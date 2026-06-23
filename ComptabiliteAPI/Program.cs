@@ -16,25 +16,16 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-// SECURITY FIX: Read environment variables FIRST, before appsettings
-// appsettings.json contains literal placeholders like "${JWT_KEY}" which .NET does not substitute
+// SECURITY FIX: Validate required environment variables at startup
+var effectiveDbConnection = configuration.GetConnectionString("DefaultConnection") 
+    ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+var effectiveJwtKey = configuration["Jwt:Key"] 
+    ?? Environment.GetEnvironmentVariable("JWT_KEY");
 
-// JWT Key: environment variable takes priority
-var effectiveJwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
-    ?? configuration["Jwt:Key"];
-
-// Database connection: read individual Postgres variables and construct the string
-var pgHost     = Environment.GetEnvironmentVariable("PGHOST")     ?? "127.0.0.1";
-var pgPort     = Environment.GetEnvironmentVariable("PGPORT")     ?? "5433";
-var pgUser     = Environment.GetEnvironmentVariable("PGUSER")     ?? "postgres";
-var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "";
-var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE") ?? "comptabilite_db";
-
-var effectiveDbConnection = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword}";
-
-if (pgHost == "127.0.0.1")
+if (string.IsNullOrEmpty(effectiveDbConnection) || effectiveDbConnection.StartsWith("${"))
 {
-    Console.WriteLine("WARNING: PGHOST not set - using local PostgreSQL default (127.0.0.1:5433)");
+    Console.WriteLine("WARNING: DB_CONNECTION_STRING not set - using local PostgreSQL 18 default (port 5433)");
+    effectiveDbConnection = "Host=127.0.0.1;Port=5433;Database=comptabilite_db;Username=postgres;Password=;";
 }
 
 // SECURITY ENFORCEMENT: JWT Key must be provided and strong in Production
@@ -195,23 +186,42 @@ builder.Services.AddScoped<TaxEngine>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-static string[] ResolveCorsOrigins(IConfiguration configuration)
+static string[] ResolveCorsOrigins(IConfiguration configuration, IWebHostEnvironment environment)
 {
     var raw = configuration["Cors:Origins"]
         ?? Environment.GetEnvironmentVariable("CORS_ORIGINS")
+        ?? Environment.GetEnvironmentVariable("PUBLIC_UI_URL")
         ?? "";
     var list = raw
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(o => o.TrimEnd('/'))
+        .Where(o => !string.IsNullOrWhiteSpace(o))
         .ToList();
-    foreach (var origin in new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
+
+    foreach (var origin in new[]
+             {
+                 "http://localhost:5173",
+                 "http://localhost:5174",
+                 "http://localhost:3000",
+                 "https://zaizens-account-ui.up.railway.app",
+             })
     {
         if (!list.Contains(origin, StringComparer.OrdinalIgnoreCase))
             list.Add(origin);
     }
+
+    if (!environment.IsDevelopment()
+        && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CORS_ORIGINS"))
+        && string.IsNullOrWhiteSpace(configuration["Cors:Origins"]))
+    {
+        Console.WriteLine(
+            "WARNING: CORS_ORIGINS not set — using built-in default https://zaizens-account-ui.up.railway.app");
+    }
+
     return list.ToArray();
 }
 
-var corsOrigins = ResolveCorsOrigins(configuration);
+var corsOrigins = ResolveCorsOrigins(configuration, builder.Environment);
 Console.WriteLine($"[CORS] Allowed origins: {string.Join(", ", corsOrigins)}");
 
 builder.Services.AddCors(options =>
@@ -239,7 +249,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseMiddleware<AuditLogMiddleware>();
+
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseCors("ReactApp");
 
 var supportedCultures = new[] { "en", "fr" };
 var localizationOptions = new RequestLocalizationOptions()
@@ -249,14 +267,10 @@ var localizationOptions = new RequestLocalizationOptions()
 
 app.UseRequestLocalization(localizationOptions);
 
-// In Development, HTTPS redirection can cause clients posting to http:// to be redirected
-// to https:// without resending the Authorization header → 401. Production keeps redirection.
-if (!app.Environment.IsDevelopment())
-    app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseCors("ReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<AuditLogMiddleware>();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
