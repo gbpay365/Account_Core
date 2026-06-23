@@ -2,11 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy project file and restore dependencies
 COPY ComptabiliteAPI.csproj .
 RUN dotnet restore
 
-# Copy all source files and build
 COPY . .
 RUN dotnet publish -c Release -o /app/publish --no-restore
 
@@ -14,16 +12,14 @@ RUN dotnet publish -c Release -o /app/publish --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# Install required libs for QuestPDF rendering
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libfontconfig1 libgdiplus \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/publish .
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-# Configure ports
-EXPOSE 8080
-ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
-ENTRYPOINT ["dotnet", "ComptabiliteAPI.dll"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

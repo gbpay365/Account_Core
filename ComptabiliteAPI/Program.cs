@@ -15,21 +15,13 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
-
-// SECURITY FIX: Validate required environment variables at startup
-var effectiveDbConnection = configuration.GetConnectionString("DefaultConnection") 
-    ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-var effectiveJwtKey = configuration["Jwt:Key"] 
-    ?? Environment.GetEnvironmentVariable("JWT_KEY");
-
-if (string.IsNullOrEmpty(effectiveDbConnection) || effectiveDbConnection.StartsWith("${"))
-{
-    Console.WriteLine("WARNING: DB_CONNECTION_STRING not set - using local PostgreSQL 18 default (port 5433)");
-    effectiveDbConnection = "Host=127.0.0.1;Port=5433;Database=comptabilite_db;Username=postgres;Password=;";
-}
-
-// SECURITY ENFORCEMENT: JWT Key must be provided and strong in Production
 bool isDev = builder.Environment.IsDevelopment();
+
+var effectiveDbConnection = ResolveDbConnection(configuration, isDev);
+Console.WriteLine($"[Boot] Database: {DescribeDbConnection(effectiveDbConnection)}");
+
+var effectiveJwtKey = configuration["Jwt:Key"]
+    ?? Environment.GetEnvironmentVariable("JWT_KEY");
 bool isWeakKey = string.IsNullOrEmpty(effectiveJwtKey) || effectiveJwtKey.StartsWith("${") || effectiveJwtKey == "DevKeyForLocalDevelopmentOnly123456";
 
 if (!isDev && isWeakKey)
@@ -186,14 +178,14 @@ builder.Services.AddScoped<TaxEngine>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
+var corsOrigins = ResolveCorsOrigins(configuration);
+Console.WriteLine($"[Boot] CORS origins: {string.Join(", ", corsOrigins)}");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:3000")
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .WithExposedHeaders("X-CompliancePack-SHA256", "X-Worm-Entry-Id")
@@ -234,16 +226,94 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGet("/", () => Results.Json(new { status = "ok", service = "ComptabiliteAPI" }));
 app.MapHealthChecks("/health");
 
-// FIX SCHEMA FIRST
-await ComptabiliteAPI.Diagnostics.FixDatabaseSchema.Run(app.Services);
-
-// ─── DB migrations + seed (SYSCOHADA) ─────────────────────────────────────────
-await DbInitializer.InitializeAsync(app.Services);
-
-// Products are populated from HMS via POST /api/v1/integrations/products (one-way sync).
-
-await ComptabiliteAPI.Diagnostics.CheckProductFamilies.Run(app.Services);
+try
+{
+    await ComptabiliteAPI.Diagnostics.FixDatabaseSchema.Run(app.Services);
+    await DbInitializer.InitializeAsync(app.Services);
+    await ComptabiliteAPI.Diagnostics.CheckProductFamilies.Run(app.Services);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"[Boot] Database initialization failed: {ex}");
+    throw;
+}
 
 app.Run();
+
+static string ResolveDbConnection(IConfiguration configuration, bool isDev)
+{
+    string?[] candidates =
+    [
+        configuration.GetConnectionString("DefaultConnection"),
+        Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"),
+        Environment.GetEnvironmentVariable("DATABASE_URL"),
+    ];
+
+    foreach (var raw in candidates)
+    {
+        if (string.IsNullOrWhiteSpace(raw) || raw.StartsWith("${")) continue;
+        return NormalizePostgresConnectionString(raw.Trim());
+    }
+
+    if (isDev)
+    {
+        Console.WriteLine("WARNING: DB not configured — using local ServBay default (5433)");
+        return "Host=127.0.0.1;Port=5433;Database=comptabilite_db;Username=postgres;Password=;";
+    }
+
+    throw new InvalidOperationException("FATAL: Set DB_CONNECTION_STRING or DATABASE_URL (e.g. ${{Postgres.DATABASE_URL}}).");
+}
+
+static string NormalizePostgresConnectionString(string raw)
+{
+    if (!raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+        && !raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        return raw;
+    }
+
+    var uri = new Uri(raw);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var user = Uri.UnescapeDataString(userInfo[0]);
+    var pass = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+    var port = uri.Port > 0 ? uri.Port : 5432;
+    var database = uri.AbsolutePath.TrimStart('/');
+    if (string.IsNullOrEmpty(database)) database = "railway";
+
+    return $"Host={uri.Host};Port={port};Database={database};Username={user};Password={pass};SSL Mode=Require;Trust Server Certificate=true";
+}
+
+static string DescribeDbConnection(string cs)
+{
+    try
+    {
+        var host = cs.Split(';').FirstOrDefault(p => p.StartsWith("Host=", StringComparison.OrdinalIgnoreCase))?.Split('=')[1];
+        var db = cs.Split(';').FirstOrDefault(p => p.StartsWith("Database=", StringComparison.OrdinalIgnoreCase))?.Split('=')[1];
+        return string.IsNullOrEmpty(host) ? "(configured)" : $"{host}/{db ?? "?"}";
+    }
+    catch
+    {
+        return "(configured)";
+    }
+}
+
+static string[] ResolveCorsOrigins(IConfiguration configuration)
+{
+    var raw = configuration["Cors:Origins"]
+        ?? Environment.GetEnvironmentVariable("CORS_ORIGINS")
+        ?? "";
+    var list = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+    foreach (var origin in new[]
+             {
+                 "http://localhost:5173", "http://localhost:5174", "http://localhost:3000",
+                 "https://zaizens-account-ui.up.railway.app"
+             })
+    {
+        if (!list.Contains(origin, StringComparer.OrdinalIgnoreCase))
+            list.Add(origin);
+    }
+    return list.ToArray();
+}
