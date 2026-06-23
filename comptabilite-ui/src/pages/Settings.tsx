@@ -86,7 +86,7 @@ const Settings: React.FC = () => {
 
       {error && <div className="glass-panel" style={{ padding: 16, color: 'var(--color-danger)', marginBottom: 20 }}>{error}</div>}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {(['currencies', 'fiscalYears', 'periods'] as Tab[]).map(key => (
           <button key={key} onClick={() => setTab(key)}
             className={tab === key ? 'btn-glow' : 'jem-btn-ghost'}

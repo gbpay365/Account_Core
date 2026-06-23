@@ -29,6 +29,7 @@ import Employees from '../pages/hr/Employees';
 import Payroll from '../pages/hr/Payroll';
 
 import AccessManagement from '../pages/AccessManagement';
+import MyAccount from '../pages/MyAccount';
 import Settings from '../pages/Settings';
 import IntegrationsSettings from '../pages/IntegrationsSettings';
 import Journals from '../pages/Journals';
@@ -70,6 +71,7 @@ export const AppRoutes = () => {
             <Route path="/audit-log" element={<AuditLog />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/rules" element={<RulesValidators />} />
+            <Route path="/account" element={<MyAccount />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/integrations" element={<IntegrationsSettings />} />
             <Route
@@ -90,7 +92,14 @@ export const AppRoutes = () => {
             <Route path="/cost-centers" element={<CostCenters />} />
             <Route path="/tax" element={<TaxCalculation />} />
             <Route path="/companies" element={<Companies />} />
-            <Route path="/access-management" element={<AccessManagement />} />
+            <Route
+              path="/access-management"
+              element={
+                <ProtectedRoute requiredResource="access" requiredAction="read" redirectTo="/unauthorized">
+                  <AccessManagement />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Enterprise modules (sidebar MODULES) */}
             <Route path="/enterprise/crm" element={<CrmPipeline />} />

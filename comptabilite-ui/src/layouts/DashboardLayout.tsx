@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { authService } from '../services/authService';
+import { PermissionContext } from '../contexts/PermissionContext';
 import { useTranslation } from 'react-i18next';
 import { getStoredCompanyId, setStoredCompanyId } from '../lib/companyContext';
 import './DashboardLayout.css';
@@ -10,7 +11,9 @@ const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { hasPermission } = useContext(PermissionContext);
   const [companyBootstrapped, setCompanyBootstrapped] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ fullName: string; roleName?: string; username?: string } | null>(null);
 
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     workspace: true,
@@ -33,6 +36,13 @@ const DashboardLayout: React.FC = () => {
     authService.logout();
     navigate('/login');
   };
+
+  useEffect(() => {
+    if (!authService.isAuthenticated()) return;
+    authService.getMe()
+      .then((me) => setCurrentUser({ fullName: me.fullName, roleName: me.roleName, username: me.username }))
+      .catch(() => setCurrentUser(null));
+  }, []);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) return;
@@ -289,9 +299,11 @@ const DashboardLayout: React.FC = () => {
                 <Link to="/billing" className={`nav-link ${isActive('/billing')}`}>
                   <span className="link-icon">💳</span> {t('billing.nav')}
                 </Link>
-                <Link to="/access-management" className={`nav-link ${isActive('/access-management')}`}>
-                  <span className="link-icon">🔑</span> {t('common.access_mgmt')}
-                </Link>
+                {hasPermission('access', 'read') && (
+                  <Link to="/access-management" className={`nav-link ${isActive('/access-management')}`}>
+                    <span className="link-icon">🔑</span> {t('common.access_mgmt')}
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -304,7 +316,17 @@ const DashboardLayout: React.FC = () => {
             <input type="text" placeholder={t('common.search')} />
           </div>
           <div className="user-profile">
-            <span>{t('common.admin_user')}</span>
+            <Link
+              to="/account"
+              title={t('settings.change_password', 'Change password')}
+              style={{ color: 'inherit', textDecoration: 'none', marginRight: 12 }}
+            >
+              {currentUser?.fullName || t('common.user')}
+              {currentUser?.roleName ? ` · ${currentUser.roleName}` : ''}
+            </Link>
+            <Link to="/account" className="logout-btn" style={{ textDecoration: 'none', marginRight: 8 }}>
+              {t('account.change_password_short', 'Password')}
+            </Link>
             <button onClick={handleLogout} className="logout-btn">{t('common.logout')}</button>
           </div>
         </header>

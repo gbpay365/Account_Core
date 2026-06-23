@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using ComptabiliteAPI.Domain.Entities;
 using ComptabiliteAPI.DTOs;
 using ComptabiliteAPI.Infrastructure.Data;
+using ComptabiliteAPI.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,27 +30,83 @@ namespace ComptabiliteAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
+            var loginName = (request.LoginName ?? request.Email ?? "").Trim();
+            if (string.IsNullOrEmpty(loginName) || string.IsNullOrEmpty(request.Password))
+                return Unauthorized("Invalid credentials.");
+
+            var loginLower = loginName.ToLowerInvariant();
             var user = await _context.Users
                 .Include(u => u.Role!)
                 .ThenInclude(r => r.RolePermissions)
                 .ThenInclude(rp => rp.Permission)
-                .FirstOrDefaultAsync(u => u.Email == request.Email);
+                .FirstOrDefaultAsync(u =>
+                    u.Username.ToLower() == loginLower || u.Email.ToLower() == loginLower);
 
-            // SECURITY FIX: Use constant-time comparison and proper password verification
             if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
-            {
                 return Unauthorized("Invalid credentials.");
-            }
 
+            return Ok(new { accessToken = CreateJwt(user) });
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMe()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
+
+            var user = await _context.Users
+                .AsNoTracking()
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return NotFound();
+
+            return Ok(new
+            {
+                user.Id,
+                user.Username,
+                user.Email,
+                user.FullName,
+                user.RoleId,
+                roleName = user.Role?.Name
+            });
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest body)
+        {
+            if (body == null || string.IsNullOrWhiteSpace(body.CurrentPassword) || string.IsNullOrWhiteSpace(body.NewPassword))
+                return BadRequest(new { error = "Current and new password are required." });
+            if (body.NewPassword.Length < 8)
+                return BadRequest(new { error = "New password must be at least 8 characters." });
+
+            var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return NotFound();
+
+            if (!VerifyPassword(body.CurrentPassword, user.PasswordHash))
+                return BadRequest(new { error = "Current password is incorrect." });
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, 12);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Password updated." });
+        }
+
+        private string CreateJwt(User user)
+        {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtKey = ResolveJwtKey();
             var key = Encoding.UTF8.GetBytes(jwtKey);
-            
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.FullName)
+                new Claim(ClaimTypes.Name, user.FullName),
+                new Claim("username", user.Username)
             };
 
             var issuer = _configuration["Jwt:Issuer"] ?? "ComptabiliteAPI";
@@ -64,12 +121,13 @@ namespace ComptabiliteAPI.Controllers
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            
-            return Ok(new
-            {
-                accessToken = tokenHandler.WriteToken(token)
-            });
+            return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
+        }
+
+        private Guid? GetCurrentUserId()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(userIdStr, out var userId) ? userId : null;
         }
 
         private string ResolveJwtKey()
@@ -83,20 +141,14 @@ namespace ComptabiliteAPI.Controllers
             throw new InvalidOperationException("JWT Key must be configured via environment variable");
         }
 
-        // SECURITY FIX: Constant-time password verification to prevent timing attacks
         private static bool VerifyPassword(string providedPassword, string storedPassword)
         {
             if (string.IsNullOrEmpty(storedPassword))
                 return false;
-            
-            // If stored password looks like a bcrypt hash (starts with $2a$, $2b$, or $2y$), use BCrypt verification
+
             if (storedPassword.StartsWith("$2"))
-            {
                 return BCrypt.Net.BCrypt.Verify(providedPassword, storedPassword);
-            }
-            
-            // Fallback: constant-time comparison for legacy plaintext comparison (NOT RECOMMENDED for production)
-            // This prevents timing attacks but still stores plaintext - should be migrated to bcrypt
+
             return CryptographicOperations.FixedTimeEquals(
                 Encoding.UTF8.GetBytes(providedPassword),
                 Encoding.UTF8.GetBytes(storedPassword)
@@ -104,12 +156,11 @@ namespace ComptabiliteAPI.Controllers
         }
 
         [HttpGet("permissions")]
-        [Microsoft.AspNetCore.Authorization.Authorize]
+        [Authorize]
         public async Task<IActionResult> GetPermissions()
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
-                return Unauthorized();
+            var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
 
             var user = await _context.Users
                 .Include(u => u.Role!)
@@ -128,6 +179,7 @@ namespace ComptabiliteAPI.Controllers
 
         [HttpGet("users")]
         [Authorize]
+        [RequirePermission("access", "read")]
         [ServiceFilter(typeof(CompanyMembershipActionFilter))]
         public async Task<IActionResult> GetUsers([FromQuery] Guid companyId)
         {
@@ -148,6 +200,7 @@ namespace ComptabiliteAPI.Controllers
             return Ok(list.Select(u => new
             {
                 u.Id,
+                u.Username,
                 u.Email,
                 u.FullName,
                 u.RoleId,
@@ -157,6 +210,7 @@ namespace ComptabiliteAPI.Controllers
 
         [HttpGet("roles")]
         [Authorize]
+        [RequirePermission("access", "read")]
         public async Task<IActionResult> GetRoles()
         {
             var roles = await _context.Roles
@@ -181,6 +235,7 @@ namespace ComptabiliteAPI.Controllers
 
         [HttpGet("permissions/catalog")]
         [Authorize]
+        [RequirePermission("access", "read")]
         public async Task<IActionResult> GetPermissionCatalog()
         {
             var perms = await _context.Permissions.AsNoTracking()
@@ -196,6 +251,7 @@ namespace ComptabiliteAPI.Controllers
 
         [HttpGet("roles/{roleId:guid}/permissions")]
         [Authorize]
+        [RequirePermission("access", "read")]
         public async Task<IActionResult> GetRolePermissions(Guid roleId)
         {
             var role = await _context.Roles.AsNoTracking()
@@ -216,6 +272,7 @@ namespace ComptabiliteAPI.Controllers
 
         [HttpPut("roles/{roleId:guid}/permissions")]
         [Authorize]
+        [RequirePermission("access", "write")]
         public async Task<IActionResult> UpdateRolePermissions(Guid roleId, [FromBody] UpdateRolePermissionsRequest body)
         {
             var role = await _context.Roles.Include(r => r.RolePermissions)
@@ -237,6 +294,7 @@ namespace ComptabiliteAPI.Controllers
 
         [HttpPatch("users/{userId:guid}/role")]
         [Authorize]
+        [RequirePermission("access", "write")]
         [ServiceFilter(typeof(CompanyMembershipActionFilter))]
         public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] UpdateUserRoleRequest body, [FromQuery] Guid companyId)
         {
@@ -254,8 +312,39 @@ namespace ComptabiliteAPI.Controllers
             return Ok(new { user.Id, user.RoleId });
         }
 
+        [HttpPost("users/{userId:guid}/reset-password")]
+        [Authorize]
+        [RequirePermission("access", "write")]
+        [ServiceFilter(typeof(CompanyMembershipActionFilter))]
+        public async Task<IActionResult> ResetUserPassword(Guid userId, [FromBody] ResetPasswordRequest? body, [FromQuery] Guid companyId)
+        {
+            var inCompany = await _context.UserCompanies.AnyAsync(uc => uc.UserId == userId && uc.CompanyId == companyId);
+            if (!inCompany) return BadRequest(new { error = "User is not in this company." });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return NotFound();
+
+            var password = string.IsNullOrWhiteSpace(body?.NewPassword)
+                ? Guid.NewGuid().ToString("N")[..12]
+                : body!.NewPassword!;
+
+            if (password.Length < 8)
+                return BadRequest(new { error = "Password must be at least 8 characters." });
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, 12);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                user.Id,
+                temporaryPassword = string.IsNullOrWhiteSpace(body?.NewPassword) ? password : (string?)null,
+                message = "Password reset."
+            });
+        }
+
         [HttpPost("roles")]
         [Authorize]
+        [RequirePermission("access", "write")]
         public async Task<IActionResult> CreateRole([FromBody] CreateRoleRequest body)
         {
             if (body == null || string.IsNullOrWhiteSpace(body.Name))
@@ -271,35 +360,44 @@ namespace ComptabiliteAPI.Controllers
 
         [HttpPost("users")]
         [Authorize]
+        [RequirePermission("access", "write")]
         [ServiceFilter(typeof(CompanyMembershipActionFilter))]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserInviteRequest body)
         {
-            if (body == null || string.IsNullOrWhiteSpace(body.FullName) || string.IsNullOrWhiteSpace(body.Email))
-                return BadRequest(new { error = "Name and email are required." });
+            if (body == null || string.IsNullOrWhiteSpace(body.FullName))
+                return BadRequest(new { error = "Full name is required." });
+            if (string.IsNullOrWhiteSpace(body.Username))
+                return BadRequest(new { error = "Login name is required." });
             if (body.CompanyId == Guid.Empty || !await _context.Companies.AnyAsync(c => c.Id == body.CompanyId))
                 return BadRequest(new { error = "Valid companyId is required." });
             if (body.RoleId == Guid.Empty || !await _context.Roles.AnyAsync(r => r.Id == body.RoleId))
                 return BadRequest(new { error = "Valid roleId is required." });
-            var email = body.Email.Trim();
-            if (await _context.Users.AnyAsync(u => u.Email == email))
-                return BadRequest(new { error = "A user with this email already exists." });
 
-            if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var currentUserId))
-                return Unauthorized();
+            var username = body.Username.Trim().ToLowerInvariant();
+            if (!IsValidUsername(username))
+                return BadRequest(new { error = "Login name must be 3–32 characters: letters, numbers, dots, underscores, or hyphens." });
+
+            if (await _context.Users.AnyAsync(u => u.Username.ToLower() == username))
+                return BadRequest(new { error = "A user with this login name already exists." });
+
+            var email = string.IsNullOrWhiteSpace(body.Email) ? "" : body.Email.Trim();
+            if (!string.IsNullOrEmpty(email) && await _context.Users.AnyAsync(u => u.Email == email))
+                return BadRequest(new { error = "A user with this email already exists." });
 
             var password = string.IsNullOrWhiteSpace(body.Password)
                 ? Guid.NewGuid().ToString("N")[..12]
                 : body.Password!;
 
-            // SECURITY FIX: Hash passwords with bcrypt before storing
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(password, 12);
+            if (password.Length < 8)
+                return BadRequest(new { error = "Password must be at least 8 characters." });
 
             var user = new User
             {
                 Id = Guid.NewGuid(),
+                Username = username,
                 Email = email,
                 FullName = body.FullName.Trim(),
-                PasswordHash = passwordHash,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, 12),
                 RoleId = body.RoleId
             };
             await _context.Users.AddAsync(user);
@@ -317,10 +415,22 @@ namespace ComptabiliteAPI.Controllers
             return Ok(new
             {
                 user.Id,
+                user.Username,
                 user.Email,
                 user.FullName,
                 temporaryPassword = string.IsNullOrWhiteSpace(body.Password) ? password : (string?)null
             });
+        }
+
+        private static bool IsValidUsername(string username)
+        {
+            if (username.Length < 3 || username.Length > 32) return false;
+            foreach (var c in username)
+            {
+                if (char.IsLetterOrDigit(c) || c is '.' or '_' or '-') continue;
+                return false;
+            }
+            return true;
         }
     }
 
@@ -332,6 +442,7 @@ namespace ComptabiliteAPI.Controllers
     public class CreateUserInviteRequest
     {
         public string FullName { get; set; } = "";
+        public string Username { get; set; } = "";
         public string Email { get; set; } = "";
         public Guid RoleId { get; set; }
         public Guid CompanyId { get; set; }
@@ -340,7 +451,20 @@ namespace ComptabiliteAPI.Controllers
 
     public class LoginRequest
     {
+        public string LoginName { get; set; } = string.Empty;
+        /// <summary>Deprecated — use LoginName.</summary>
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+    }
+
+    public class ChangePasswordRequest
+    {
+        public string CurrentPassword { get; set; } = "";
+        public string NewPassword { get; set; } = "";
+    }
+
+    public class ResetPasswordRequest
+    {
+        public string? NewPassword { get; set; }
     }
 }

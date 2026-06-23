@@ -2,6 +2,7 @@
   "common": {
     "dashboard": "Tableau de Bord",
     "admin_user": "Administrateur",
+    "user": "Utilisateur",
     "journal": "Saisie des écritures",
     "income_statement": "Compte de résultat",
     "balance_sheet": "Bilan",
@@ -68,11 +69,16 @@
     "title": "ZAIZENS Core",
     "subtitle": "ERP Nouvelle Génération",
     "email": "Identifiant",
+    "login_name": "Nom de connexion",
     "password": "Mot de passe",
     "submit": "Ouvrir la session",
     "forgot_password": "Mot de passe oublié ?",
     "loading": "Connexion...",
     "error_invalid": "Identifiant ou mot de passe incorrect"
+  },
+  "account": {
+    "subtitle": "Consultez votre profil et changez votre mot de passe",
+    "change_password_short": "Mot de passe"
   },
   "reporting": {
     "title": "Reporting",
@@ -1019,6 +1025,7 @@
     "title": "Paramètres",
     "nav": "Paramètres",
     "subtitle": "Configuration : devises, exercices et périodes comptables",
+    "tab_account": "Mon compte",
     "tab_currencies": "Devises",
     "tab_fiscalYears": "Exercices",
     "tab_periods": "Périodes",
@@ -1036,6 +1043,16 @@
     "status": "Statut",
     "add_fiscal_year": "Ajouter un exercice",
     "seed_defaults": "Initialiser les valeurs par défaut",
+    "login_name": "Connexion",
+    "change_password": "Changer le mot de passe",
+    "current_password": "Mot de passe actuel",
+    "new_password": "Nouveau mot de passe",
+    "confirm_password": "Confirmer le mot de passe",
+    "update_password": "Mettre à jour le mot de passe",
+    "password_updated": "Mot de passe mis à jour.",
+    "password_mismatch": "Les nouveaux mots de passe ne correspondent pas.",
+    "password_too_short": "Le mot de passe doit contenir au moins 8 caractères.",
+    "password_failed": "Impossible de mettre à jour le mot de passe.",
     "load_failed": "Échec du chargement des paramètres",
     "create_failed": "Échec de l'enregistrement"
   },

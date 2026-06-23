@@ -4,7 +4,7 @@ import { authService } from '../services/authService';
 
 const Login: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const [email, setEmail] = useState('admin@comptabilite.cm');
+  const [loginName, setLoginName] = useState('admin');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +14,7 @@ const Login: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      await authService.login(email, password);
+      await authService.login(loginName, password);
       window.location.href = '/';
     } catch (err) {
       const errorMessage = err && typeof err === 'object' && 'response' in err 
@@ -99,16 +99,17 @@ const Login: React.FC = () => {
         )}
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {/* Email Field with Floating Label Effect */}
+          {/* Login name */}
           <div className="animate-slide-in" style={{ animationDelay: '0.3s', position: 'relative' }}>
             <div style={{ position: 'relative' }}>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={loginName}
+                onChange={(e) => setLoginName(e.target.value)}
                 required
+                autoComplete="username"
                 placeholder=" "
-                id="email-input"
+                id="login-name-input"
                 style={{
                   width: '100%', padding: '22px 14px 8px', borderRadius: '12px',
                   border: '1px solid rgba(0,0,0,0.08)', background: 'rgba(255,255,255,0.8)',
@@ -127,17 +128,17 @@ const Login: React.FC = () => {
                 }}
               />
               <label 
-                htmlFor="email-input"
+                htmlFor="login-name-input"
                 style={{ 
-                  position: 'absolute', left: '14px', top: email ? '6px' : '16px', 
-                  fontSize: email ? '0.7rem' : '0.95rem', color: email ? 'var(--color-primary)' : 'var(--text-muted)',
+                  position: 'absolute', left: '14px', top: loginName ? '6px' : '16px', 
+                  fontSize: loginName ? '0.7rem' : '0.95rem', color: loginName ? 'var(--color-primary)' : 'var(--text-muted)',
                   fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
                   transition: 'all 0.2s ease', pointerEvents: 'none'
                 }}
               >
-                {t('login.email')}
+                {t('login.login_name', 'Login name')}
               </label>
-              <span style={{ position: 'absolute', right: '14px', top: '16px', opacity: 0.5, fontSize: '0.9rem' }}>📧</span>
+              <span style={{ position: 'absolute', right: '14px', top: '16px', opacity: 0.5, fontSize: '0.9rem' }}>👤</span>
             </div>
           </div>
 

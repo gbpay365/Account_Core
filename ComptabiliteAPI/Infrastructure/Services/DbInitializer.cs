@@ -134,6 +134,16 @@ namespace ComptabiliteAPI.Infrastructure.Services
                     CREATE UNIQUE INDEX "IX_PayrollDepartmentSummaries_PeriodDept"
                       ON "PayrollDepartmentSummaries" ("CompanyId", "Year", "Month", "Department");
                   END IF;
+
+                  IF to_regclass('public."Users"') IS NOT NULL THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='Users' AND column_name='Username') THEN
+                      ALTER TABLE "Users" ADD COLUMN "Username" text NOT NULL DEFAULT '';
+                    END IF;
+                    UPDATE "Users"
+                    SET "Username" = lower(split_part("Email", '@', 1))
+                    WHERE ("Username" IS NULL OR "Username" = '') AND "Email" IS NOT NULL AND "Email" <> '';
+                    UPDATE "Users" SET "Username" = 'admin' WHERE "Email" = 'admin@comptabilite.cm' AND ("Username" IS NULL OR "Username" = '');
+                  END IF;
                 END $$;
                 """);
 

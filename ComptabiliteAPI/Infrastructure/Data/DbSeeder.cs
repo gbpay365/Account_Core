@@ -44,6 +44,8 @@ namespace ComptabiliteAPI.Infrastructure.Data
             if (!needsReset) return;
 
             admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(defaultPassword, 12);
+            if (string.IsNullOrWhiteSpace(admin.Username))
+                admin.Username = "admin";
             await dbContext.SaveChangesAsync();
             Console.WriteLine($"[AUTH] Admin password set for {adminEmail}.");
         }
@@ -72,6 +74,8 @@ namespace ComptabiliteAPI.Infrastructure.Data
                 ("billing", "write"),
                 ("rules", "read"),
                 ("rules", "write"),
+                ("access", "read"),
+                ("access", "write"),
             };
 
             foreach (var (resource, action) in definitions)
@@ -314,6 +318,7 @@ namespace ComptabiliteAPI.Infrastructure.Data
 
                 var adminUser = new User
                 {
+                    Username = "admin",
                     Email    = "admin@comptabilite.cm",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123", 12),
                     FullName = "System Administrator",

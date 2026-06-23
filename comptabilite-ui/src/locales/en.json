@@ -2,6 +2,7 @@
   "common": {
     "dashboard": "Dashboard",
     "admin_user": "Admin User",
+    "user": "User",
     "journal": "Journal Entries",
     "income_statement": "Income Statement",
     "balance_sheet": "Balance Sheet",
@@ -68,11 +69,16 @@
     "title": "ZAIZENS Core",
     "subtitle": "Next-Gen Enterprise ERP",
     "email": "Email address",
+    "login_name": "Login name",
     "password": "Password",
     "submit": "Sign in",
     "forgot_password": "Forgot your password?",
     "loading": "Signing in...",
-    "error_invalid": "Invalid email or password"
+    "error_invalid": "Invalid login name or password"
+  },
+  "account": {
+    "subtitle": "View your profile and change your password",
+    "change_password_short": "Password"
   },
   "reporting": {
     "title": "Reporting",
@@ -1014,6 +1020,7 @@
     "title": "Settings",
     "nav": "Settings",
     "subtitle": "Company configuration: currencies, fiscal years, and accounting periods",
+    "tab_account": "My account",
     "tab_currencies": "Currencies",
     "tab_fiscalYears": "Fiscal years",
     "tab_periods": "Periods",
@@ -1031,6 +1038,16 @@
     "status": "Status",
     "add_fiscal_year": "Add fiscal year",
     "seed_defaults": "Initialize defaults",
+    "login_name": "Login",
+    "change_password": "Change password",
+    "current_password": "Current password",
+    "new_password": "New password",
+    "confirm_password": "Confirm new password",
+    "update_password": "Update password",
+    "password_updated": "Password updated.",
+    "password_mismatch": "New passwords do not match.",
+    "password_too_short": "Password must be at least 8 characters.",
+    "password_failed": "Could not update password.",
     "load_failed": "Failed to load settings",
     "create_failed": "Failed to save"
   },

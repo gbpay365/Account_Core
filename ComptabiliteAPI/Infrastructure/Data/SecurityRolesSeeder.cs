@@ -11,7 +11,7 @@ namespace ComptabiliteAPI.Infrastructure.Data
     {
         public const int StandardRoleCount = 22;
 
-        // Canonical permission keys (12 total) — same resources as RequirePermission in controllers.
+        // Canonical permission keys — same resources as RequirePermission in controllers.
         private static readonly string[] AllPermissions =
         {
             "dashboard:read", "dashboard:edit",
@@ -21,7 +21,8 @@ namespace ComptabiliteAPI.Infrastructure.Data
             "ecf:read", "ecf:write",
             "finance:read", "finance:write",
             "billing:read", "billing:write",
-            "rules:read", "rules:write"
+            "rules:read", "rules:write",
+            "access:read", "access:write"
         };
 
         private static readonly string[] ReadStack =
@@ -95,6 +96,46 @@ namespace ComptabiliteAPI.Infrastructure.Data
             }
 
             await db.SaveChangesAsync();
+            await ResyncStandardRolePermissionsAsync(db);
+        }
+
+        /// <summary>
+        /// Replaces role-permission links for the 22 standard roles so they match the catalog exactly
+        /// (removes extras that let non-admin roles escalate, e.g. via Access Management UI).
+        /// </summary>
+        public static async Task ResyncStandardRolePermissionsAsync(AppDbContext db)
+        {
+            var byKey = (await db.Permissions.AsNoTracking().ToListAsync())
+                .ToDictionary(p => $"{p.Resource}:{p.Action}", p => p.Id, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (name, keys) in StandardRoles)
+            {
+                var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == name);
+                if (role == null) continue;
+
+                var expected = keys
+                    .Where(byKey.ContainsKey)
+                    .Select(k => byKey[k])
+                    .ToHashSet();
+
+                var links = await db.RolePermissions
+                    .Where(rp => rp.RoleId == role.Id)
+                    .ToListAsync();
+
+                var toRemove = links.Where(rp => !expected.Contains(rp.PermissionId)).ToList();
+                if (toRemove.Count > 0)
+                    db.RolePermissions.RemoveRange(toRemove);
+
+                var have = links.Select(rp => rp.PermissionId).ToHashSet();
+                foreach (var pid in expected)
+                {
+                    if (have.Contains(pid)) continue;
+                    await db.RolePermissions.AddAsync(new RolePermission { RoleId = role.Id, PermissionId = pid });
+                }
+            }
+
+            if (db.ChangeTracker.HasChanges())
+                await db.SaveChangesAsync();
         }
 
         /// <summary>

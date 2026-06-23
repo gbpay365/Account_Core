@@ -261,11 +261,17 @@ export const authAccessApi = {
   createRole: (name: string) => api.post('/auth/roles', { name }),
   createUser: (body: {
     fullName: string;
-    email: string;
+    username: string;
+    email?: string;
     roleId: string;
     companyId: string;
     password?: string;
-  }) => api.post('/auth/users', body)
+  }) => api.post('/auth/users', body),
+  resetUserPassword: (userId: string, companyId: string, newPassword?: string) =>
+    api.post(`/auth/users/${userId}/reset-password?companyId=${encodeURIComponent(companyId)}`, { newPassword: newPassword || null }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post('/auth/change-password', { currentPassword, newPassword }),
+  getMe: () => api.get('/auth/me'),
 };
 
 export const billingApi = {

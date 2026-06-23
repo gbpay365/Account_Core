@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
 import { authAccessApi } from '../api';
 import { ModalPortal } from '../components/ModalPortal';
 import { JemShellModal } from '../components/jem/JemShellModal';
 import '../components/JournalEntry/JournalEntryForm.css';
 import { getStoredCompanyId } from '../lib/companyContext';
 import { showToast } from '../utils/dialogs';
+import { PermissionContext } from '../contexts/PermissionContext';
 
 interface PermissionItem {
   id: string;
@@ -14,6 +15,8 @@ interface PermissionItem {
 }
 
 const AccessManagement: React.FC = () => {
+  const { hasPermission } = useContext(PermissionContext);
+  const canWrite = hasPermission('access', 'write');
   const [users, setUsers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [catalog, setCatalog] = useState<PermissionItem[]>([]);
@@ -21,7 +24,7 @@ const AccessManagement: React.FC = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
-  const [invite, setInvite] = useState({ fullName: '', email: '', roleId: '' });
+  const [invite, setInvite] = useState({ fullName: '', username: '', email: '', roleId: '' });
   const [securityRolesOpen, setSecurityRolesOpen] = useState(true);
   const [companyId, setCompanyId] = useState(() => getStoredCompanyId());
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
@@ -143,12 +146,13 @@ const AccessManagement: React.FC = () => {
     try {
       const res = await authAccessApi.createUser({
         fullName: invite.fullName.trim(),
-        email: invite.email.trim(),
+        username: invite.username.trim(),
+        email: invite.email.trim() || undefined,
         roleId: invite.roleId,
         companyId
       });
       setShowInviteModal(false);
-      setInvite({ fullName: '', email: '', roleId: roles[0]?.id || '' });
+      setInvite({ fullName: '', username: '', email: '', roleId: roles[0]?.id || '' });
       if (res.data?.temporaryPassword) {
         alert(`User created. Share this temporary password once: ${res.data.temporaryPassword}`);
       } else {
@@ -161,6 +165,21 @@ const AccessManagement: React.FC = () => {
     }
   };
 
+  const handleResetPassword = async (userId: string) => {
+    if (!companyId || !canWrite) return;
+    if (!window.confirm('Generate a new temporary password for this user?')) return;
+    try {
+      const res = await authAccessApi.resetUserPassword(userId, companyId);
+      if (res.data?.temporaryPassword) {
+        alert(`Password reset. Share this temporary password once: ${res.data.temporaryPassword}`);
+      } else {
+        showToast('Password reset.', 'success');
+      }
+    } catch (err: any) {
+      showToast('Error: ' + (err.response?.data?.error || err.message), 'error');
+    }
+  };
+
   const selectedRole = roles.find(r => r.id === selectedRoleId);
 
   return (
@@ -170,10 +189,12 @@ const AccessManagement: React.FC = () => {
           <h1 style={{ margin: 0, fontSize: '1.8rem' }}>🔑 Access Management</h1>
           <p style={{ margin: '6px 0 0 0', color: 'var(--text-muted)' }}>Manage users, roles, and granular permissions</p>
         </div>
-        <button type="button" className="btn-glow" onClick={() => {
-          setInvite({ fullName: '', email: '', roleId: roles[0]?.id || '' });
-          setShowInviteModal(true);
-        }}>+ Add User</button>
+        {canWrite && (
+          <button type="button" className="btn-glow" onClick={() => {
+            setInvite({ fullName: '', username: '', email: '', roleId: roles[0]?.id || '' });
+            setShowInviteModal(true);
+          }}>+ Add User</button>
+        )}
       </div>
 
       {loading ? (
@@ -186,6 +207,7 @@ const AccessManagement: React.FC = () => {
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th>Login</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
@@ -195,9 +217,10 @@ const AccessManagement: React.FC = () => {
                 {users.map(u => (
                   <tr key={u.id}>
                     <td style={{ fontWeight: 600 }}>{u.fullName}</td>
-                    <td>{u.email}</td>
+                    <td><code style={{ fontSize: '0.85rem' }}>{u.username || '—'}</code></td>
+                    <td>{u.email || '—'}</td>
                     <td>
-                      {editingUserId === u.id ? (
+                      {canWrite && editingUserId === u.id ? (
                         <select value={u.roleId || ''} onChange={e => handleUserRoleChange(u.id, e.target.value)} className="jem-field" style={{ fontSize: '0.85rem' }}>
                           {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                         </select>
@@ -205,15 +228,22 @@ const AccessManagement: React.FC = () => {
                         <span className="status-pill active">{u.role?.name || '—'}</span>
                       )}
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button className="btn-small" type="button" onClick={() => setEditingUserId(editingUserId === u.id ? null : u.id)}>
-                        {editingUserId === u.id ? 'Done' : 'Edit role'}
-                      </button>
+                    <td style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      {canWrite && (
+                        <>
+                          <button className="btn-small" type="button" onClick={() => setEditingUserId(editingUserId === u.id ? null : u.id)}>
+                            {editingUserId === u.id ? 'Done' : 'Edit role'}
+                          </button>
+                          <button className="btn-small" type="button" onClick={() => handleResetPassword(u.id)}>
+                            Reset password
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
                 {users.length === 0 && (
-                  <tr><td colSpan={4} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>No users in this company yet.</td></tr>
+                  <tr><td colSpan={5} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>No users in this company yet.</td></tr>
                 )}
               </tbody>
             </table>
@@ -226,7 +256,7 @@ const AccessManagement: React.FC = () => {
                   <h3 style={{ margin: 0 }}>Permissions</h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{selectedRole?.name}</p>
                 </div>
-                <button className="btn-glow" onClick={saveRolePermissions} disabled={savingPerms}>
+                <button className="btn-glow" onClick={saveRolePermissions} disabled={savingPerms || !canWrite}>
                   {savingPerms ? 'Saving…' : 'Save'}
                 </button>
               </div>
@@ -236,7 +266,7 @@ const AccessManagement: React.FC = () => {
                     <div style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: 8, color: 'var(--color-primary)' }}>{resource}</div>
                     {perms.map(p => (
                       <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', fontSize: '0.9rem' }}>
-                        <input type="checkbox" checked={selectedPermIds.has(p.id)} onChange={() => togglePermission(p.id)} />
+                        <input type="checkbox" checked={selectedPermIds.has(p.id)} onChange={() => togglePermission(p.id)} disabled={!canWrite} />
                         <code style={{ fontSize: '0.82rem' }}>{p.action}</code>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({p.key})</span>
                       </label>
@@ -259,7 +289,7 @@ const AccessManagement: React.FC = () => {
                 </div>
                 <span aria-hidden style={{ flexShrink: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-primary, #0d9488)', transform: securityRolesOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s ease' }}>▼</span>
               </button>
-              <button type="button" className="btn-secondary" onClick={e => { e.stopPropagation(); setNewRoleName(''); setShowRoleModal(true); }} style={{ flexShrink: 0 }}>Add Role</button>
+              <button type="button" className="btn-secondary" onClick={e => { e.stopPropagation(); setNewRoleName(''); setShowRoleModal(true); }} style={{ flexShrink: 0 }} disabled={!canWrite}>Add Role</button>
             </div>
             {securityRolesOpen && (
               <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -291,7 +321,8 @@ const AccessManagement: React.FC = () => {
             footer={<><button type="button" className="jem-btn-ghost" onClick={() => setShowInviteModal(false)}>Cancel</button><button type="submit" form="access-invite-form" className="jem-btn-primary" disabled={roles.length === 0}>Create user</button></>}>
             <form id="access-invite-form" onSubmit={handleInvite} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div className="jem-input-group"><span className="jem-label">Full name</span><input required className="jem-field" value={invite.fullName} onChange={e => setInvite({ ...invite, fullName: e.target.value })} /></div>
-              <div className="jem-input-group"><span className="jem-label">Email</span><input type="email" required className="jem-field" value={invite.email} onChange={e => setInvite({ ...invite, email: e.target.value })} /></div>
+              <div className="jem-input-group"><span className="jem-label">Login name</span><input required className="jem-field" value={invite.username} onChange={e => setInvite({ ...invite, username: e.target.value })} placeholder="e.g. jsmith" /></div>
+              <div className="jem-input-group"><span className="jem-label">Email (optional)</span><input type="email" className="jem-field" value={invite.email} onChange={e => setInvite({ ...invite, email: e.target.value })} /></div>
               <div className="jem-input-group"><span className="jem-label">Role</span>
                 <select required className="jem-field" value={invite.roleId} onChange={e => setInvite({ ...invite, roleId: e.target.value })}>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
