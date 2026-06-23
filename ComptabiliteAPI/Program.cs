@@ -19,8 +19,8 @@ var configuration = builder.Configuration;
 // SECURITY FIX: Validate required environment variables at startup
 var effectiveDbConnection = configuration.GetConnectionString("DefaultConnection") 
     ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-var effectiveJwtKey = configuration["Jwt:Key"] 
-    ?? Environment.GetEnvironmentVariable("JWT_KEY");
+var effectiveJwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
+    ?? configuration["Jwt:Key"];
 
 if (string.IsNullOrEmpty(effectiveDbConnection) || effectiveDbConnection.StartsWith("${"))
 {
