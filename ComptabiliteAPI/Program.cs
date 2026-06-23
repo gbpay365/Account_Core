@@ -17,20 +17,34 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 // SECURITY FIX: Validate required environment variables at startup
-var effectiveDbConnection = configuration.GetConnectionString("DefaultConnection") 
-    ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-var effectiveJwtKey = configuration["Jwt:Key"] 
-    ?? Environment.GetEnvironmentVariable("JWT_KEY");
+// Environment variables are the PRIMARY source; configuration (appsettings.json) is the fallback.
+// appsettings.json may contain literal placeholder strings like "${JWT_KEY}" which are NOT
+// automatically substituted by .NET — Railway injects the real values via environment variables.
+var effectiveDbConnection = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
+    ?? configuration.GetConnectionString("DefaultConnection");
+var effectiveJwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
+    ?? configuration["Jwt:Key"];
 
-if (string.IsNullOrEmpty(effectiveDbConnection) || effectiveDbConnection.StartsWith("${"))
+// Discard any unresolved placeholder values that were not substituted
+if (!string.IsNullOrEmpty(effectiveDbConnection) && effectiveDbConnection.StartsWith("${"))
+    effectiveDbConnection = null;
+if (!string.IsNullOrEmpty(effectiveJwtKey) && effectiveJwtKey.StartsWith("${"))
+    effectiveJwtKey = null;
+
+if (string.IsNullOrEmpty(effectiveDbConnection))
 {
-    Console.WriteLine("WARNING: DB_CONNECTION_STRING not set - using local PostgreSQL 18 default (port 5433)");
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException(
+            "FATAL: DB_CONNECTION_STRING environment variable is not set. " +
+            "Configure it on the Railway service before deploying.");
+
+    Console.WriteLine("WARNING: DB_CONNECTION_STRING not set - using local PostgreSQL default (port 5433)");
     effectiveDbConnection = "Host=127.0.0.1;Port=5433;Database=comptabilite_db;Username=postgres;Password=;";
 }
 
 // SECURITY ENFORCEMENT: JWT Key must be provided and strong in Production
 bool isDev = builder.Environment.IsDevelopment();
-bool isWeakKey = string.IsNullOrEmpty(effectiveJwtKey) || effectiveJwtKey.StartsWith("${") || effectiveJwtKey == "DevKeyForLocalDevelopmentOnly123456";
+bool isWeakKey = string.IsNullOrEmpty(effectiveJwtKey) || effectiveJwtKey == "DevKeyForLocalDevelopmentOnly123456";
 
 if (!isDev && isWeakKey)
 {
