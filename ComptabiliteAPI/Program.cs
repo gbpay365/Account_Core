@@ -186,14 +186,30 @@ builder.Services.AddScoped<TaxEngine>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
+static string[] ResolveCorsOrigins(IConfiguration configuration)
+{
+    var raw = configuration["Cors:Origins"]
+        ?? Environment.GetEnvironmentVariable("CORS_ORIGINS")
+        ?? "";
+    var list = raw
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .ToList();
+    foreach (var origin in new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
+    {
+        if (!list.Contains(origin, StringComparer.OrdinalIgnoreCase))
+            list.Add(origin);
+    }
+    return list.ToArray();
+}
+
+var corsOrigins = ResolveCorsOrigins(configuration);
+Console.WriteLine($"[CORS] Allowed origins: {string.Join(", ", corsOrigins)}");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:3000")
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .WithExposedHeaders("X-CompliancePack-SHA256", "X-Worm-Entry-Id")
@@ -235,6 +251,14 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapGet("/", () => Results.Json(new
+{
+    service = "ComptabiliteAPI",
+    status = "ok",
+    health = "/health",
+    api = "/api",
+    ui = "Deploy comptabilite-ui as a separate Railway service (see docs/RAILWAY-DEPLOY.md)."
+}));
 
 // FIX SCHEMA FIRST
 await ComptabiliteAPI.Diagnostics.FixDatabaseSchema.Run(app.Services);

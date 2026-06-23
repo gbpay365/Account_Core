@@ -1,0 +1,10 @@
+# Railway — Account_Core UI (comptabilite-ui)
+# Create a separate web service, root directory: Account/comptabilite-ui
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+restartPolicyType = "on_failure"
