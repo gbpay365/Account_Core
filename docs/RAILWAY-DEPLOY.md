@@ -40,20 +40,34 @@ See `ComptabiliteAPI/railway.env.example` for integration variables.
 
 ## 3. UI service (`zaizens-account-ui`)
 
-1. **New service** → same repo → root directory: `Account/comptabilite-ui`.
-2. **Build variable** (required — Vite bakes this into the bundle):
+1. **New service** in the same Railway project → **Deploy from GitHub** (same repo as API).
+2. **Settings → Root directory:** `Account/comptabilite-ui` (**required** — without this, build fails or deploys wrong app).
+3. **Settings → Build:** Railway reads `railway.toml` (Nixpacks: `npm ci && npm run build`).
+4. **Variables** — add before deploy:
 
-| Variable | Value |
-|----------|--------|
-| `VITE_API_URL` | `https://zaizens-account.up.railway.app/api` |
+| Variable | Value | Build-time? |
+|----------|--------|-------------|
+| `VITE_API_URL` | `https://zaizens-account.up.railway.app/api` | **Yes** |
 
-In Railway: **Variables** → add `VITE_API_URL` → enable **Available at build time** (if shown).
+5. **Deploy** → wait for **Success** in Deployments tab.
+6. **Settings → Networking → Generate domain** → e.g. `zaizens-account-ui.up.railway.app`.
+7. On **API** service, set `CORS_ORIGINS` to that UI URL → redeploy API.
 
-3. Deploy uses `Dockerfile` (nginx + SPA).
-4. Generate domain → e.g. `https://zaizens-account-ui.up.railway.app`.
-5. Update API `CORS_ORIGINS` to that exact UI URL → **redeploy API**.
+8. Open the **UI** URL → `/login`.
 
-6. Open the **UI** URL → `/login`.
+### “The train has not arrived at the station”
+
+Railway shows this when the **UI service has no successful deployment** linked to that domain.
+
+| Check | Action |
+|-------|--------|
+| Root directory | Must be `Account/comptabilite-ui`, not repo root |
+| Deployment status | Deployments tab must show **Active / Success** |
+| Build logs | Fix `npm run build` errors (often missing `VITE_API_URL`) |
+| Domain | Generate domain **after** first successful deploy |
+| Wrong service | Domain must belong to the **UI** service, not API |
+
+Alternative: set builder to **Dockerfile** in Railway settings if you prefer nginx (`Dockerfile` in this folder).
 
 ---
 

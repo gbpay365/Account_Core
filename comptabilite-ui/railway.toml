@@ -1,10 +1,11 @@
 # Railway — Account_Core UI (comptabilite-ui)
-# Create a separate web service, root directory: Account/comptabilite-ui
+# Service settings → Root Directory MUST be: Account/comptabilite-ui
 
 [build]
-builder = "dockerfile"
-dockerfilePath = "Dockerfile"
+builder = "NIXPACKS"
+buildCommand = "npm ci && npm run build"
 
 [deploy]
+startCommand = "npm start"
 healthcheckPath = "/"
 restartPolicyType = "on_failure"
