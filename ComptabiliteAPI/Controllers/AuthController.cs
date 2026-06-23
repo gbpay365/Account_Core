@@ -42,9 +42,7 @@ namespace ComptabiliteAPI.Controllers
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var jwtKey = _configuration["Jwt:Key"];
-            if (string.IsNullOrEmpty(jwtKey))
-                throw new InvalidOperationException("JWT Key must be configured via environment variable");
+            var jwtKey = ResolveJwtKey();
             var key = Encoding.UTF8.GetBytes(jwtKey);
             
             var claims = new List<Claim>
@@ -72,6 +70,17 @@ namespace ComptabiliteAPI.Controllers
             {
                 accessToken = tokenHandler.WriteToken(token)
             });
+        }
+
+        private string ResolveJwtKey()
+        {
+            var fromConfig = _configuration["Jwt:Key"];
+            if (!string.IsNullOrWhiteSpace(fromConfig) && !fromConfig.StartsWith("${"))
+                return fromConfig;
+            var fromEnv = Environment.GetEnvironmentVariable("JWT_KEY");
+            if (!string.IsNullOrWhiteSpace(fromEnv))
+                return fromEnv;
+            throw new InvalidOperationException("JWT Key must be configured via environment variable");
         }
 
         // SECURITY FIX: Constant-time password verification to prevent timing attacks

@@ -8,6 +8,21 @@ namespace ComptabiliteAPI.Infrastructure.Data
     public static class DbSeeder
     {
         /// <summary>
+        /// Upgrades legacy plaintext admin password to bcrypt (Railway / fresh Postgres).
+        /// Default login after upgrade: admin@comptabilite.cm / Admin@123
+        /// </summary>
+        public static async Task EnsureAdminPasswordHashAsync(AppDbContext dbContext)
+        {
+            const string adminEmail = "admin@comptabilite.cm";
+            var admin = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+            if (admin == null || admin.PasswordHash.StartsWith("$2"))
+                return;
+
+            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123", 12);
+            await dbContext.SaveChangesAsync();
+        }
+
+        /// <summary>
         /// Ensures canonical permission rows exist and the Admin role has them.
         /// Idempotent — fixes databases created before journal:* (or other) permissions were added.
         /// </summary>
@@ -274,7 +289,7 @@ namespace ComptabiliteAPI.Infrastructure.Data
                 var adminUser = new User
                 {
                     Email    = "admin@comptabilite.cm",
-                    PasswordHash = "hashed_password_123",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123", 12),
                     FullName = "System Administrator",
                     RoleId   = adminRole.Id,
                     UserCompanies = new List<UserCompany>
@@ -286,7 +301,12 @@ namespace ComptabiliteAPI.Infrastructure.Data
                 await dbContext.Users.AddAsync(adminUser);
                 await dbContext.SaveChangesAsync();
             }
+            else
+            {
+                await EnsureAdminPasswordHashAsync(dbContext);
+            }
 
+            // ─── end admin seed ───────────────────────────────────────────────────────
             await EnsureCorePermissionsGrantedAsync(dbContext);
             await EnsureDefaultTaxRulePackAsync(dbContext);
 

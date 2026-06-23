@@ -139,6 +139,7 @@ namespace ComptabiliteAPI.Infrastructure.Services
 
             // 3. Seed domain-specific static data (SYSCOHADA Accounts, Security Roles)
             await DbSeeder.SeedSYSCOHADAAsync(dbContext);
+            await DbSeeder.EnsureAdminPasswordHashAsync(dbContext);
             await SecurityRolesSeeder.SeedStandard22Async(dbContext);
 
             // 3b. Seed core config defaults (currencies, journals, fiscal years) for all companies
