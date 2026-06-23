@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ComptabiliteAPI")]
 [assembly: System.Reflection.AssemblyCopyrightAttribute(" ")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9a627280f15d2f2d5bad148324a7b28cfd3bccc1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+50c5f0c465f6c6db9f2beeb9bfd82855a28945eb")]
 [assembly: System.Reflection.AssemblyProductAttribute("ComptabiliteAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ComptabiliteAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

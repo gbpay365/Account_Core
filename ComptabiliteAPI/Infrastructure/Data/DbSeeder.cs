@@ -8,18 +8,50 @@ namespace ComptabiliteAPI.Infrastructure.Data
     public static class DbSeeder
     {
         /// <summary>
-        /// Upgrades legacy plaintext admin password to bcrypt (Railway / fresh Postgres).
-        /// Default login after upgrade: admin@comptabilite.cm / Admin@123
+        /// Ensures admin@comptabilite.cm can sign in on Railway / fresh Postgres.
+        /// Default: Admin@123 — override with ADMIN_DEFAULT_PASSWORD.
+        /// Set RESET_ADMIN_PASSWORD=1 once to force-reset an existing bcrypt hash.
         /// </summary>
         public static async Task EnsureAdminPasswordHashAsync(AppDbContext dbContext)
         {
             const string adminEmail = "admin@comptabilite.cm";
+            var defaultPassword = Environment.GetEnvironmentVariable("ADMIN_DEFAULT_PASSWORD") ?? "Admin@123";
+            var forceReset = string.Equals(
+                Environment.GetEnvironmentVariable("RESET_ADMIN_PASSWORD"),
+                "1",
+                StringComparison.OrdinalIgnoreCase);
+
             var admin = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
-            if (admin == null || admin.PasswordHash.StartsWith("$2"))
+            if (admin == null)
+            {
+                Console.WriteLine("[AUTH] No admin user found — run full seed or import DB.");
+                return;
+            }
+
+            var isBcrypt = admin.PasswordHash.StartsWith("$2");
+            var needsReset = !isBcrypt
+                || admin.PasswordHash == "hashed_password_123"
+                || forceReset;
+
+            if (isBcrypt && !forceReset)
+            {
+                try
+                {
+                    if (BCrypt.Net.BCrypt.Verify(defaultPassword, admin.PasswordHash))
+                        return;
+                }
+                catch
+                {
+                    needsReset = true;
+                }
+            }
+
+            if (!needsReset)
                 return;
 
-            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123", 12);
+            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(defaultPassword, 12);
             await dbContext.SaveChangesAsync();
+            Console.WriteLine($"[AUTH] Admin password set for {adminEmail} (RESET_ADMIN_PASSWORD={forceReset}).");
         }
 
         /// <summary>
