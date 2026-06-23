@@ -8,8 +8,8 @@ The domain `zaizens-account-ui.up.railway.app` only works after a **separate UI 
 2. **Settings → Source:** connect your GitHub repo.
 3. **Settings → Root directory:** `comptabilite-ui` ← **required** (repo is `gbpay365/Account_Core`, no `Account/` prefix)
 4. **Variables:**
-   - `VITE_API_URL` = `https://zaizens-account.up.railway.app/api`
-   - Mark **Available at build time** if Railway shows that toggle.
+   - `VITE_API_URL` = `/api` (build-time — nginx proxies to the API)
+   - `API_UPSTREAM` = `https://zaizens-account.up.railway.app` (runtime, optional)
 5. **Deploy** → open **Deployments** → status must be **Success** (green).
 6. **Settings → Networking → Generate domain** (or attach `zaizens-account-ui`).
 7. On **API** service, set `CORS_ORIGINS=https://zaizens-account-ui.up.railway.app` and redeploy API.

@@ -7,8 +7,8 @@ RUN npm ci
 
 COPY . .
 
-# Set at Railway build time: VITE_API_URL=https://<api-host>.up.railway.app/api
-ARG VITE_API_URL=https://zaizens-account.up.railway.app/api
+# Set at Railway build time. Use /api so nginx proxies to ComptabiliteAPI (same-origin, no CORS).
+ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build

@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const apiUrl =
     env.VITE_API_URL ||
     process.env.VITE_API_URL ||
-    'https://zaizens-account.up.railway.app/api'
+    (mode === 'production' ? '/api' : 'http://localhost:5072/api')
 
   return {
     plugins: [react()],
