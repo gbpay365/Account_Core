@@ -15,26 +15,44 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
-
-// SECURITY FIX: Validate required environment variables at startup
-var effectiveDbConnection = configuration.GetConnectionString("DefaultConnection") 
-    ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-var effectiveJwtKey = configuration["Jwt:Key"] 
-    ?? Environment.GetEnvironmentVariable("JWT_KEY");
-
-if (string.IsNullOrEmpty(effectiveDbConnection) || effectiveDbConnection.StartsWith("${"))
-{
-    Console.WriteLine("WARNING: DB_CONNECTION_STRING not set - using local PostgreSQL 18 default (port 5433)");
-    effectiveDbConnection = "Host=127.0.0.1;Port=5433;Database=comptabilite_db;Username=postgres;Password=;";
-}
-
-// SECURITY ENFORCEMENT: JWT Key must be provided and strong in Production
 bool isDev = builder.Environment.IsDevelopment();
-bool isWeakKey = string.IsNullOrEmpty(effectiveJwtKey) || effectiveJwtKey.StartsWith("${") || effectiveJwtKey == "DevKeyForLocalDevelopmentOnly123456";
+
+// ─── Database connection: read individual PG* env vars ───────────────────────
+// Railway injects PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE as discrete
+// variables. Reading them directly avoids the ${{Ref}} resolution issue that
+// occurs when a single DB_CONNECTION_STRING reference variable is used.
+var pgHost     = Environment.GetEnvironmentVariable("PGHOST")     ?? "127.0.0.1";
+var pgPort     = Environment.GetEnvironmentVariable("PGPORT")     ?? "5433";
+var pgUser     = Environment.GetEnvironmentVariable("PGUSER")     ?? "postgres";
+var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "";
+var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE") ?? "comptabilite_db";
+
+Console.WriteLine($"[CONFIG] PGHOST={pgHost} PGPORT={pgPort} PGUSER={pgUser} PGDATABASE={pgDatabase} PGPASSWORD={(string.IsNullOrEmpty(pgPassword) ? "(empty)" : "(set)")}");
+
+var effectiveDbConnection = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};";
+Console.WriteLine($"[CONFIG] Constructed connection string (password redacted): Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password=***");
+
+// ─── JWT key: env var takes priority over appsettings ────────────────────────
+// appsettings.json may contain a literal "${JWT_KEY}" placeholder that was
+// never resolved. Always check the real environment variable first.
+var jwtKeyFromEnv      = Environment.GetEnvironmentVariable("JWT_KEY");
+var jwtKeyFromSettings = configuration["Jwt:Key"];
+
+// Treat Railway-style unresolved placeholders as absent
+bool IsPlaceholder(string? v) => string.IsNullOrEmpty(v) || v.StartsWith("${");
+
+var effectiveJwtKey = !IsPlaceholder(jwtKeyFromEnv)      ? jwtKeyFromEnv
+                    : !IsPlaceholder(jwtKeyFromSettings)  ? jwtKeyFromSettings
+                    : null;
+
+Console.WriteLine($"[CONFIG] JWT_KEY source: env={(IsPlaceholder(jwtKeyFromEnv) ? "absent/placeholder" : "set")} appsettings={(IsPlaceholder(jwtKeyFromSettings) ? "absent/placeholder" : "set")} effective={(effectiveJwtKey is null ? "NONE" : "set")}");
+
+// SECURITY ENFORCEMENT: JWT Key must be present and strong in non-Development
+bool isWeakKey = string.IsNullOrEmpty(effectiveJwtKey) || effectiveJwtKey == "DevKeyForLocalDevelopmentOnly123456";
 
 if (!isDev && isWeakKey)
 {
-    throw new InvalidOperationException("FATAL: JWT_KEY must be configured via environment variable in non-Development environments. fallback to DevKey is prohibited.");
+    throw new InvalidOperationException("FATAL: JWT_KEY must be configured via environment variable in non-Development environments. Fallback to DevKey is prohibited.");
 }
 
 if (isWeakKey)
@@ -43,7 +61,7 @@ if (isWeakKey)
     effectiveJwtKey = "DevKeyForLocalDevelopmentOnly123456";
 }
 
-if (effectiveJwtKey.Length < 32)
+if (effectiveJwtKey!.Length < 32)
 {
     if (!isDev) throw new InvalidOperationException("FATAL: JWT_KEY must be at least 32 characters long in Production.");
     Console.WriteLine("WARNING: JWT_KEY less than 32 characters - using padded key");
