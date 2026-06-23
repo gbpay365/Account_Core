@@ -226,22 +226,28 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/", () => Results.Json(new { status = "ok", service = "ComptabiliteAPI" }));
+app.MapGet("/", () => Results.Json(new { status = "ok", service = "ComptabiliteAPI", dbReady = BootState.DbReady }));
 app.MapHealthChecks("/health");
 
-try
+_ = Task.Run(async () =>
 {
-    await ComptabiliteAPI.Diagnostics.FixDatabaseSchema.Run(app.Services);
-    await DbInitializer.InitializeAsync(app.Services);
-    await ComptabiliteAPI.Diagnostics.CheckProductFamilies.Run(app.Services);
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"[Boot] Database initialization failed: {ex}");
-    throw;
-}
+    try
+    {
+        Console.WriteLine("[Boot] Database initialization starting...");
+        await ComptabiliteAPI.Diagnostics.FixDatabaseSchema.Run(app.Services);
+        await DbInitializer.InitializeAsync(app.Services);
+        await ComptabiliteAPI.Diagnostics.CheckProductFamilies.Run(app.Services);
+        BootState.DbReady = true;
+        Console.WriteLine("[Boot] Database initialization complete.");
+    }
+    catch (Exception ex)
+    {
+        BootState.DbInitError = ex.Message;
+        Console.WriteLine($"[Boot] Database initialization failed: {ex}");
+    }
+});
 
-app.Run();
+await app.RunAsync();
 
 static string ResolveDbConnection(IConfiguration configuration, bool isDev)
 {
@@ -316,4 +322,10 @@ static string[] ResolveCorsOrigins(IConfiguration configuration)
             list.Add(origin);
     }
     return list.ToArray();
+}
+
+file static class BootState
+{
+    public static volatile bool DbReady;
+    public static string? DbInitError;
 }

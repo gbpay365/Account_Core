@@ -156,6 +156,12 @@ namespace ComptabiliteAPI.Infrastructure.Services
 
             await DbSeeder.EnsureProjectProfitabilityAsync(dbContext);
 
+            if (string.Equals(Environment.GetEnvironmentVariable("SKIP_HEAVY_DB_INIT"), "1", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("[Boot] SKIP_HEAVY_DB_INIT=1 — skipping product family backfill.");
+                return;
+            }
+
             // 4. Backfill/Correct Product Families for ALL products
             var allProducts = await dbContext.Products.ToListAsync();
             if (allProducts.Any())
