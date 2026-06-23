@@ -1,0 +1,23 @@
+using System.Text;
+using ComptabiliteAPI.Configuration;
+using ComptabiliteAPI.Domain.Entities;
+using ComptabiliteAPI.Domain.Interfaces;
+using ComptabiliteAPI.Infrastructure.Data;
+using ComptabiliteAPI.Infrastructure.Repositories;
+using ComptabiliteAPI.Infrastructure.Services;
+using ComptabiliteAPI.Filters;
+using ComptabiliteAPI.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+
+var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
+
+// SECURITY FIX: Validate required environment variables at startup
+var effectiveDbConnection = configuration.GetConnectionString("DefaultConnection") 
+    ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+var effectiveJwtKey = configuration["Jwt:Key"] 
+    ?? Environment.GetEnvironmentVariable("JWT_KEY");

@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  # ── PostgreSQL Database ───────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: comptabilite_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: comptabilite_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Hellt0cell}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── .NET 8 Backend API ────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./ComptabiliteAPI
+      dockerfile: Dockerfile
+    container_name: comptabilite_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=db;Database=comptabilite_db;Username=postgres;Password=${DB_PASSWORD:-Hellt0cell}"
+      Jwt__Key: ${JWT_KEY:-your-256-bit-secret-key-that-needs-to-be-long-enough}
+      Jwt__Issuer: ComptabiliteAPI
+      Jwt__Audience: ComptabiliteReact
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── React Frontend (Nginx) ────────────────────────────────────────────────
+  ui:
+    build:
+      context: ./comptabilite-ui
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: comptabilite_ui
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
+    driver: local

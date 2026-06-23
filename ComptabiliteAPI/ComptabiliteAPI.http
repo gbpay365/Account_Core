@@ -1,0 +1,6 @@
+@ComptabiliteAPI_HostAddress = http://localhost:5072
+
+GET {{ComptabiliteAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

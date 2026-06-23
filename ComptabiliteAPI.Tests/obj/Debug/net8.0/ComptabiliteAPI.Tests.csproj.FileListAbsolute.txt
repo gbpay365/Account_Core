@@ -1,0 +1,5 @@
+C:\Account\ComptabiliteAPI.Tests\obj\Debug\net8.0\ComptabiliteAPI.Tests.csproj.AssemblyReference.cache
+C:\Account\ComptabiliteAPI.Tests\obj\Debug\net8.0\ComptabiliteAPI.Tests.GeneratedMSBuildEditorConfig.editorconfig
+C:\Account\ComptabiliteAPI.Tests\obj\Debug\net8.0\ComptabiliteAPI.Tests.AssemblyInfoInputs.cache
+C:\Account\ComptabiliteAPI.Tests\obj\Debug\net8.0\ComptabiliteAPI.Tests.AssemblyInfo.cs
+C:\Account\ComptabiliteAPI.Tests\obj\Debug\net8.0\ComptabiliteAPI.Tests.csproj.CoreCompileInputs.cache

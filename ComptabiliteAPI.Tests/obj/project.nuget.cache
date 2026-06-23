@@ -1,0 +1,97 @@
+{
+  "version": 2,
+  "dgSpecHash": "QsbRTwWgbr4=",
+  "success": false,
+  "projectFilePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+  "expectedPackageFiles": [],
+  "logs": [
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Handlebars.Net.Helpers.Core' from remote source 'https://api.nuget.org/v3-flatcontainer/handlebars.net.helpers.core/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'protobuf-net' from remote source 'https://api.nuget.org/v3-flatcontainer/protobuf-net/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Microsoft.OpenApi' from remote source 'https://api.nuget.org/v3-flatcontainer/microsoft.openapi/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'System.Collections.NonGeneric' from remote source 'https://api.nuget.org/v3-flatcontainer/system.collections.nongeneric/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'System.ComponentModel.TypeConverter' from remote source 'https://api.nuget.org/v3-flatcontainer/system.componentmodel.typeconverter/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'System.IdentityModel.Tokens.Jwt' from remote source 'https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'protobuf-net.Reflection' from remote source 'https://api.nuget.org/v3-flatcontainer/protobuf-net.reflection/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'YamlDotNet' from remote source 'https://api.nuget.org/v3-flatcontainer/yamldotnet/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'System.Reflection.TypeExtensions' from remote source 'https://api.nuget.org/v3-flatcontainer/system.reflection.typeextensions/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Fare' from remote source 'https://api.nuget.org/v3-flatcontainer/fare/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'MetadataReferenceService.Default' from remote source 'https://api.nuget.org/v3-flatcontainer/metadatareferenceservice.default/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known.",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "filePath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "targetGraphs": []
+    }
+  ]
+}

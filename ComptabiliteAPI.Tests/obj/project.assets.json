@@ -1,0 +1,174 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {}
+  },
+  "libraries": {},
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "Microsoft.AspNetCore.TestHost >= 8.0.11",
+      "Microsoft.EntityFrameworkCore.InMemory >= 8.0.0",
+      "Microsoft.NET.Test.Sdk >= 17.8.0",
+      "WireMock.Net >= 1.6.8",
+      "xunit >= 2.6.2",
+      "xunit.runner.visualstudio >= 2.5.4"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\Souleman\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "projectName": "ComptabiliteAPI.Tests",
+      "projectPath": "C:\\Account\\ComptabiliteAPI.Tests\\ComptabiliteAPI.Tests.csproj",
+      "packagesPath": "C:\\Users\\Souleman\\.nuget\\packages\\",
+      "outputPath": "C:\\Account\\ComptabiliteAPI.Tests\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\Souleman\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {
+            "C:\\Account\\ComptabiliteAPI\\ComptabiliteAPI.csproj": {
+              "projectPath": "C:\\Account\\ComptabiliteAPI\\ComptabiliteAPI.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "10.0.100"
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "dependencies": {
+          "Microsoft.AspNetCore.TestHost": {
+            "target": "Package",
+            "version": "[8.0.11, )"
+          },
+          "Microsoft.EntityFrameworkCore.InMemory": {
+            "target": "Package",
+            "version": "[8.0.0, )"
+          },
+          "Microsoft.NET.Test.Sdk": {
+            "target": "Package",
+            "version": "[17.8.0, )"
+          },
+          "WireMock.Net": {
+            "target": "Package",
+            "version": "[1.6.8, )"
+          },
+          "xunit": {
+            "target": "Package",
+            "version": "[2.6.2, )"
+          },
+          "xunit.runner.visualstudio": {
+            "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+            "suppressParent": "All",
+            "target": "Package",
+            "version": "[2.5.4, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.AspNetCore.App": {
+            "privateAssets": "none"
+          },
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  },
+  "logs": [
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Handlebars.Net.Helpers.Core' from remote source 'https://api.nuget.org/v3-flatcontainer/handlebars.net.helpers.core/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'protobuf-net' from remote source 'https://api.nuget.org/v3-flatcontainer/protobuf-net/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Microsoft.OpenApi' from remote source 'https://api.nuget.org/v3-flatcontainer/microsoft.openapi/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'System.Collections.NonGeneric' from remote source 'https://api.nuget.org/v3-flatcontainer/system.collections.nongeneric/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'System.ComponentModel.TypeConverter' from remote source 'https://api.nuget.org/v3-flatcontainer/system.componentmodel.typeconverter/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'System.IdentityModel.Tokens.Jwt' from remote source 'https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'protobuf-net.Reflection' from remote source 'https://api.nuget.org/v3-flatcontainer/protobuf-net.reflection/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'YamlDotNet' from remote source 'https://api.nuget.org/v3-flatcontainer/yamldotnet/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'System.Reflection.TypeExtensions' from remote source 'https://api.nuget.org/v3-flatcontainer/system.reflection.typeextensions/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Fare' from remote source 'https://api.nuget.org/v3-flatcontainer/fare/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'MetadataReferenceService.Default' from remote source 'https://api.nuget.org/v3-flatcontainer/metadatareferenceservice.default/index.json'.\r\n  No such host is known. (api.nuget.org:443)\r\n  No such host is known."
+    }
+  ]
+}

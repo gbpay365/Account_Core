@@ -1,0 +1,253 @@
+/* ECOHADA-style compliance layout: books → tax → declarations */
+
+.tc-page {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.tc-lead {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 52rem;
+}
+
+.tc-pill {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(79, 70, 229, 0.12);
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.tc-zones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.tc-zone {
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.tc-zone h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.tc-zone .tc-zone-desc {
+  margin: 0 0 0.9rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  flex: 0 0 auto;
+}
+
+.tc-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-links a {
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-primary);
+  background: rgba(79, 70, 229, 0.06);
+  border: 1px solid rgba(79, 70, 229, 0.15);
+  transition: background 0.12s;
+}
+
+.tc-links a:hover {
+  background: rgba(79, 70, 229, 0.12);
+}
+
+.tc-check {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-main);
+  padding: 0.5rem 0.65rem;
+  background: rgba(16, 185, 129, 0.06);
+  border-radius: 8px;
+  border: 1px dashed rgba(16, 185, 129, 0.35);
+}
+
+.tc-check h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.tc-check ol {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.tc-check li {
+  margin-bottom: 0.2rem;
+}
+
+.tc-engine .tc-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1.25rem;
+  align-items: flex-end;
+  margin-bottom: 0.9rem;
+}
+
+.tc-engine .tc-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.tc-stat {
+  padding: 0.9rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.tc-stat .tc-lbl {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.tc-stat .tc-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  line-height: 1.2;
+  word-break: break-all;
+}
+
+.tc-legal {
+  margin-top: 1.5rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 10px;
+}
+
+.tc-warn {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--color-danger);
+  font-size: 0.88rem;
+}
+
+.tc-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tc-step {
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--text-main);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tc-step.tc-step-active {
+  border-color: rgba(79, 70, 229, 0.5);
+  background: rgba(79, 70, 229, 0.08);
+  color: var(--color-primary);
+}
+
+.tc-step.tc-step-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tc-checklist {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.tc-checkitem {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.tc-checkitem .tc-checkitem-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin: 0 0 0.25rem;
+}
+
+.tc-badge {
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+}
+
+.tc-badge.tc-badge-pass {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.07);
+  color: var(--color-success);
+}
+
+.tc-badge.tc-badge-fail {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.07);
+  color: var(--color-danger);
+}
+
+.tc-checkitem .tc-checkitem-summary {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
