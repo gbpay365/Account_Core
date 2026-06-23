@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "start": "serve -s dist",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -25,7 +24,6 @@
     "react-i18next": "^17.0.4",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.14.2",
-    "serve": "^14.2.4",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },

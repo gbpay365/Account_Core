@@ -8,9 +8,8 @@ namespace ComptabiliteAPI.Infrastructure.Data
     public static class DbSeeder
     {
         /// <summary>
-        /// Ensures admin@comptabilite.cm can sign in on Railway / fresh Postgres.
-        /// Default: Admin@123 — override with ADMIN_DEFAULT_PASSWORD.
-        /// Set RESET_ADMIN_PASSWORD=1 once to force-reset an existing bcrypt hash.
+        /// Ensures admin@comptabilite.cm can sign in. Default: Admin@123.
+        /// Set RESET_ADMIN_PASSWORD=1 on Railway once to force-reset existing bcrypt hash.
         /// </summary>
         public static async Task EnsureAdminPasswordHashAsync(AppDbContext dbContext)
         {
@@ -22,11 +21,7 @@ namespace ComptabiliteAPI.Infrastructure.Data
                 StringComparison.OrdinalIgnoreCase);
 
             var admin = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
-            if (admin == null)
-            {
-                Console.WriteLine("[AUTH] No admin user found — run full seed or import DB.");
-                return;
-            }
+            if (admin == null) return;
 
             var isBcrypt = admin.PasswordHash.StartsWith("$2");
             var needsReset = !isBcrypt
@@ -46,12 +41,11 @@ namespace ComptabiliteAPI.Infrastructure.Data
                 }
             }
 
-            if (!needsReset)
-                return;
+            if (!needsReset) return;
 
             admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(defaultPassword, 12);
             await dbContext.SaveChangesAsync();
-            Console.WriteLine($"[AUTH] Admin password set for {adminEmail} (RESET_ADMIN_PASSWORD={forceReset}).");
+            Console.WriteLine($"[AUTH] Admin password set for {adminEmail}.");
         }
 
         /// <summary>
@@ -338,7 +332,6 @@ namespace ComptabiliteAPI.Infrastructure.Data
                 await EnsureAdminPasswordHashAsync(dbContext);
             }
 
-            // ─── end admin seed ───────────────────────────────────────────────────────
             await EnsureCorePermissionsGrantedAsync(dbContext);
             await EnsureDefaultTaxRulePackAsync(dbContext);
 

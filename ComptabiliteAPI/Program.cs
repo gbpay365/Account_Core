@@ -186,49 +186,14 @@ builder.Services.AddScoped<TaxEngine>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-static string[] ResolveCorsOrigins(IConfiguration configuration, IWebHostEnvironment environment)
-{
-    var raw = configuration["Cors:Origins"]
-        ?? Environment.GetEnvironmentVariable("CORS_ORIGINS")
-        ?? Environment.GetEnvironmentVariable("PUBLIC_UI_URL")
-        ?? "";
-    var list = raw
-        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .Select(o => o.TrimEnd('/'))
-        .Where(o => !string.IsNullOrWhiteSpace(o))
-        .ToList();
-
-    foreach (var origin in new[]
-             {
-                 "http://localhost:5173",
-                 "http://localhost:5174",
-                 "http://localhost:3000",
-                 "https://zaizens-account-ui.up.railway.app",
-             })
-    {
-        if (!list.Contains(origin, StringComparer.OrdinalIgnoreCase))
-            list.Add(origin);
-    }
-
-    if (!environment.IsDevelopment()
-        && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CORS_ORIGINS"))
-        && string.IsNullOrWhiteSpace(configuration["Cors:Origins"]))
-    {
-        Console.WriteLine(
-            "WARNING: CORS_ORIGINS not set — using built-in default https://zaizens-account-ui.up.railway.app");
-    }
-
-    return list.ToArray();
-}
-
-var corsOrigins = ResolveCorsOrigins(configuration, builder.Environment);
-Console.WriteLine($"[CORS] Allowed origins: {string.Join(", ", corsOrigins)}");
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
     {
-        policy.WithOrigins(corsOrigins)
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .WithExposedHeaders("X-CompliancePack-SHA256", "X-Worm-Entry-Id")
@@ -249,15 +214,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
-
-if (!app.Environment.IsDevelopment())
-    app.UseHttpsRedirection();
-
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseCors("ReactApp");
+app.UseMiddleware<AuditLogMiddleware>();
 
 var supportedCultures = new[] { "en", "fr" };
 var localizationOptions = new RequestLocalizationOptions()
@@ -267,22 +224,17 @@ var localizationOptions = new RequestLocalizationOptions()
 
 app.UseRequestLocalization(localizationOptions);
 
+// In Development, HTTPS redirection can cause clients posting to http:// to be redirected
+// to https:// without resending the Authorization header → 401. Production keeps redirection.
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseCors("ReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseMiddleware<AuditLogMiddleware>();
-
-app.MapControllers().RequireCors("ReactApp");
+app.MapControllers();
 app.MapHealthChecks("/health");
-app.MapGet("/", () => Results.Json(new
-{
-    service = "ComptabiliteAPI",
-    status = "ok",
-    health = "/health",
-    api = "/api",
-    ui = "Deploy comptabilite-ui as a separate Railway service (see docs/RAILWAY-DEPLOY.md).",
-    corsOrigins = corsOrigins,
-}));
 
 // FIX SCHEMA FIRST
 await ComptabiliteAPI.Diagnostics.FixDatabaseSchema.Run(app.Services);
