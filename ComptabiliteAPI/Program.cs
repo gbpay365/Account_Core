@@ -272,7 +272,7 @@ app.UseAuthorization();
 
 app.UseMiddleware<AuditLogMiddleware>();
 
-app.MapControllers();
+app.MapControllers().RequireCors("ReactApp");
 app.MapHealthChecks("/health");
 app.MapGet("/", () => Results.Json(new
 {
@@ -280,7 +280,8 @@ app.MapGet("/", () => Results.Json(new
     status = "ok",
     health = "/health",
     api = "/api",
-    ui = "Deploy comptabilite-ui as a separate Railway service (see docs/RAILWAY-DEPLOY.md)."
+    ui = "Deploy comptabilite-ui as a separate Railway service (see docs/RAILWAY-DEPLOY.md).",
+    corsOrigins = corsOrigins,
 }));
 
 // FIX SCHEMA FIRST
