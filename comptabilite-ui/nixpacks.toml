@@ -1,0 +1,12 @@
+# Nixpacks — Node 20 for comptabilite-ui on Railway
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm start"
