@@ -6,7 +6,7 @@ The domain `zaizens-account-ui.up.railway.app` only works after a **separate UI 
 
 1. **New service** in the same project (do not reuse the API service).
 2. **Settings → Source:** connect your GitHub repo.
-3. **Settings → Root directory:** `Account/comptabilite-ui` ← **required**
+3. **Settings → Root directory:** `comptabilite-ui` ← **required** (repo is `gbpay365/Account_Core`, no `Account/` prefix)
 4. **Variables:**
    - `VITE_API_URL` = `https://zaizens-account.up.railway.app/api`
    - Mark **Available at build time** if Railway shows that toggle.
@@ -22,13 +22,13 @@ This is Railway’s edge page — **no running deployment** is linked to that do
 |-------|-----|
 | Domain on wrong service | Attach domain to the **UI** service, not API |
 | No deploy yet | Connect Git + deploy UI service |
-| Root directory wrong | Must be `Account/comptabilite-ui` |
+| Root directory wrong | Must be `comptabilite-ui` (not `Account/comptabilite-ui`) |
 | Build failed | Read **Build logs** in Deployments tab |
 
 ## Verify locally
 
 ```bash
-cd Account/comptabilite-ui
+cd comptabilite-ui
 npm ci
 npm run build
 npm start

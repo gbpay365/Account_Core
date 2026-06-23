@@ -4,8 +4,10 @@ Two Railway **web services** + one **PostgreSQL** plugin.
 
 | Service | Git root | Public URL (example) |
 |---------|----------|----------------------|
-| **API** | `Account/ComptabiliteAPI` | `https://zaizens-account.up.railway.app` |
-| **UI** | `Account/comptabilite-ui` | `https://zaizens-account-ui.up.railway.app` |
+| **API** | `ComptabiliteAPI` | `https://zaizens-account.up.railway.app` |
+| **UI** | `comptabilite-ui` | `https://zaizens-account-ui.up.railway.app` |
+
+GitHub repo: `gbpay365/Account_Core` — service root paths are **relative to repo root** (`ComptabiliteAPI`, `comptabilite-ui`). Do **not** use an `Account/` prefix.
 
 The API does **not** serve the React app. Opening the API root shows JSON; use the **UI** URL for login.
 
@@ -20,7 +22,7 @@ The API does **not** serve the React app. Opening the API root shows JSON; use t
 
 ## 2. API service (`zaizens-account`)
 
-1. **New service** → Deploy from Git → root directory: `Account/ComptabiliteAPI`.
+1. **New service** → Deploy from Git → root directory: `ComptabiliteAPI`.
 2. Railway detects `railway.toml` + `Dockerfile`.
 3. Link Postgres → reference `DATABASE_URL` as `DB_CONNECTION_STRING`.
 
@@ -41,8 +43,8 @@ See `ComptabiliteAPI/railway.env.example` for integration variables.
 ## 3. UI service (`zaizens-account-ui`)
 
 1. **New service** in the same Railway project → **Deploy from GitHub** (same repo as API).
-2. **Settings → Root directory:** `Account/comptabilite-ui` (**required** — without this, build fails or deploys wrong app).
-3. **Settings → Build:** Railway reads `railway.toml` (Nixpacks: `npm ci && npm run build`).
+2. **Settings → Root directory:** `comptabilite-ui` (**required** — without this, build fails with “Failed to read app source directory”).
+3. **Settings → Build:** uses `Dockerfile` + nginx (no `npm` needed at runtime).
 4. **Variables** — add before deploy:
 
 | Variable | Value | Build-time? |
@@ -61,7 +63,7 @@ Railway shows this when the **UI service has no successful deployment** linked t
 
 | Check | Action |
 |-------|--------|
-| Root directory | Must be `Account/comptabilite-ui`, not repo root |
+| Root directory | Must be `comptabilite-ui`, not `Account/comptabilite-ui` or repo root |
 | Deployment status | Deployments tab must show **Active / Success** |
 | Build logs | Fix `npm run build` errors (often missing `VITE_API_URL`) |
 | Domain | Generate domain **after** first successful deploy |
@@ -98,11 +100,11 @@ Update `VITE_API_URL` and `CORS_ORIGINS` to match.
 
 ```bash
 # API
-cd Account/ComptabiliteAPI
+cd ComptabiliteAPI
 dotnet run
 
 # UI
-cd Account/comptabilite-ui
+cd comptabilite-ui
 npm install
 npm run dev
 ```

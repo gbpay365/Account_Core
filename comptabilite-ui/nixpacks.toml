@@ -1,4 +1,5 @@
-# Nixpacks — Node 20 for comptabilite-ui on Railway
+# Nixpacks — not used when railway.toml builder = dockerfile (kept for local reference)
+# Node 20 static build + serve (Railway Nixpacks runtime often lacks npm — use Dockerfile instead)
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 

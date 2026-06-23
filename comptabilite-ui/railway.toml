@@ -1,11 +1,11 @@
 # Railway — Account_Core UI (comptabilite-ui)
-# Service settings → Root Directory MUST be: Account/comptabilite-ui
+# Service settings → Root Directory MUST be: comptabilite-ui
+# (Repo github.com/gbpay365/Account_Core — root is NOT Account/)
 
 [build]
-builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build"
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npm start"
 healthcheckPath = "/"
 restartPolicyType = "on_failure"
