@@ -17,15 +17,24 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 // SECURITY FIX: Validate required environment variables at startup
-var effectiveDbConnection = configuration.GetConnectionString("DefaultConnection") 
-    ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 var effectiveJwtKey = configuration["Jwt:Key"] 
     ?? Environment.GetEnvironmentVariable("JWT_KEY");
 
-if (string.IsNullOrEmpty(effectiveDbConnection) || effectiveDbConnection.StartsWith("${"))
+// Build connection string from individual Postgres variables (workaround for Railway
+// reference variable resolution timing — individual vars are injected more reliably
+// than a single composed DB_CONNECTION_STRING reference).
+var pgHost     = Environment.GetEnvironmentVariable("PGHOST")     ?? "127.0.0.1";
+var pgPort     = Environment.GetEnvironmentVariable("PGPORT")     ?? "5433";
+var pgUser     = Environment.GetEnvironmentVariable("PGUSER")     ?? "postgres";
+var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "";
+var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE") ?? "comptabilite_db";
+
+var effectiveDbConnection = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword}";
+
+bool isPgHostDefault = pgHost == "127.0.0.1";
+if (isPgHostDefault)
 {
-    Console.WriteLine("WARNING: DB_CONNECTION_STRING not set - using local PostgreSQL 18 default (port 5433)");
-    effectiveDbConnection = "Host=127.0.0.1;Port=5433;Database=comptabilite_db;Username=postgres;Password=;";
+    Console.WriteLine("WARNING: PGHOST not set - using local PostgreSQL default (127.0.0.1:5433)");
 }
 
 // SECURITY ENFORCEMENT: JWT Key must be provided and strong in Production
