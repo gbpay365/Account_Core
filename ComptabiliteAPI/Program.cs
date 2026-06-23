@@ -20,9 +20,10 @@ bool isDev = builder.Environment.IsDevelopment();
 var effectiveDbConnection = ResolveDbConnection(configuration, isDev);
 Console.WriteLine($"[Boot] Database: {DescribeDbConnection(effectiveDbConnection)}");
 
-var effectiveJwtKey = configuration["Jwt:Key"]
-    ?? Environment.GetEnvironmentVariable("JWT_KEY");
-bool isWeakKey = string.IsNullOrEmpty(effectiveJwtKey) || effectiveJwtKey.StartsWith("${") || effectiveJwtKey == "DevKeyForLocalDevelopmentOnly123456";
+var effectiveJwtKey = ReadConfigSecret(
+    configuration["Jwt:Key"],
+    Environment.GetEnvironmentVariable("JWT_KEY"));
+bool isWeakKey = string.IsNullOrEmpty(effectiveJwtKey) || effectiveJwtKey == "DevKeyForLocalDevelopmentOnly123456";
 
 if (!isDev && isWeakKey)
 {
@@ -216,9 +217,7 @@ var localizationOptions = new RequestLocalizationOptions()
 
 app.UseRequestLocalization(localizationOptions);
 
-// In Development, HTTPS redirection can cause clients posting to http:// to be redirected
-// to https:// without resending the Authorization header → 401. Production keeps redirection.
-if (!app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment() && Environment.GetEnvironmentVariable("RAILWAY_ENVIRONMENT") == null)
     app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCors("ReactApp");
@@ -248,6 +247,16 @@ _ = Task.Run(async () =>
 });
 
 await app.RunAsync();
+
+static string? ReadConfigSecret(params string?[] candidates)
+{
+    foreach (var value in candidates)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && !value.StartsWith("${"))
+            return value.Trim();
+    }
+    return null;
+}
 
 static string ResolveDbConnection(IConfiguration configuration, bool isDev)
 {
