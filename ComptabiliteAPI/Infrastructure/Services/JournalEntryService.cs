@@ -103,6 +103,8 @@ namespace ComptabiliteAPI.Infrastructure.Services
                 .Include(je => je.JournalLines)
                 .Where(je => je.CompanyId == companyId)
                 .OrderByDescending(je => je.EntryDate)
+                .ThenByDescending(je => je.CreatedAt)
+                .ThenByDescending(je => je.Id)
                 .ToListAsync();
         }
 

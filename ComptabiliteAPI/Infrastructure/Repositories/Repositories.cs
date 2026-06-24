@@ -48,6 +48,8 @@ namespace ComptabiliteAPI.Infrastructure.Repositories
                 .Include(e => e.JournalLines)
                 .Where(e => e.CompanyId == companyId)
                 .OrderByDescending(e => e.EntryDate)
+                .ThenByDescending(e => e.CreatedAt)
+                .ThenByDescending(e => e.Id)
                 .ToListAsync();
 
         public async Task<JournalEntry?> GetByIdAsync(Guid id)

@@ -15,7 +15,20 @@ type ApiEntryListItem = {
     voided?: boolean;
     lines?: ApiLine[] | null;
     journalType?: string;
+    createdAt?: string;
 };
+
+function sortJournalEntriesNewestFirst(rows: JournalEntryListRow[]): JournalEntryListRow[] {
+    return [...rows].sort((a, b) => {
+        const dateA = Date.parse(a.journalDate) || 0;
+        const dateB = Date.parse(b.journalDate) || 0;
+        if (dateB !== dateA) return dateB - dateA;
+        const createdA = Date.parse(a.createdAt || '') || 0;
+        const createdB = Date.parse(b.createdAt || '') || 0;
+        if (createdB !== createdA) return createdB - createdA;
+        return b.id.localeCompare(a.id);
+    });
+}
 
 function mapListItem(e: ApiEntryListItem, index: number): JournalEntryListRow {
     const lines = Array.isArray(e?.lines) ? e.lines! : [];
@@ -38,6 +51,7 @@ function mapListItem(e: ApiEntryListItem, index: number): JournalEntryListRow {
         totalCredits,
         validated: Boolean(e?.validated) && !voided,
         status: voided ? 'Voided' : e?.validated ? 'Posted' : 'Draft',
+        createdAt: e.createdAt != null ? String(e.createdAt) : undefined,
     };
 }
 
@@ -48,7 +62,11 @@ export const fetchJournalEntries = async (params?: { year?: number, period?: num
     });
     const raw = response.data;
     if (!Array.isArray(raw)) return [];
-    return raw.map((e: ApiEntryListItem, i: number) => mapListItem(e, i));
+    const rows = raw.map((e: ApiEntryListItem, i: number) => mapListItem(e, i));
+    if (params?.type) {
+        return sortJournalEntriesNewestFirst(rows.filter((r) => r.journalType === params.type));
+    }
+    return sortJournalEntriesNewestFirst(rows);
 };
 
 export const fetchJournalEntryById = async (id: string): Promise<JournalEntryDto> => {

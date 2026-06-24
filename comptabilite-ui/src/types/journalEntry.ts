@@ -76,4 +76,6 @@ export interface JournalEntryListRow {
     totalCredits: number;
     status: JournalStatus;
     validated: boolean;
+    /** ISO timestamp — used to break ties when entry dates match */
+    createdAt?: string;
 }
