@@ -3,6 +3,22 @@ import { useTranslation } from 'react-i18next';
 import { integrationSettingsApi } from '../api';
 import { getStoredCompanyId } from '../lib/companyContext';
 
+/** Strip dev ports from *.railway.app URLs (Railway uses standard 443). */
+function normalizePartnerUrl(raw: string): string {
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+  try {
+    const u = new URL(trimmed);
+    if (u.hostname.endsWith('.railway.app') && u.port && !['80', '443', ''].includes(u.port)) {
+      u.port = '';
+      return u.toString().replace(/\/$/, '');
+    }
+    return trimmed;
+  } catch {
+    return trimmed;
+  }
+}
+
 const IntegrationsSettings: React.FC = () => {
   const { t } = useTranslation();
   const companyId = getStoredCompanyId();
@@ -142,15 +158,20 @@ const IntegrationsSettings: React.FC = () => {
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>{t('integrations.public_url', 'Account_Core public URL')}</label>
             <input type="url" className="form-control" value={form.publicBaseUrl}
-              onChange={(e) => setForm({ ...form, publicBaseUrl: e.target.value })} placeholder="http://127.0.0.1:5072" />
+              onChange={(e) => setForm({ ...form, publicBaseUrl: e.target.value })}
+              onBlur={(e) => setForm({ ...form, publicBaseUrl: normalizePartnerUrl(e.target.value) })}
+              placeholder="https://zaizens-account.up.railway.app" />
+            <small style={{ color: 'var(--text-muted)' }}>API base URL (not the React UI). Local: http://127.0.0.1:5072</small>
           </div>
 
           <h3 style={{ fontSize: '1.1rem', marginTop: 24 }}>{t('integrations.hms_section', 'HMS (inbound webhooks from Core)')}</h3>
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>{t('integrations.hms_url', 'HMS URL')}</label>
             <input type="url" className="form-control" value={form.hmsBaseUrl}
-              onChange={(e) => setForm({ ...form, hmsBaseUrl: e.target.value })} placeholder="http://127.0.0.1:3003" />
-            <small style={{ color: 'var(--text-muted)' }}>Local HMS uses port <strong>3003</strong> (not 3000).</small>
+              onChange={(e) => setForm({ ...form, hmsBaseUrl: e.target.value })}
+              onBlur={(e) => setForm({ ...form, hmsBaseUrl: normalizePartnerUrl(e.target.value) })}
+              placeholder="https://zaizens-hms.up.railway.app" />
+            <small style={{ color: 'var(--text-muted)' }}>Railway: public HMS URL. Local: http://127.0.0.1:3003</small>
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>{t('integrations.hms_webhook_key', 'Outbound key (Core → HMS X-API-Key)')}</label>
@@ -164,7 +185,12 @@ const IntegrationsSettings: React.FC = () => {
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>{t('integrations.zaizens_url', 'Zaizens PayRoll URL')}</label>
             <input type="url" className="form-control" value={form.zaizensPayrollBaseUrl}
-              onChange={(e) => setForm({ ...form, zaizensPayrollBaseUrl: e.target.value })} placeholder="http://127.0.0.1:3010" />
+              onChange={(e) => setForm({ ...form, zaizensPayrollBaseUrl: e.target.value })}
+              onBlur={(e) => setForm({ ...form, zaizensPayrollBaseUrl: normalizePartnerUrl(e.target.value) })}
+              placeholder="https://zaizenspay.up.railway.app" />
+            <small style={{ color: 'var(--text-muted)' }}>
+              PayRoll <strong>API</strong> URL — not <code>zaizens-account-ui</code>. Do not append <code>:3010</code> on Railway. Local: http://127.0.0.1:3010
+            </small>
           </div>
 
           <h3 style={{ fontSize: '1.1rem', marginTop: 24 }}>{t('integrations.inbound_section', 'Inbound (HMS / PayRoll → Core)')}</h3>

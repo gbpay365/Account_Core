@@ -31,8 +31,15 @@ namespace ComptabiliteAPI.Controllers
         public async Task<IActionResult> Save([FromQuery] Guid companyId, [FromBody] CompanyIntegrationSettingsDto body, CancellationToken ct)
         {
             body.CompanyId = companyId;
-            var saved = await _settings.SaveAsync(companyId, body, ct);
-            return Ok(_settings.ApplyDefaults(saved));
+            try
+            {
+                var saved = await _settings.SaveAsync(companyId, body, ct);
+                return Ok(_settings.ApplyDefaults(saved));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         [HttpPost("test-hms")]
@@ -44,10 +51,14 @@ namespace ComptabiliteAPI.Controllers
             if (string.IsNullOrWhiteSpace(baseUrl))
                 return BadRequest(new { ok = false, error = "HMS URL not configured." });
 
+            var urlError = IntegrationUrlNormalizer.ValidateHmsUrl(baseUrl);
+            if (urlError != null)
+                return Ok(new { ok = false, status = 0, error = urlError, url = baseUrl });
+
             try
             {
                 var client = _httpFactory.CreateClient();
-                client.Timeout = TimeSpan.FromSeconds(10);
+                client.Timeout = TimeSpan.FromSeconds(25);
                 using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/api/v1/integrations/health");
                 if (!string.IsNullOrWhiteSpace(s.HmsWebhookKey))
                     req.Headers.TryAddWithoutValidation("X-API-Key", s.HmsWebhookKey);
@@ -72,10 +83,14 @@ namespace ComptabiliteAPI.Controllers
             if (string.IsNullOrWhiteSpace(baseUrl))
                 return BadRequest(new { ok = false, error = "Zaizens PayRoll URL not configured." });
 
+            var urlError = IntegrationUrlNormalizer.ValidateZaizensPayrollUrl(baseUrl);
+            if (urlError != null)
+                return Ok(new { ok = false, status = 0, error = urlError, url = baseUrl });
+
             try
             {
                 var client = _httpFactory.CreateClient();
-                client.Timeout = TimeSpan.FromSeconds(10);
+                client.Timeout = TimeSpan.FromSeconds(25);
                 using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/api/v1/integrations/health");
                 if (!string.IsNullOrWhiteSpace(s.InboundApiKey))
                     req.Headers.TryAddWithoutValidation("X-API-Key", s.InboundApiKey);

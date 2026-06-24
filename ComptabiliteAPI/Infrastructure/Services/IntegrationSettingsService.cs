@@ -54,10 +54,10 @@ namespace ComptabiliteAPI.Infrastructure.Services
             var merged = ApplyDefaults(saved);
             if (form == null) return merged;
             if (form.HmsFacilityId > 0) merged.HmsFacilityId = form.HmsFacilityId;
-            if (!string.IsNullOrWhiteSpace(form.PublicBaseUrl)) merged.PublicBaseUrl = form.PublicBaseUrl.Trim();
-            if (!string.IsNullOrWhiteSpace(form.HmsBaseUrl)) merged.HmsBaseUrl = form.HmsBaseUrl.Trim().TrimEnd('/');
+            if (!string.IsNullOrWhiteSpace(form.PublicBaseUrl)) merged.PublicBaseUrl = IntegrationUrlNormalizer.Normalize(form.PublicBaseUrl);
+            if (!string.IsNullOrWhiteSpace(form.HmsBaseUrl)) merged.HmsBaseUrl = IntegrationUrlNormalizer.Normalize(form.HmsBaseUrl);
             if (!string.IsNullOrWhiteSpace(form.HmsWebhookKey)) merged.HmsWebhookKey = form.HmsWebhookKey.Trim();
-            if (!string.IsNullOrWhiteSpace(form.ZaizensPayrollBaseUrl)) merged.ZaizensPayrollBaseUrl = form.ZaizensPayrollBaseUrl.Trim().TrimEnd('/');
+            if (!string.IsNullOrWhiteSpace(form.ZaizensPayrollBaseUrl)) merged.ZaizensPayrollBaseUrl = IntegrationUrlNormalizer.Normalize(form.ZaizensPayrollBaseUrl);
             if (!string.IsNullOrWhiteSpace(form.InboundApiKey)) merged.InboundApiKey = form.InboundApiKey.Trim();
             return ApplyDefaults(merged);
         }
@@ -93,6 +93,11 @@ namespace ComptabiliteAPI.Infrastructure.Services
 
         public async Task<CompanyIntegrationSettingsDto> SaveAsync(Guid companyId, CompanyIntegrationSettingsDto dto, CancellationToken ct = default)
         {
+            var zaizensErr = IntegrationUrlNormalizer.ValidateZaizensPayrollUrl(dto.ZaizensPayrollBaseUrl);
+            if (zaizensErr != null) throw new InvalidOperationException(zaizensErr);
+            var hmsErr = IntegrationUrlNormalizer.ValidateHmsUrl(dto.HmsBaseUrl);
+            if (hmsErr != null) throw new InvalidOperationException(hmsErr);
+
             var row = await _db.CompanyIntegrationSettings.FirstOrDefaultAsync(x => x.CompanyId == companyId, ct);
             if (row == null)
             {
@@ -101,10 +106,10 @@ namespace ComptabiliteAPI.Infrastructure.Services
             }
 
             row.HmsFacilityId = dto.HmsFacilityId > 0 ? dto.HmsFacilityId : 1;
-            row.PublicBaseUrl = TrimUrl(dto.PublicBaseUrl);
-            row.HmsBaseUrl = TrimUrl(dto.HmsBaseUrl);
+            row.PublicBaseUrl = TrimUrl(IntegrationUrlNormalizer.Normalize(dto.PublicBaseUrl));
+            row.HmsBaseUrl = TrimUrl(IntegrationUrlNormalizer.Normalize(dto.HmsBaseUrl));
             row.HmsWebhookKey = string.IsNullOrWhiteSpace(dto.HmsWebhookKey) ? null : dto.HmsWebhookKey.Trim();
-            row.ZaizensPayrollBaseUrl = TrimUrl(dto.ZaizensPayrollBaseUrl);
+            row.ZaizensPayrollBaseUrl = TrimUrl(IntegrationUrlNormalizer.Normalize(dto.ZaizensPayrollBaseUrl));
             row.InboundApiKey = string.IsNullOrWhiteSpace(dto.InboundApiKey) ? null : dto.InboundApiKey.Trim();
             row.UpdatedAt = DateTime.UtcNow;
 
