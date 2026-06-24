@@ -67,7 +67,6 @@ export const AppRoutes = () => {
             <Route path="/journal" element={<JournalEntries />} />
             <Route path="/journals" element={<Journals />} />
             <Route path="/reconciliation" element={<Reconciliation />} />
-            <Route path="/general-ledger" element={<GeneralLedger />} />
             <Route path="/audit-log" element={<AuditLog />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/rules" element={<RulesValidators />} />
@@ -83,7 +82,16 @@ export const AppRoutes = () => {
               }
             />
             <Route path="/reporting" element={<ReportingModule />} />
-            <Route path="/trial-balance" element={<TrialBalance />} />
+            <Route path="/trial-balance" element={
+              <ProtectedRoute requiredResource="journal" requiredAction="read" redirectTo="/unauthorized">
+                <TrialBalance />
+              </ProtectedRoute>
+            } />
+            <Route path="/general-ledger" element={
+              <ProtectedRoute requiredResource="journal" requiredAction="read" redirectTo="/unauthorized">
+                <GeneralLedger />
+              </ProtectedRoute>
+            } />
             <Route path="/income-statement" element={<IncomeStatement />} />
             <Route path="/balance-sheet" element={<BalanceSheet />} />
             <Route path="/cash-flow" element={<CashFlow />} />

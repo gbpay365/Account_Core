@@ -78,7 +78,7 @@ namespace ComptabiliteAPI.Controllers
 
         /// <summary>Lightweight data presence signals for the selected company and fiscal year.</summary>
         [HttpGet("availability")]
-        [RequirePermission("balance_sheet", "read")]
+        [RequirePermission("journal", "read")]
         public async Task<ActionResult<ReportAvailabilityDto>> GetReportAvailability(
             int fiscalYear,
             Guid companyId,
@@ -117,7 +117,7 @@ namespace ComptabiliteAPI.Controllers
 
         /// <summary>Fiscal years that have posted journal entries (newest first).</summary>
         [HttpGet("journal-years")]
-        [RequirePermission("balance_sheet", "read")]
+        [RequirePermission("journal", "read")]
         public async Task<ActionResult<IReadOnlyList<int>>> GetJournalYears(
             Guid companyId,
             CancellationToken cancellationToken = default)
@@ -148,7 +148,8 @@ namespace ComptabiliteAPI.Controllers
 
             var (resource, action) = engineKey switch
             {
-                "trial_balance" or "income_statement" or "balance_sheet" or "notes" => ("balance_sheet", "read"),
+                "trial_balance" => ("journal", "read"),
+                "income_statement" or "balance_sheet" or "notes" => ("balance_sheet", "read"),
                 "cash_flow" => ("cash_flow", "read"),
                 "project_profitability" => ("dashboard", "read"),
                 _ => (null as string, null as string)
@@ -237,7 +238,7 @@ namespace ComptabiliteAPI.Controllers
 
         // ─── TRIAL BALANCE ───────────────────────────────────────────────────────
         [HttpGet("trial-balance")]
-        [RequirePermission("balance_sheet", "read")]
+        [RequirePermission("journal", "read")]
         public async Task<IActionResult> GetTrialBalance(int fiscalYear, Guid companyId)
         {
             var tb = await _tbService.GetTrialBalanceAsync(fiscalYear, companyId);
@@ -246,7 +247,7 @@ namespace ComptabiliteAPI.Controllers
         }
 
         [HttpGet("trial-balance/export/excel")]
-        [RequirePermission("balance_sheet", "export")]
+        [RequirePermission("journal", "read")]
         public async Task<IActionResult> ExportTrialBalanceExcel(int fiscalYear, Guid companyId, string lang = "en")
         {
             var data = await _tbService.GetTrialBalanceAsync(fiscalYear, companyId);
@@ -256,7 +257,7 @@ namespace ComptabiliteAPI.Controllers
         }
 
         [HttpGet("trial-balance/export/xml")]
-        [RequirePermission("balance_sheet", "export")]
+        [RequirePermission("journal", "read")]
         public async Task<IActionResult> ExportTrialBalanceXml(int fiscalYear, Guid companyId, string lang = "en")
         {
             var data = await _tbService.GetTrialBalanceAsync(fiscalYear, companyId);
@@ -266,7 +267,7 @@ namespace ComptabiliteAPI.Controllers
         }
 
         [HttpGet("trial-balance/export/html")]
-        [RequirePermission("balance_sheet", "export")]
+        [RequirePermission("journal", "read")]
         public async Task<IActionResult> ExportTrialBalanceHtml(int fiscalYear, Guid companyId, string lang = "en")
         {
             var data = await _tbService.GetTrialBalanceAsync(fiscalYear, companyId);

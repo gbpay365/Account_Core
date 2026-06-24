@@ -42,8 +42,8 @@ namespace ComptabiliteAPI.Infrastructure.Data
             ("General Accountant", new[] { "dashboard:read", "balance_sheet:read", "cash_flow:read", "journal:read", "journal:write", "ecf:read", "finance:read" }),
             ("Senior Accountant", new[] { "dashboard:read", "balance_sheet:read", "journal:read", "journal:write", "finance:read" }),
             ("Assistant Accountant", new[] { "dashboard:read", "journal:read", "journal:write", "finance:read" }),
-            ("Bookkeeper", new[] { "dashboard:read", "journal:read", "journal:write" }),
-            ("Accounts Payable Lead", new[] { "dashboard:read", "journal:read", "journal:write", "finance:read", "finance:write" }),
+            ("Bookkeeper", new[] { "dashboard:read", "balance_sheet:read", "journal:read", "journal:write" }),
+            ("Accounts Payable Lead", new[] { "dashboard:read", "balance_sheet:read", "journal:read", "journal:write", "finance:read", "finance:write" }),
             ("Accounts Receivable Lead", new[] { "dashboard:read", "balance_sheet:read", "journal:read", "journal:write", "finance:read" }),
             ("Treasury & Banking", new[] { "dashboard:read", "cash_flow:read", "cash_flow:export", "finance:read", "finance:write", "journal:read" }),
             ("Tax & ECF / Statutory Filing", new[] { "dashboard:read", "balance_sheet:read", "journal:read", "ecf:read", "ecf:write", "finance:read" }),
@@ -55,7 +55,7 @@ namespace ComptabiliteAPI.Infrastructure.Data
             ("Sales / Commercial Finance", new[] { "dashboard:read", "journal:read", "balance_sheet:read" }),
             ("Procurement & Purchasing", new[] { "dashboard:read", "journal:read", "journal:write", "finance:read" }),
             ("ECF Filing Officer", new[] { "dashboard:read", "ecf:read", "ecf:write", "journal:read" }),
-            ("Data Entry (journal only)", new[] { "dashboard:read", "journal:read", "journal:write" }),
+            ("Data Entry (journal only)", new[] { "dashboard:read", "balance_sheet:read", "journal:read", "journal:write" }),
             ("Compliance & Reporting Viewer", new[] { "dashboard:read", "balance_sheet:read", "balance_sheet:export", "ecf:read", "cash_flow:read" })
         };
 

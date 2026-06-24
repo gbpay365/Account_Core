@@ -120,9 +120,11 @@ const DashboardLayout: React.FC = () => {
                 <Link to="/cost-centers" className={`nav-link ${isActive('/cost-centers')}`}>
                   <span className="link-icon">▦</span> {t('common.cost_centers', 'Cost centres')}
                 </Link>
-                <Link to="/trial-balance" className={`nav-link ${isActive('/trial-balance')}`}>
-                  <span className="link-icon">⇄</span> {t('trial_balance.title')}
-                </Link>
+                {hasPermission('journal', 'read') && (
+                  <Link to="/trial-balance" className={`nav-link ${isActive('/trial-balance')}`}>
+                    <span className="link-icon">⇄</span> {t('trial_balance.title')}
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -144,27 +146,41 @@ const DashboardLayout: React.FC = () => {
                 <Link to="/reporting" className={`nav-link ${isActiveModule('/reporting')}`}>
                   <span className="link-icon">📑</span> {t('common.report_catalog')}
                 </Link>
-                <Link to="/trial-balance" className={`nav-link ${isActive('/trial-balance')}`}>
-                  <span className="link-icon">⚖️</span> {t('trial_balance.title')}
-                </Link>
-                <Link to="/general-ledger" className={`nav-link ${isActive('/general-ledger')}`}>
-                  <span className="link-icon">📖</span> {t('general_ledger.nav')}
-                </Link>
-                <Link to="/income-statement" className={`nav-link ${isActive('/income-statement')}`}>
-                  <span className="link-icon">📉</span> {t('common.income_statement')}
-                </Link>
-                <Link to="/balance-sheet" className={`nav-link ${isActive('/balance-sheet')}`}>
-                  <span className="link-icon">🏛️</span> {t('common.balance_sheet')}
-                </Link>
-                <Link to="/cash-flow" className={`nav-link ${isActive('/cash-flow')}`}>
-                  <span className="link-icon">💸</span> {t('common.cash_flow')}
-                </Link>
-                <Link to="/notes" className={`nav-link ${isActive('/notes')}`}>
-                  <span className="link-icon">📑</span> {t('nav.notes_annexes')}
-                </Link>
-                <Link to="/ecf" className={`nav-link ${isActive('/ecf')}`}>
-                  <span className="link-icon">📋</span> {t('nav.ecf')}
-                </Link>
+                {hasPermission('journal', 'read') && (
+                  <Link to="/trial-balance" className={`nav-link ${isActive('/trial-balance')}`}>
+                    <span className="link-icon">⚖️</span> {t('trial_balance.title')}
+                  </Link>
+                )}
+                {hasPermission('journal', 'read') && (
+                  <Link to="/general-ledger" className={`nav-link ${isActive('/general-ledger')}`}>
+                    <span className="link-icon">📖</span> {t('general_ledger.nav')}
+                  </Link>
+                )}
+                {hasPermission('balance_sheet', 'read') && (
+                  <Link to="/income-statement" className={`nav-link ${isActive('/income-statement')}`}>
+                    <span className="link-icon">📉</span> {t('common.income_statement')}
+                  </Link>
+                )}
+                {hasPermission('balance_sheet', 'read') && (
+                  <Link to="/balance-sheet" className={`nav-link ${isActive('/balance-sheet')}`}>
+                    <span className="link-icon">🏛️</span> {t('common.balance_sheet')}
+                  </Link>
+                )}
+                {hasPermission('cash_flow', 'read') && (
+                  <Link to="/cash-flow" className={`nav-link ${isActive('/cash-flow')}`}>
+                    <span className="link-icon">💸</span> {t('common.cash_flow')}
+                  </Link>
+                )}
+                {hasPermission('balance_sheet', 'read') && (
+                  <Link to="/notes" className={`nav-link ${isActive('/notes')}`}>
+                    <span className="link-icon">📑</span> {t('nav.notes_annexes')}
+                  </Link>
+                )}
+                {hasPermission('ecf', 'read') && (
+                  <Link to="/ecf" className={`nav-link ${isActive('/ecf')}`}>
+                    <span className="link-icon">📋</span> {t('nav.ecf')}
+                  </Link>
+                )}
                 <Link to="/enterprise/compliance" className={`nav-link nav-link--highlight ${isActiveModule('/enterprise/compliance')}`}>
                   <span className="link-icon">🛡️</span> {t('compliance_hub.title')}
                 </Link>
