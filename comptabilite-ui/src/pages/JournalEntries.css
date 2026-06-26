@@ -69,10 +69,18 @@
   flex-shrink: 0;
 }
 
+/* Journal Entries page — 80% width, centered */
+.page-content:has(.je-page) {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .je-page {
-  max-width: 1200px;
+  width: 80%;
+  max-width: 80%;
   margin: 0 auto;
-  padding: 1rem 1.25rem 2rem;
+  padding: 0 0 1.5rem;
   animation: je-page-in 0.55s ease-out both;
 }
 
@@ -513,7 +521,7 @@
 }
 @media (min-width: 1024px) {
   .je-desc-cell {
-    max-width: 20rem;
+    max-width: none;
   }
 }
 

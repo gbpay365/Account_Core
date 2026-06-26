@@ -251,8 +251,8 @@ const JournalEntries: React.FC = () => {
 
       {showModal && (
         <ModalPortal>
-          <div className="jem-backdrop">
-            <div className="jem-backdrop__inner">
+          <div className="jem-backdrop jem-backdrop--journal">
+            <div className="jem-backdrop__inner jem-backdrop__inner--journal">
               <JournalEntryForm
                 onSuccess={() => {
                   setShowModal(false);

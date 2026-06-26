@@ -42,8 +42,9 @@ export const JournalEntryDetailModal: React.FC<Props> = ({ entryId, onClose }) =
             : 'View lines and metadata for this document.'
       }
       onClose={onClose}
-      size="lg"
+      size="xl"
       wideBody
+      className="jem--journal-wide"
       bodyClassName="jem-body--detail-scroll"
       titleId="je-detail-title"
       footer={
