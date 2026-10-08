@@ -1,0 +1,38 @@
+{
+  "name": "ledgercore-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LedgerCore API - OHADA/SYSCOHADA + IFRS accounting core with hospital asset management",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node src/db/migrate.js",
+    "seed": "node src/db/seed.js",
+    "reset": "node src/db/migrate.js --drop && node src/db/seed.js",
+    "verify": "node scripts/verify.js",
+    "smoke": "node scripts/smoke.js",
+    "check:sql": "node scripts/check-sql.js",
+    "coa:import": "node scripts/import-syscohada.js",
+    "posting:apply": "node scripts/apply-posting-level.js",
+    "services:apply": "node scripts/apply-services.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.4.0",
+    "mysql2": "^3.11.3",
+    "pdfkit": "^0.15.0",
+    "qrcode": "^1.5.4",
+    "zod": "^3.23.8"
+  }
+}
