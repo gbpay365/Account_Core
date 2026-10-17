@@ -265,9 +265,13 @@ def _post_run(run: dict, parent, reload) -> None:
             if result:
                 entry = (result.get('recordEntry') or {}).get('entry_no', '')
                 delta = (result.get('deltaEntry') or {}).get('entry_no')
-                ui.notify(f"Posted as {entry}" + (f" with IFRS difference on {delta}." if delta
-                                                  else '.'),
-                          type='positive', position='top')
+                subsidy = (result.get('subsidyEntry') or {}).get('entry_no')
+                msg = f"Comptabilisé : {entry}"
+                if delta:
+                    msg += f", écart IFRS sur {delta}"
+                if subsidy:
+                    msg += f", reprise subventions sur {subsidy}"
+                ui.notify(msg + '.', type='positive', position='top')
                 dialog.close()
                 parent.close()
                 await reload()
@@ -317,6 +321,8 @@ def _simulation_result(result: dict, currency: str) -> None:
                       hint='Statutory basis', icon='trending_down', tone='sky')
                 w.kpi('IFRS charge', w.money(totals.get('ifrs'), currency),
                       hint='IFRS basis', icon='balance', tone='violet')
+                w.kpi('Reprise Subvention (Dons)', w.money(totals.get('subsidy'), currency),
+                      hint='Amortissement compte 14 -> 865', icon='volunteer_activism', tone='teal')
                 w.kpi('Difference',
                       w.money(float(totals.get('ifrs') or 0) - float(totals.get('ohada') or 0),
                               currency),

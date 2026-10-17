@@ -147,6 +147,9 @@ depreciationRoutes.post(
         domain: l.asset.domain, cost_center_name: l.asset.cost_center_name ?? null,
         ohada: l.ohada, ifrs: l.ifrs,
         delta: money(Number(l.ifrs.amount) - Number(l.ohada.amount)),
+        subsidy_amount: l.subsidy_amount || 0,
+        funding_source: l.asset.funding_source ?? null,
+        donor: l.asset.donor ?? null,
       })),
     });
   })

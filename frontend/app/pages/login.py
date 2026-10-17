@@ -99,8 +99,11 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
                         message.text = exc.message
                         button.props(remove='loading')
                         return
-                    if user.get('locale') in ('en', 'fr') and not app.storage.user.get('lang'):
-                        set_lang(user['locale'])
+                    org_fw = user.get('frameworks')
+                    is_ifrs = (org_fw == 'ifrs' or org_fw == ['ifrs'] or str(org_fw).lower() == 'ifrs')
+                    chosen_lang = 'en' if is_ifrs else lang()
+                    set_lang(chosen_lang)
+                    await api.safe(api.patch('/auth/locale', {'locale': chosen_lang}), notify=False)
                     ui.notify(t('auth.welcome', name=user['full_name'].split()[0]),
                               type='positive', position='top')
                     target = next if next and next != '/login' else '/'

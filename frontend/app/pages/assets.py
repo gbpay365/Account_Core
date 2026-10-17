@@ -11,7 +11,7 @@ from __future__ import annotations
 from nicegui import ui
 
 from .. import api
-from ..i18n import account_label, framework, t
+from ..i18n import STRINGS, account_label, framework, t
 from ..ui import chrome, widgets as w
 from ..ui.shell import page
 
@@ -129,19 +129,20 @@ async def assets_page() -> None:
 
 def _summary(summary: dict, currency: str) -> None:
     with w.kpi_row():
-        w.kpi('Assets shown', w.number(summary.get('count')),
-              hint='Matching the current filters', icon='inventory_2', tone='slate')
+        w.kpi(t('ar.shown'), w.number(summary.get('count')),
+              hint=t('ar.shown_hint') if 'ar.shown_hint' in STRINGS['en'] else 'Matching filters',
+              icon='inventory_2', tone='slate')
         if framework() == 'ifrs':
-            w.kpi('Gross cost', w.money(summary.get('ifrs_cost'), currency),
+            w.kpi(t('ar.gross'), w.money(summary.get('ifrs_cost'), currency),
                   hint='IFRS basis', icon='request_quote', tone='sky')
-            w.kpi('Net book value (IFRS)', w.money(summary.get('ifrs_nbv'), currency),
+            w.kpi(t('ar.nbv_ifrs'), w.money(summary.get('ifrs_nbv'), currency),
                   hint='After component depreciation and impairment', icon='balance', tone='violet')
         else:
-            w.kpi('Gross cost', w.money(summary.get('ohada_cost'), currency),
+            w.kpi(t('ar.gross'), w.money(summary.get('ohada_cost'), currency),
                   hint='Statutory basis', icon='request_quote', tone='sky')
-            w.kpi('Net book value (OHADA)', w.money(summary.get('ohada_nbv'), currency),
+            w.kpi(t('ar.nbv_ohada'), w.money(summary.get('ohada_nbv'), currency),
                   hint='Cost less accumulated depreciation', icon='account_balance', tone='teal')
-        w.kpi('Maintenance spent', w.money(summary.get('maintenance_cost'), currency),
+        w.kpi(t('ar.maint_spent'), w.money(summary.get('maintenance_cost'), currency),
               hint='Life to date on these assets', icon='build', tone='amber')
 
 
@@ -154,25 +155,25 @@ def _register_table(rows: list[dict], total: int, currency: str) -> None:
         row['compliance'] = ('Restricted' if row.get('use_restricted')
                              else 'Due' if _is_due(row) else 'Current')
 
-    body = w.section(f'{w.number(total)} assets',
-                     'Click an asset to open its full lifecycle')
+    body = w.section(f"{w.number(total)} {t('nav.assets').lower()}",
+                     t('ar.sub'))
     with body:
         if not rows:
-            w.empty_state('No asset matches those filters.', icon='inventory_2')
+            w.empty_state(t('ar.none') if 'ar.none' in STRINGS['en'] else 'No asset matches those filters.', icon='inventory_2')
             return
         columns = [
-            w.column('asset_tag', 'Tag', classes='lc-num font-semibold'),
-            w.column('name', 'Asset'),
-            w.column('category_label', 'Category'),
-            w.column('domain_label', 'Domain'),
-            w.column('cost_center_name', 'Cost centre'),
-            w.column('location_name', 'Location'),
-            w.column('status', 'Status'),
-            w.column('compliance', 'Compliance'),
-            w.date_column('next_calibration_date', 'Calibration due'),
-            w.date_column('next_pm_date', 'Service due'),
+            w.column('asset_tag', t('ar.tag'), classes='lc-num font-semibold'),
+            w.column('name', t('ar.title')),
+            w.column('category_label', t('ar.category')),
+            w.column('domain_label', t('common.domain')),
+            w.column('cost_center_name', t('ar.cost_centre')),
+            w.column('location_name', t('ar.location')),
+            w.column('status', t('common.status')),
+            w.column('compliance', t('nav.compliance')),
+            w.date_column('next_calibration_date', t('cal.title') if 'cal.title' in STRINGS['en'] else 'Calibration due'),
+            w.date_column('next_pm_date', t('pl.title') if 'pl.title' in STRINGS['en'] else 'Service due'),
             w.money_column('ifrs_nbv' if framework() == 'ifrs' else 'ohada_nbv',
-                           f'NBV ({currency})', currency=currency),
+                           f"{t('ar.nbv_ifrs') if framework() == 'ifrs' else t('ar.nbv_ohada')} ({currency})", currency=currency),
         ]
         table = w.table(columns, rows, height='64vh', pagination=0,
                         on_row_click=lambda row: ui.navigate.to(f"/assets/{row['id']}"))
@@ -200,13 +201,14 @@ async def asset_detail(asset_id: int) -> None:
         data = await api.safe(api.get(f'/assets/{asset_id}'))
         if not data:
             return
+        rollup_data = await api.safe(api.get(f'/assets/{asset_id}/components-rollup')) or {}
         with container:
-            _draw_asset(data, currency, reload)
+            _draw_asset(data, rollup_data, currency, reload)
 
     await reload()
 
 
-def _draw_asset(data: dict, currency: str, reload) -> None:
+def _draw_asset(data: dict, rollup_data: dict, currency: str, reload) -> None:
     asset = data['asset']
 
     def actions() -> None:
@@ -260,7 +262,7 @@ def _draw_asset(data: dict, currency: str, reload) -> None:
             ui.tab(label)
     with ui.tab_panels(tabs, value='Overview').classes('w-full bg-transparent'):
         with ui.tab_panel('Overview').classes('p-0'):
-            _overview(asset, data, currency)
+            _overview(asset, data, rollup_data, currency)
         with ui.tab_panel('Maintenance').classes('p-0'):
             _maintenance_tab(data, currency)
         with ui.tab_panel('Compliance').classes('p-0'):
@@ -303,7 +305,7 @@ def _years(months) -> str:
     return f'{months // 12} years' + (f' {months % 12} months' if months % 12 else '')
 
 
-def _overview(asset: dict, data: dict, currency: str) -> None:
+def _overview(asset: dict, data: dict, rollup_data: dict, currency: str) -> None:
     left, right = w.two_column()
     with left:
         body = w.section('Identification and custody')
@@ -348,15 +350,71 @@ def _overview(asset: dict, data: dict, currency: str) -> None:
                        'deferred income credit released over the asset’s life, in line with IAS 20.',
                        icon='volunteer_activism', tone='sky')
 
-        components = data.get('components') or []
-        if components:
+        # Component Decomposition Rollup (IAS 16 / SYSCOHADA)
+        components_list = rollup_data.get('components') or []
+        rollup_totals = rollup_data.get('totals') or rollup_data.get('rollup') or {}
+        tot_count = rollup_totals.get('componentCount') or rollup_totals.get('component_count') or len(components_list)
+        tot_cost = rollup_totals.get('totalCost') or rollup_totals.get('cost')
+        tot_accum = rollup_totals.get('totalAccumDepr') or rollup_totals.get('accum_depr') or 0
+        tot_nbv = rollup_totals.get('totalNbv') or rollup_totals.get('nbv')
+
+        if components_list or rollup_data.get('is_parent'):
+            body = w.section(
+                'Décomposition analytique par composants (IAS 16 / SYSCOHADA)',
+                f"Consolidation de {tot_count} composant(s) immobilisé(s)"
+            )
+            with body:
+                with w.kpi_row():
+                    w.kpi('Coût consolidé', w.money(tot_cost, currency),
+                          hint='Structure principale + composants', icon='layers', tone='slate')
+                    w.kpi('Amort. cumulés', w.money(tot_accum, currency),
+                          hint='Cumul des amortissements', icon='trending_down', tone='amber')
+                    w.kpi('VNC consolidée', w.money(tot_nbv, currency),
+                          hint='Valeur nette consolidée', icon='account_balance', tone='teal')
+
+                table_rows = []
+                for comp in components_list:
+                    c_cost = comp.get('ohada_cost') or comp.get('acquisition_cost') or comp.get('cost') or 0
+                    c_accum = comp.get('ohada_accum_depr') or comp.get('accum_depr') or 0
+                    c_nbv = comp.get('ohada_nbv') or comp.get('nbv') or c_cost
+                    table_rows.append({
+                        'id': comp.get('id'),
+                        'asset_tag': comp.get('asset_tag'),
+                        'name': comp.get('name'),
+                        'category': comp.get('category_name') or comp.get('category_code') or '—',
+                        'cost': c_cost,
+                        'accum_depr': c_accum,
+                        'nbv': c_nbv,
+                        'depr_rate': f"{1200 / (comp.get('ohada_useful_life_months') or 120):.1f}%" if comp.get('ohada_useful_life_months') else '—',
+                        'status': comp.get('status'),
+                    })
+                comp_cols = [
+                    w.column('asset_tag', 'Tag', classes='lc-num font-semibold'),
+                    w.column('name', 'Composant'),
+                    w.column('category', 'Catégorie'),
+                    w.money_column('cost', f'Coût ({currency})', currency=currency),
+                    w.money_column('accum_depr', f'Amort. ({currency})', currency=currency),
+                    w.money_column('nbv', f'VNC ({currency})', currency=currency),
+                    w.column('depr_rate', 'Taux'),
+                    w.column('status', 'Statut'),
+                ]
+                t_comp = w.table(comp_cols, table_rows, pagination=0,
+                                 on_row_click=lambda row: ui.navigate.to(f"/assets/{row['id']}"))
+                w.add_badge_slot(t_comp, 'status')
+        elif rollup_data.get('parent_asset_id'):
+            w.note(
+                f"Ce bien est un sous-composant rattaché à l'immobilisation #{rollup_data.get('parent_asset_id')}. "
+                "Son amortissement est calculé de manière autonome selon IAS 16.",
+                icon='extension', tone='sky'
+            )
+        elif data.get('components'):
             body = w.section('Components', 'Parts depreciated separately under IAS 16')
             with body:
                 w.table([w.column('asset_tag', 'Tag', classes='lc-num'),
                          w.column('name', 'Component'),
                          w.money_column('ifrs_nbv' if framework() == 'ifrs' else 'ohada_nbv',
                                         f'NBV ({currency})', currency=currency)],
-                        components, pagination=0)
+                        data.get('components'), pagination=0)
 
     with right:
         body = w.section('Service contracts')
@@ -693,11 +751,16 @@ def _capitalize_dialog(asset: dict, reload) -> None:
             .props('outlined dense').classes('w-full')
         credit = ui.input('Credit account code', placeholder='Defaults to the supplier payable') \
             .props('outlined dense').classes('w-full')
+        wip = ui.switch('Mise en service depuis travaux en cours (WIP Compte 239/249)').props('dense')
+        w.note('Si activé, l\'écriture débitera le compte d\'immobilisation (21x/23x/24x) et créditera '
+               'le compte de travaux en cours (2391 Bâtiments en cours ou 2491 Matériel en cours) au lieu du compte fournisseur.',
+               icon='construction', tone='amber')
 
         async def submit() -> None:
             result = await api.safe(api.post(f"/assets/{asset['id']}/capitalize", {
                 'date': date.value, 'recoverableVat': vat.value or 0,
                 'creditAccountCode': credit.value or None,
+                'capitalizeFromWip': wip.value,
             }))
             if result:
                 ui.notify(f"Capitalised with entry {result['entry']['entry_no']}.",

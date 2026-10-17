@@ -269,6 +269,16 @@ export async function capitalizeAsset(tx, orgId, assetId, opts = {}) {
   const cost = money(asset.ohada_cost);
   const vat = money(opts.recoverableVat || 0);
 
+  const isWip = opts.capitalizeFromWip || opts.wipAccountId || asset.funding_source === 'own_construction';
+  let wipAccount = null;
+  if (isWip) {
+    if (opts.wipAccountId) {
+      wipAccount = await tx.queryOne('SELECT * FROM accounts WHERE id = ? AND org_id = ?', [opts.wipAccountId, orgId]);
+    } else if (category.wip_account_id) {
+      wipAccount = await tx.queryOne('SELECT * FROM accounts WHERE id = ?', [category.wip_account_id]);
+    }
+  }
+
   const creditByFunding = {
     purchase: '481',          // Fournisseurs d'investissement
     donation: '845',          // Dons et liberalites obtenus (H.A.O. income)
@@ -277,7 +287,7 @@ export async function capitalizeAsset(tx, orgId, assetId, opts = {}) {
     transfer: '185',          // Comptes de liaison des etablissements
     own_construction: '722',  // Production immobilisee
   };
-  const creditCode = opts.creditAccountCode || creditByFunding[asset.funding_source] || '481';
+  const creditCode = wipAccount ? wipAccount.code : (opts.creditAccountCode || creditByFunding[asset.funding_source] || '481');
 
   const lines = [
     {
@@ -299,7 +309,10 @@ export async function capitalizeAsset(tx, orgId, assetId, opts = {}) {
   }
   lines.push({
     accountCode: creditCode,
-    description: `${asset.asset_tag} - ${asset.name}`,
+    accountId: wipAccount ? wipAccount.id : undefined,
+    description: wipAccount
+      ? `Mise en service depuis travaux en cours (${wipAccount.code}) - ${asset.asset_tag}`
+      : `${asset.asset_tag} - ${asset.name}`,
     debit: 0,
     credit: money(cost + vat),
     partnerType: asset.supplier_id ? 'supplier' : 'none',
@@ -310,9 +323,11 @@ export async function capitalizeAsset(tx, orgId, assetId, opts = {}) {
     orgId,
     journalCode: 'IMM',
     date,
-    description: `Capitalisation of ${asset.asset_tag} - ${asset.name}`,
+    description: wipAccount
+      ? `Mise en service depuis travaux en cours (WIP) : ${asset.asset_tag} - ${asset.name}`
+      : `Capitalisation of ${asset.asset_tag} - ${asset.name}`,
     reference: asset.asset_tag,
-    source: 'asset_acquisition',
+    source: wipAccount ? 'wip_capitalization' : 'asset_acquisition',
     sourceRef: asset.asset_tag,
     framework: 'both',
     currency: asset.currency,
@@ -325,12 +340,57 @@ export async function capitalizeAsset(tx, orgId, assetId, opts = {}) {
   await tx.query(
     `UPDATE assets
         SET is_capitalized = 1, capitalization_date = ?, acquisition_entry_id = ?,
+            wip_capitalization_entry_id = ?,
             status = CASE WHEN status = 'draft' THEN 'in_stock' ELSE status END
       WHERE id = ?`,
-    [date, entry.id, assetId]
+    [date, entry.id, wipAccount ? entry.id : null, assetId]
   );
 
   return entry;
+}
+
+/**
+ * Returns parent asset with all components rolled up (acquisition cost, NBV, accum depreciation).
+ */
+export async function getAssetComponentRollup(db, orgId, assetId) {
+  const asset = await db.queryOne(
+    `SELECT a.*, c.name AS category_name, c.domain
+       FROM assets a
+       JOIN asset_categories c ON c.id = a.category_id
+      WHERE a.id = ? AND a.org_id = ?`,
+    [assetId, orgId]
+  );
+  if (!asset) throw new ApiError(404, 'Asset not found.');
+
+  const components = await db.query(
+    `SELECT a.*, c.name AS category_name
+       FROM assets a
+       JOIN asset_categories c ON c.id = a.category_id
+      WHERE a.parent_asset_id = ? AND a.org_id = ?
+      ORDER BY a.asset_tag ASC`,
+    [assetId, orgId]
+  );
+
+  const totalCost = money(
+    Number(asset.ohada_cost) + components.reduce((s, c) => s + Number(c.ohada_cost || 0), 0)
+  );
+  const totalAccumDepr = money(
+    Number(asset.ohada_accum_depr || 0) + components.reduce((s, c) => s + Number(c.ohada_accum_depr || 0), 0)
+  );
+  const totalNbv = money(
+    Number(asset.ohada_nbv || 0) + components.reduce((s, c) => s + Number(c.ohada_nbv || 0), 0)
+  );
+
+  return {
+    parent: asset,
+    components,
+    totals: {
+      componentCount: components.length,
+      totalCost,
+      totalAccumDepr,
+      totalNbv,
+    },
+  };
 }
 
 /** FR-AM-011 :: installation & commissioning before the asset goes in service. */

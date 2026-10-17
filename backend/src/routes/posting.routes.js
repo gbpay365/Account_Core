@@ -8,8 +8,8 @@ import {
   isPostingLengthLocked, listPostableChildren, nextDefaultChildCode, suspenseBalance,
 } from '../services/posting-level.service.js';
 import { proposeCounterLines } from '../services/proposal.service.js';
-import { unprocessable } from '../utils/errors.js';
-import { boolish } from './helpers.js';
+import { unprocessable, badRequest } from '../utils/errors.js';
+import { boolish, optionalId } from './helpers.js';
 
 export const postingRoutes = Router();
 
@@ -85,6 +85,53 @@ postingRoutes.get(
       [req.orgId]
     );
     res.json({ rows, total: rows.length });
+  })
+);
+
+postingRoutes.post(
+  '/posting/templates',
+  requirePermission('journal.create', 'coa.manage', 'admin.manage'),
+  validate({
+    body: z.object({
+      code: z.string().trim().min(1).max(40).toUpperCase(),
+      name: z.string().trim().min(1).max(150),
+      nameEn: z.string().trim().max(150).optional().nullable(),
+      transactionType: z.string().trim().min(1).max(40).toLowerCase().optional().nullable(),
+      journalCode: z.string().trim().max(10).optional().nullable(),
+      counterpartAccountId: optionalId.optional().nullable(),
+      side: z.enum(['credit', 'debit']).default('credit'),
+    }),
+  }),
+  handler(async (req, res) => {
+    const { code, name, nameEn, journalCode, counterpartAccountId, side } = req.body;
+    const transactionType = req.body.transactionType || code.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    const existing = await queryOne('SELECT id FROM posting_templates WHERE org_id = ? AND (code = ? OR transaction_type = ?)', [req.orgId, code, transactionType]);
+    if (existing) throw badRequest(`A template with code or transaction type '${code}' already exists.`);
+
+    const created = await transaction(async (tx) => {
+      const res = await tx.query(
+        `INSERT INTO posting_templates (org_id, code, name, name_en, transaction_type, journal_code, is_active, is_recurring, auto_post, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0, 50)`,
+        [req.orgId, code, name, nameEn || null, transactionType, journalCode || null]
+      );
+      const templateId = res.insertId;
+      if (counterpartAccountId) {
+        const acct = await tx.queryOne('SELECT code FROM accounts WHERE id = ?', [counterpartAccountId]);
+        await tx.query(
+          `INSERT INTO posting_template_lines (template_id, line_no, side, account_rule, amount_formula, is_proposed, note)
+           VALUES (?, 1, ?, ?, 'gross', 1, ?)`,
+          [templateId, side, acct ? acct.code : 'suspense', `Auto-balancing line for ${name}`]
+        );
+      }
+      return tx.queryOne('SELECT * FROM posting_templates WHERE id = ?', [templateId]);
+    });
+
+    await writeAudit({
+      orgId: req.orgId, userId: req.user.id, action: 'create', entity: 'posting_template', entityId: created.id,
+      summary: `Created posting template ${created.code} (${created.name})`,
+      after: created, context: requestContext(req),
+    });
+    res.status(201).json({ template: created });
   })
 );
 

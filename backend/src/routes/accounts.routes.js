@@ -32,7 +32,7 @@ accountRoutes.get(
     const { search, accountClass, statement, postableOnly, activeOnly, tier, tree, framework } = req.query;
 
     if (framework === 'ifrs') {
-      return res.json(await listIfrsChart(req.orgId, { search, statement }));
+      return res.json(await listIfrsChart(req.orgId, { search, statement, accountClass }));
     }
     const params = [req.orgId];
     let filter = '';
@@ -274,6 +274,63 @@ accountRoutes.get(
   })
 );
 
+export const IFRS_STANDARD_CODES = {
+  // Class 1: Non-Current & Current Assets (1000-1999)
+  'SOFP.PPE': '1100',
+  'SOFP.INTANGIBLE': '1200',
+  'SOFP.RIGHT_OF_USE': '1300',
+  'SOFP.FIN_NC': '1400',
+  'SOFP.OTHER_NC': '1500',
+  'SOFP.INVENTORY': '1600',
+  'SOFP.TRADE_RECV': '1700',
+  'SOFP.TAX_RECV': '1800',
+  'SOFP.PREPAID': '1850',
+  'SOFP.CASH': '1900',
+  // Class 2: Non-Current & Current Liabilities (2000-2999)
+  'SOFP.LT_BORROW': '2100',
+  'SOFP.LEASE_NC': '2200',
+  'SOFP.PROV_NC': '2300',
+  'SOFP.DEF_GRANT': '2400',
+  'SOFP.TRADE_PAY': '2500',
+  'SOFP.ST_BORROW': '2600',
+  'SOFP.TAX_PAY': '2700',
+  'SOFP.PROV_C': '2800',
+  'SOFP.DEF_INCOME': '2900',
+  // Class 3: Equity (3000-3999)
+  'SOFP.SHARE_CAPITAL': '3100',
+  'SOFP.SHARE_PREMIUM': '3200',
+  'SOFP.REVAL_SURPLUS': '3300',
+  'SOFP.OTHER_RESERVES': '3400',
+  'SOFP.RETAINED': '3500',
+  'SOFP.RESULT': '3600',
+  // Class 4: Revenue (4000-4999)
+  'PL.REVENUE': '4100',
+  'PL.GRANT_INCOME': '4200',
+  'PL.OTHER_INCOME': '4900',
+  // Class 5: Cost of Sales / Healthcare Consumables (5000-5999)
+  'PL.CONSUMABLES': '5100',
+  // Class 6: Operating Expenses (6000-6999)
+  'PL.STAFF': '6100',
+  'PL.DEPRECIATION': '6200',
+  'PL.MAINTENANCE': '6300',
+  'PL.UTILITIES': '6400',
+  'PL.OTHER_OPEX': '6500',
+  'PL.IMPAIRMENT': '6600',
+  'PL.DISPOSAL_RESULT': '6700',
+  // Class 7: Finance & FX (7000-7999)
+  'PL.FINANCE_INCOME': '7100',
+  'PL.FINANCE_COST': '7200',
+  'PL.FX_RESULT': '7300',
+  // Class 8: Income Tax (8000-8999)
+  'PL.TAX': '8100',
+  // Class 9: OCI & Cash Flows (9000-9999)
+  'OCI.REVAL': '9100',
+  'OCI.FX_TRANSLATION': '9200',
+  'CF.OPERATING': '9510',
+  'CF.INVESTING': '9520',
+  'CF.FINANCING': '9530',
+};
+
 function ifrsAccountType(statement, section) {
   if (['non_current_assets', 'current_assets'].includes(section)) return 'asset';
   if (section === 'equity' || statement === 'oci') return 'equity';
@@ -284,9 +341,13 @@ function ifrsAccountType(statement, section) {
 }
 
 function shapeIfrsAccount(row, mappedCount = 0) {
+  const stdCode = IFRS_STANDARD_CODES[row.code] || '9900';
   return {
     id: row.id,
-    code: row.code,
+    code: stdCode,
+    standard_code: stdCode,
+    ifrs_ref: row.code,
+    account_class: Number(stdCode[0]) || 1,
     name: row.name_fr || row.name,
     name_en: row.name,
     name_fr: row.name_fr,
@@ -303,7 +364,7 @@ function shapeIfrsAccount(row, mappedCount = 0) {
   };
 }
 
-async function listIfrsChart(orgId, { search, statement } = {}) {
+async function listIfrsChart(orgId, { search, statement, accountClass } = {}) {
   const f = where([
     ['i.org_id = ?', orgId],
     ['i.statement = ?', statement],
@@ -324,9 +385,28 @@ async function listIfrsChart(orgId, { search, statement } = {}) {
       ORDER BY i.statement, i.sort_order`,
     params
   );
+
+  let shaped = rows.map((r) => shapeIfrsAccount(r, r.mapped_accounts));
+
+  // If search was numerical (e.g. '1100', '11', '6'), search by standard code
+  if (search) {
+    const sLower = search.trim().toLowerCase();
+    shaped = shaped.filter((a) =>
+      a.code.includes(sLower) ||
+      a.ifrs_ref.toLowerCase().includes(sLower) ||
+      a.name.toLowerCase().includes(sLower) ||
+      (a.name_en && a.name_en.toLowerCase().includes(sLower))
+    );
+  }
+
+  // Filter by numerical accountClass if specified (1 = 1000s, 2 = 2000s, etc.)
+  if (accountClass) {
+    shaped = shaped.filter((a) => a.account_class === Number(accountClass));
+  }
+
   return {
-    rows: rows.map((r) => shapeIfrsAccount(r, r.mapped_accounts)),
-    total: rows.length,
+    rows: shaped,
+    total: shaped.length,
     framework: 'ifrs',
   };
 }

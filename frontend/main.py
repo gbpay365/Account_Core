@@ -13,20 +13,12 @@ from app import pages  # noqa: F401 - importing registers the routes
 from app.theme import CANVAS
 
 
+from starlette.responses import RedirectResponse
+
+
 @app.exception_handler(404)
 async def not_found(request, exception):  # noqa: ANN001, ARG001
-    from app.ui.shell import first_allowed_route
-    from app import api
-    from app.i18n import t
-    from app.theme import apply as apply_theme
-
-    apply_theme()
-    with ui.column().classes('w-screen h-screen items-center justify-center gap-3'):
-        ui.icon('explore_off').classes('text-6xl text-slate-300')
-        ui.label(t('auth.missing')).classes('text-lg font-semibold text-slate-700')
-        ui.button(t('auth.take_back'), icon='arrow_back',
-                  on_click=lambda: ui.navigate.to(first_allowed_route() if api.token() else '/login')
-                  ).props('unelevated')
+    return RedirectResponse(url='/')
 
 
 ui.run(

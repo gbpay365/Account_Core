@@ -132,7 +132,7 @@ export const ASSET_CATEGORIES = [
   // --- Facilities & infrastructure ------------------------------------------
   {
     code: 'FAC-BLD', name: 'Batiments hospitaliers', name_en: 'Hospital buildings',
-    domain: 'facility', ...bld('231'),
+    domain: 'facility', ...bld('2311'),
     ohada_useful_life_months: 240, ifrs_useful_life_months: 480, ifrs_residual_pct: 10,
     ifrs_measurement_model: 'revaluation', allow_component_depr: 1,
     pm_interval_months: 12, default_criticality: 'critical', capitalization_threshold: 1000000,
@@ -248,7 +248,7 @@ export const ASSET_CATEGORIES = [
   },
   {
     code: 'IT-SW', name: 'Logiciels et licences', name_en: 'Software and licences',
-    domain: 'it_office', ...accounts('213', '2812', '6811'),
+    domain: 'it_office', ...accounts('2131', '2812', '6811'),
     maintenance_account: '6246',
     ohada_useful_life_months: 36, ifrs_useful_life_months: 60,
     default_criticality: 'high', capitalization_threshold: 100000,

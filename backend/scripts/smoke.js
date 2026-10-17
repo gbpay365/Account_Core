@@ -130,7 +130,7 @@ const unbalanced = await call('POST', '/api/entries', {
     journalCode: 'OD', date: postingDate, description: 'Test desequilibre',
     lines: [
       { accountCode: '6042', costCenterId: 1, debit: 100000, credit: 0 },
-      { accountCode: '401', debit: 0, credit: 90000 },
+      { accountCode: '4011', debit: 0, credit: 90000, partnerType: 'supplier', partnerId: 7 },
     ],
   },
 });
@@ -143,7 +143,7 @@ const headingAccount = await call('POST', '/api/entries', {
     journalCode: 'OD', date: postingDate, description: 'Test compte collectif',
     lines: [
       { accountCode: '60', debit: 50000, credit: 0 },
-      { accountCode: '401', debit: 0, credit: 50000 },
+      { accountCode: '4011', debit: 0, credit: 50000, partnerType: 'supplier', partnerId: 7 },
     ],
   },
 });
@@ -157,7 +157,7 @@ const missingAsset = await call('POST', '/api/entries', {
     journalCode: 'OD', date: postingDate, description: 'Maintenance sans immobilisation',
     lines: [
       { accountCode: '6243', costCenterId: 1, debit: 75000, credit: 0 },
-      { accountCode: '401', debit: 0, credit: 75000 },
+      { accountCode: '4011', debit: 0, credit: 75000, partnerType: 'supplier', partnerId: 7 },
     ],
   },
 });
@@ -173,7 +173,7 @@ const draft = await call('POST', '/api/entries', {
     reference: 'SMOKE-001',
     lines: [
       { accountCode: '6051', costCenterId: 1, description: 'Consommation d eau', debit: 1250000, credit: 0 },
-      { accountCode: '401', description: 'CAMWATER', debit: 0, credit: 1250000, partnerType: 'supplier' },
+      { accountCode: '4011', description: 'CAMWATER', debit: 0, credit: 1250000, partnerType: 'supplier', partnerId: 7 },
     ],
   },
 });
@@ -187,7 +187,7 @@ const selfPost = await call('POST', '/api/entries', {
     journalCode: 'OD', date: postingDate, description: 'Tentative de comptabilisation directe', autoPost: true,
     lines: [
       { accountCode: '6051', costCenterId: 1, debit: 1000, credit: 0 },
-      { accountCode: '401', debit: 0, credit: 1000 },
+      { accountCode: '4011', debit: 0, credit: 1000, partnerType: 'supplier', partnerId: 7 },
     ],
   },
 });
@@ -208,7 +208,7 @@ const closedPeriodEntry = await call('POST', '/api/entries', {
     journalCode: 'OD', date: closedDate, description: 'Ecriture sur periode cloturee', autoPost: true,
     lines: [
       { accountCode: '6051', costCenterId: 1, debit: 5000, credit: 0 },
-      { accountCode: '401', debit: 0, credit: 5000 },
+      { accountCode: '4011', debit: 0, credit: 5000, partnerType: 'supplier', partnerId: 7 },
     ],
   },
 });
@@ -223,7 +223,7 @@ const withOverride = await call('POST', '/api/entries', {
     overrideReason: 'Regularisation demandee par le commissaire aux comptes sur exercice clos.',
     lines: [
       { accountCode: '6051', costCenterId: 1, debit: 5000, credit: 0 },
-      { accountCode: '401', debit: 0, credit: 5000 },
+      { accountCode: '4011', debit: 0, credit: 5000, partnerType: 'supplier', partnerId: 7 },
     ],
   },
 });
@@ -245,12 +245,12 @@ const tb = await call('GET', '/api/ledger/trial-balance?from=2026-01-01&to=2026-
 check('the trial balance balances', tb.status === 200 && tb.body?.totals?.balanced === true,
   `${tb.body?.rows?.length} accounts, closing ${tb.body?.totals?.closing_debit} = ${tb.body?.totals?.closing_credit}`);
 
-const bankAccount = coa.body?.rows?.find((a) => a.code === '521');
+const bankAccount = coa.body?.rows?.find((a) => a.code === '5211') ?? coa.body?.rows?.find((a) => a.code === '521');
 const gl = await call('GET', `/api/ledger/account/${bankAccount?.id}?from=2026-01-01&to=2026-08-31`, { token: admin });
 check('account detail returns a running balance',
   gl.status === 200 && gl.body.rows.length > 0 &&
     Math.abs(gl.body.rows.at(-1).balance - gl.body.closing_balance) < 0.01,
-  `521 ${gl.body?.rows?.length} movements, opening ${gl.body?.opening_balance} closing ${gl.body?.closing_balance}`);
+  `5211 ${gl.body?.rows?.length} movements, opening ${gl.body?.opening_balance} closing ${gl.body?.closing_balance}`);
 
 console.log('\n7. Period control and close checklist (FR-CN-002)');
 // The period currently being worked: open, with a checklist not yet signed off.
@@ -276,7 +276,7 @@ const blocker = await call('POST', '/api/entries', {
     journalCode: 'OD', date: postingDate, description: 'Brouillon bloquant la cloture',
     lines: [
       { accountCode: '6051', costCenterId: 1, debit: 1000, credit: 0 },
-      { accountCode: '401', debit: 0, credit: 1000 },
+      { accountCode: '4011', debit: 0, credit: 1000, partnerType: 'supplier', partnerId: 7 },
     ],
   },
 });

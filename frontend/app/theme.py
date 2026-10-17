@@ -262,8 +262,75 @@ def apply() -> None:
       .q-dialog__inner > .lc-card {{ box-shadow: 0 24px 64px -24px rgba(15,23,42,.35); }}
 
       @media print {{
-        .lc-no-print {{ display: none !important; }}
-        body, html {{ background: #fff; }}
-        .lc-card {{ box-shadow: none; border: none; }}
+        @page {{
+          size: A4 portrait;
+          margin: 10mm 12mm 12mm 12mm;
+        }}
+        .lc-no-print, .print\\:hidden {{ display: none !important; }}
+        html, body, body.q-body--fullscreen, body.q-body--prevent-scroll, #q-app, .q-layout, .q-page-container, .q-page, .nicegui-content {{
+          background: #fff !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-height: 0 !important;
+          height: auto !important;
+          overflow: visible !important;
+          overflow-x: hidden !important;
+          overflow-y: visible !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }}
+        .q-header, .q-drawer, .q-footer, .q-notifications {{ display: none !important; }}
+        .q-dialog__backdrop {{ display: none !important; }}
+        .q-dialog__inner {{ padding: 0 !important; display: block !important; }}
+        .lc-page {{
+          padding: 0 !important;
+          margin: 0 !important;
+          gap: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow: visible !important;
+        }}
+        .nicegui-content {{
+          padding: 0 !important;
+          margin: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow: visible !important;
+        }}
+        .q-tab-panels {{ background: transparent !important; padding: 0 !important; overflow: visible !important; }}
+        .q-tab-panel {{ padding: 0 !important; overflow: visible !important; }}
+        .lc-card, .q-card {{
+          box-shadow: none !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          overflow: visible !important;
+        }}
+        .print-avoid-break {{
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }}
+        /* Completely eliminate all scrollbars in print */
+        *, *::before, *::after {{
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }}
+        *::-webkit-scrollbar,
+        ::-webkit-scrollbar,
+        ::-webkit-scrollbar-thumb,
+        ::-webkit-scrollbar-track,
+        ::-webkit-scrollbar-button,
+        ::-webkit-scrollbar-corner {{
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          background: transparent !important;
+          border: none !important;
+        }}
       }}
     """)
+

@@ -10,7 +10,7 @@ from nicegui import ui
 from .. import api
 from ..i18n import account_label, framework, lang, t
 from ..ui import chrome, widgets as w
-from ..ui.shell import page
+from ..ui.shell import page, admin_framework_dialog
 
 CLASSES = list(range(1, 10))
 IFRS_STATEMENTS = ('sofp', 'pl', 'oci', 'cf')
@@ -42,6 +42,12 @@ async def _ohada_chart() -> None:
     state = {'search': '', 'class': None, 'postable': False, 'active': True}
 
     def actions() -> None:
+        if api.can('coa.manage', 'admin.audit'):
+            ui.button(
+                t('admin.coa_settings_btn'),
+                icon='settings',
+                on_click=lambda: admin_framework_dialog(reload)
+            ).props('outline size=sm color=slate-7')
         if api.can('coa.manage'):
             ui.button(t('coa.new'), icon='add', on_click=lambda: _account_dialog(reload)
                       ).props('unelevated size=sm')
@@ -83,17 +89,39 @@ async def _ohada_chart() -> None:
     await reload()
 
 
-async def _ifrs_chart() -> None:
-    state = {'search': '', 'statement': None}
+IFRS_CLASSES = {
+    1: {'en': '1000 — Assets', 'fr': '1000 — Actifs'},
+    2: {'en': '2000 — Liabilities', 'fr': '2000 — Passifs'},
+    3: {'en': '3000 — Equity', 'fr': '3000 — Capitaux propres'},
+    4: {'en': '4000 — Revenue', 'fr': '4000 — Produits'},
+    5: {'en': '5000 — Cost of Sales', 'fr': '5000 — Coût des ventes / Médicaments'},
+    6: {'en': '6000 — Operating Expenses', 'fr': '6000 — Charges d’exploitation'},
+    7: {'en': '7000 — Finance & FX', 'fr': '7000 — Financier & Change'},
+    8: {'en': '8000 — Income Tax', 'fr': '8000 — Impôt sur le résultat'},
+    9: {'en': '9000 — OCI & Cash Flows', 'fr': '9000 — Autres éléments du résultat & Flux'},
+}
 
-    w.page_header(t('coa.title'), t('coa.sub_ifrs'), emoji=chrome.PAGE['coa.title'])
+
+async def _ifrs_chart() -> None:
+    state = {'search': '', 'statement': None, 'class': None}
+
+    def actions() -> None:
+        if api.can('coa.manage', 'admin.audit'):
+            ui.button(
+                t('admin.coa_settings_btn'),
+                icon='settings',
+                on_click=lambda: admin_framework_dialog(reload)
+            ).props('outline size=sm color=slate-7')
+
+    w.page_header(t('coa.title'), t('coa.sub_ifrs'), actions=actions, emoji=chrome.PAGE['coa.title'])
 
     async def reload() -> None:
         container.clear()
         data = await api.safe(api.get('/accounts',
                                       framework='ifrs',
                                       search=state['search'] or None,
-                                      statement=state['statement']))
+                                      statement=state['statement'],
+                                      accountClass=state['class']))
         if not data:
             return
         rows = data.get('rows') or []
@@ -101,18 +129,26 @@ async def _ifrs_chart() -> None:
             _ifrs_summary(rows)
             _ifrs_table(rows)
 
+    cur_lang = lang() if lang() in ('fr', 'en') else 'en'
+    class_opts = {None: t('coa.all_classes')}
+    for k, v in IFRS_CLASSES.items():
+        class_opts[k] = v.get(cur_lang, v['en'])
+
     with ui.element('div').classes('lc-card p-4 w-full mb-1 lc-no-print'):
         with w.toolbar():
-            search = ui.input(t('coa.search'), placeholder='SOFP.PPE') \
-                .props('outlined dense clearable debounce=350').classes('w-full sm:w-80')
+            search = ui.input(t('coa.search'), placeholder='1100 or SOFP.PPE') \
+                .props('outlined dense clearable debounce=350').classes('w-full sm:w-72')
             search.bind_value(state, 'search')
+            klass = ui.select(class_opts, value=None, label=t('coa.class')) \
+                .props('outlined dense options-dense').classes('w-56')
+            klass.bind_value(state, 'class')
             stmt = ui.select(
                 {None: t('coa.all_statements'),
                  **{s: t(f'coa.stmt.{s}') for s in IFRS_STATEMENTS}},
                 value=None, label=t('coa.statement'),
-            ).props('outlined dense options-dense').classes('w-64')
+            ).props('outlined dense options-dense').classes('w-56')
             stmt.bind_value(state, 'statement')
-            for element in (search, stmt):
+            for element in (search, klass, stmt):
                 element.on_value_change(reload)
 
     container = ui.column().classes('w-full gap-5')
@@ -146,6 +182,7 @@ def _ifrs_table(rows: list[dict]) -> None:
             else (row.get('statement') or '')
         row['section_label'] = w.humanise(row.get('section'))
         row['mapped_label'] = t('coa.mapped_n', n=w.number(row.get('mapped_accounts') or 0))
+        row['ifrs_badge'] = row.get('ifrs_ref') or row.get('code')
 
     body = w.section(t('coa.count', n=w.number(len(rows))), t('coa.click_ifrs'))
     with body:
@@ -153,7 +190,8 @@ def _ifrs_table(rows: list[dict]) -> None:
             w.empty_state(t('coa.none'), icon='search_off')
             return
         columns = [
-            w.column('code', t('coa.code'), classes='lc-num font-semibold'),
+            w.column('code', t('coa.code'), classes='lc-num font-bold text-teal-800'),
+            w.column('ifrs_badge', 'IFRS Ref', classes='font-mono text-xs text-slate-500'),
             w.column('shown_name', t('coa.name')),
             w.column('other_name', t('coa.name_other')),
             w.column('statement_label', t('coa.statement')),

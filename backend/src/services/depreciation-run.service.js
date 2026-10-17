@@ -36,7 +36,8 @@ export async function simulateRun(tx, orgId, periodId, opts = {}) {
 
   const assets = await tx.query(
     `SELECT a.*, c.code AS category_code, c.name AS category_name, c.domain,
-            c.depr_expense_account_id, c.accum_depr_account_id
+            c.depr_expense_account_id, c.accum_depr_account_id,
+            c.subsidy_account_id, c.subsidy_income_account_id
        FROM assets a
        JOIN asset_categories c ON c.id = a.category_id
       WHERE a.org_id = ?
@@ -84,11 +85,15 @@ export async function simulateRun(tx, orgId, periodId, opts = {}) {
 
     if (ohada.amount === 0 && ifrs.amount === 0) continue;
 
+    const isDonated = asset.funding_source === 'donation' || asset.funding_source === 'grant';
+    const subsidyAmount = isDonated && asset.subsidy_account_id && asset.subsidy_income_account_id ? ohada.amount : 0;
+
     lines.push({
       asset,
       ohada,
       ifrs,
       delta: money(ifrs.amount - ohada.amount),
+      subsidy_amount: subsidyAmount,
     });
   }
 
@@ -96,6 +101,7 @@ export async function simulateRun(tx, orgId, periodId, opts = {}) {
     assetCount: lines.length,
     ohada: money(lines.reduce((s, l) => s + l.ohada.amount, 0)),
     ifrs: money(lines.reduce((s, l) => s + l.ifrs.amount, 0)),
+    subsidy: money(lines.reduce((s, l) => s + (l.subsidy_amount || 0), 0)),
   };
   totals.delta = money(totals.ifrs - totals.ohada);
 
@@ -155,9 +161,11 @@ export async function postRun(tx, orgId, runId, opts = {}) {
   const deltaBasis = basisOfRecord === 'ohada' ? 'ifrs' : 'ohada';
 
   const lines = await tx.query(
-    `SELECT dl.*, a.asset_tag, a.name AS asset_name
+    `SELECT dl.*, a.asset_tag, a.name AS asset_name, a.funding_source,
+            c.subsidy_account_id, c.subsidy_income_account_id
        FROM depreciation_lines dl
        JOIN assets a ON a.id = dl.asset_id
+       JOIN asset_categories c ON c.id = a.category_id
       WHERE dl.run_id = ?`,
     [runId]
   );
@@ -261,6 +269,64 @@ export async function postRun(tx, orgId, runId, opts = {}) {
     });
   }
 
+  // --- 3. Donated asset subsidy release entry (Compte 14 -> Compte 865) -----
+  const subsidyByGroup = new Map();
+  for (const l of lines) {
+    if (l.basis !== 'ohada') continue;
+    if (l.funding_source !== 'donation' && l.funding_source !== 'grant') continue;
+    if (!l.subsidy_account_id || !l.subsidy_income_account_id) continue;
+    if (Number(l.depreciation_amount) <= 0) continue;
+
+    const key = `${l.subsidy_account_id}|${l.subsidy_income_account_id}|${l.cost_center_id ?? 0}`;
+    const sg = subsidyByGroup.get(key) || {
+      subsidyAccountId: l.subsidy_account_id,
+      incomeAccountId: l.subsidy_income_account_id,
+      costCenterId: l.cost_center_id,
+      amount: 0,
+      count: 0,
+    };
+    sg.amount = money(sg.amount + Number(l.depreciation_amount));
+    sg.count += 1;
+    subsidyByGroup.set(key, sg);
+  }
+
+  const subsidyLines = [];
+  for (const sg of subsidyByGroup.values()) {
+    if (sg.amount <= 0) continue;
+    subsidyLines.push({
+      accountId: sg.subsidyAccountId,
+      costCenterId: sg.costCenterId,
+      description: `Reprise subvention investissement ${period.code} (${sg.count} équipement(s) don/bailleur)`,
+      debit: sg.amount,
+      credit: 0,
+    });
+    subsidyLines.push({
+      accountId: sg.incomeAccountId,
+      costCenterId: sg.costCenterId,
+      description: `Quote-part de subvention virée au compte de résultat ${period.code}`,
+      debit: 0,
+      credit: sg.amount,
+    });
+  }
+
+  let subsidyEntry = null;
+  if (subsidyLines.length > 0) {
+    subsidyEntry = await createJournalEntry(tx, {
+      orgId,
+      journalCode: 'AMO',
+      date: run.run_date,
+      description: `Reprise de subventions d'investissement — ${period.name}`,
+      reference: `AMO-${period.code}-SUB`,
+      source: 'depreciation',
+      sourceRef: String(runId),
+      framework: 'both',
+      autoPost: true,
+      actor: opts.actor,
+      overrideReason: opts.overrideReason,
+      lines: subsidyLines,
+    });
+  }
+
   // --- 3. Roll the asset sub-ledger forward ---------------------------------
   const byAsset = new Map();
   for (const l of lines) {
@@ -302,6 +368,7 @@ export async function postRun(tx, orgId, runId, opts = {}) {
     period: period.code,
     recordEntry,
     deltaEntry,
+    subsidyEntry,
     totals: { ohada: money(run.total_ohada), ifrs: money(run.total_ifrs), delta: money(run.total_ifrs - run.total_ohada) },
   };
 }

@@ -15,7 +15,7 @@ from datetime import datetime
 from nicegui import ui
 
 from .. import api
-from ..i18n import bilingual, framework as current_framework, set_framework, t
+from ..i18n import bilingual, framework as current_framework, lang, set_framework, t
 from ..ui import chrome, widgets as w
 from ..ui.shell import page
 
@@ -43,32 +43,30 @@ async def reports_page(statement: str = '') -> None:
     years = catalog.get('fiscal_years') or []
     current = next((y for y in years if y.get('status') != 'closed'), years[0] if years else {})
 
-    # The header OHADA / IFRS toggle is the source of truth. A statement slug
-    # only picks a tab inside that framework; `bridge` is the exception.
+    # The chosen framework is the active system framework (OHADA or IFRS).
+    # All statements automatically conform to that framework.
     header_fw = current_framework()
-    if statement == 'bridge':
-        framework_of = 'bridge'
-        default_statement = 'sofp' if header_fw == 'ifrs' else 'bilan'
-    elif header_fw == 'ifrs':
-        framework_of = 'ifrs'
+    framework_of = 'ifrs' if header_fw == 'ifrs' else 'ohada'
+    if framework_of == 'ifrs':
         default_statement = statement if statement in IFRS_SLUGS else 'sofp'
-    elif statement in OHADA_SLUGS:
-        framework_of = 'ohada'
-        default_statement = statement
     else:
-        framework_of = 'ohada'
-        default_statement = 'bilan'
+        default_statement = statement if statement in OHADA_SLUGS else 'bilan'
+    cc_res = await api.safe(api.get('/cost-centers'), notify=False) or {}
+    cost_centers = cc_res.get('rows', [])
+
     state = {'from': str(current.get('start_date', ''))[:10],
              'to': str(current.get('end_date', ''))[:10],
              'framework': framework_of,
-             'statement': default_statement}
+             'statement': default_statement,
+             'costCenterId': None,
+             'cost_centers': cost_centers}
 
     org = catalog.get('organisation') or {}
+    fw_tag = 'OHADA' if framework_of == 'ohada' else 'IFRS'
+    tier_tag = f" {str(org.get('reporting_tier', '')).capitalize()}" if framework_of == 'ohada' and org.get('reporting_tier') else ''
     w.page_header(
         t('st.title'),
-        t('st.sub', org=org.get('name', ''),
-          tier=str(org.get('reporting_tier', '')).capitalize(),
-          ccy=org.get('functional_currency', '')),
+        f"{org.get('name', '')} · {fw_tag}{tier_tag} · {org.get('functional_currency', currency)}",
         emoji=chrome.PAGE['st.title'],
     )
 
@@ -86,21 +84,38 @@ async def reports_page(statement: str = '') -> None:
 
     with ui.element('div').classes('lc-card p-4 w-full lc-no-print'):
         with w.toolbar():
-            framework = ui.toggle({'ohada': t('st.ohada'), 'ifrs': t('st.ifrs'),
-                                   'bridge': t('st.bridge')}, value=state['framework']) \
-                .props('unelevated dense no-caps').classes('rounded-lg')
-            framework.bind_value(state, 'framework')
             date_from = ui.input(t('common.from'), value=state['from']).props('outlined dense type=date') \
                 .classes('w-40')
             date_from.bind_value(state, 'from')
             date_to = ui.input(t('common.to'), value=state['to']).props('outlined dense type=date').classes('w-40')
             date_to.bind_value(state, 'to')
+
+            cur_l = lang() if lang() in ('fr', 'en') else 'en'
+            is_ifrs_mode = state['framework'] == 'ifrs'
+            seg_lbl = ('Operating Segment (IFRS 8)' if cur_l == 'en' else 'Segment opérationnel (IFRS 8)') if is_ifrs_mode \
+                else ('Cost Center' if cur_l == 'en' else 'Centre de coût')
+            all_lbl = ('All Segments (Consolidated)' if cur_l == 'en' else 'Tous les segments (Consolidé)') if is_ifrs_mode \
+                else ('All Cost Centers' if cur_l == 'en' else 'Tous les centres')
+
+            seg_opts = {None: all_lbl}
+            for cc in cost_centers:
+                c_name = cc.get('name_en') if cur_l == 'en' else cc.get('name')
+                seg_opts[cc['id']] = f"{cc['code']} — {c_name}"
+
+            segment_select = ui.select(seg_opts, value=None, label=seg_lbl) \
+                .props('outlined dense options-dense').classes('w-64')
+            segment_select.bind_value(state, 'costCenterId')
+            segment_select.on_value_change(reload)
+
             ui.button(t('common.print'), icon='print',
                       on_click=lambda: ui.run_javascript('window.print()')).props('outline dense')
             ui.button(t('common.excel'), icon='table_view',
                       on_click=lambda: _export_excel(export_state, currency)).props('outline dense')
             ui.button(t('common.pdf'), icon='picture_as_pdf',
                       on_click=lambda: _export_pdf(export_state, currency, org)).props('outline dense')
+            if state['framework'] == 'ohada':
+                ui.button(t('fec.btn_title'), icon='assignment',
+                          on_click=lambda: _fec_dialog(years, current)).props('unelevated color=teal dense')
 
         statement_row = ui.row().classes('w-full pt-2')
 
@@ -118,16 +133,6 @@ async def reports_page(statement: str = '') -> None:
                 picker.bind_value(state, 'statement')
                 picker.on_value_change(reload)
 
-        async def switch_framework() -> None:
-            if state['framework'] in ('ohada', 'ifrs'):
-                set_framework(state['framework'])
-                if state['framework'] != header_fw:
-                    ui.navigate.reload()
-                    return
-            draw_statement_picker()
-            await reload()
-
-        framework.on_value_change(switch_framework)
         for element in (date_from, date_to):
             element.on_value_change(reload)
         draw_statement_picker()
@@ -141,8 +146,10 @@ async def reports_page(statement: str = '') -> None:
 
 async def _ohada(state: dict, currency: str, export_state: dict) -> None:
     slug = state['statement']
-    data = await api.safe(api.get(f'/reports/ohada/{slug}',
-                                  **{'from': state['from'], 'to': state['to']}))
+    req_params = {'from': state['from'], 'to': state['to']}
+    if state.get('costCenterId'):
+        req_params['costCenterId'] = state['costCenterId']
+    data = await api.safe(api.get(f'/reports/ohada/{slug}', **req_params))
     if not data:
         return
 
@@ -207,10 +214,21 @@ def _ohada_row(line: dict, with_columns: bool) -> dict:
 
 async def _ifrs(state: dict, currency: str, export_state: dict) -> None:
     slug = state['statement']
-    data = await api.safe(api.get(f'/reports/ifrs/{slug}',
-                                  **{'from': state['from'], 'to': state['to']}))
+    req_params = {'from': state['from'], 'to': state['to']}
+    if state.get('costCenterId'):
+        req_params['costCenterId'] = state['costCenterId']
+    data = await api.safe(api.get(f'/reports/ifrs/{slug}', **req_params))
     if not data:
         return
+
+    if state.get('costCenterId'):
+        seg = next((c for c in state.get('cost_centers', []) if c['id'] == state['costCenterId']), None)
+        if seg:
+            cur_l = lang() if lang() in ('fr', 'en') else 'en'
+            s_name = seg.get('name_en') if cur_l == 'en' else seg.get('name')
+            with ui.row().classes('w-full items-center gap-2 px-3 py-2 rounded bg-teal-50 border border-teal-200 text-teal-900 text-xs font-semibold'):
+                ui.icon('pie_chart', size='18px').classes('text-teal-700')
+                ui.label(f"IFRS 8 Operating Segment: {seg.get('code')} — {s_name} (Segmental Disclosure)")
 
     if slug == 'ppe-note':
         _ppe_note(data, currency, state, export_state)
@@ -972,3 +990,95 @@ def _slug(text: str) -> str:
     while '--' in slug:
         slug = slug.replace('--', '-')
     return slug.strip('-')[:70] or 'statement'
+
+
+async def _fec_dialog(years: list[dict], current_year: dict) -> None:
+    fy_options = {y['id']: f"{y['code']} ({str(y['start_date'])[:10]} — {str(y['end_date'])[:10]})"
+                  for y in years}
+    state = {
+        'fy_id': current_year.get('id', years[0]['id'] if years else 1),
+        'delimiter': 'pipe',
+        'decimal_sep': 'comma',
+    }
+    currency = api.user().get('functional_currency', 'XAF')
+
+    with ui.dialog().props('maximized') as dialog, \
+            ui.element('div').classes('bg-white w-full h-full flex flex-col'):
+        with ui.row().classes('items-center justify-between w-full px-6 py-3 border-b border-slate-200'):
+            with ui.column().classes('gap-0'):
+                ui.label(t('fec.dialog_title')).classes('text-base font-semibold')
+                ui.label(t('fec.dialog_sub')).classes('text-xs text-slate-500')
+            ui.button(icon='close', on_click=dialog.close).props('flat dense round')
+
+        with ui.column().classes('flex-1 overflow-auto p-6 gap-5 w-full max-w-[1200px] mx-auto'):
+            with ui.element('div').classes('lc-card p-4 w-full'):
+                with ui.row().classes('w-full items-center gap-4 flex-wrap'):
+                    fy_sel = ui.select(fy_options, value=state['fy_id'], label=t('fec.fy_label')) \
+                        .props('outlined dense options-dense').classes('w-72')
+                    fy_sel.bind_value(state, 'fy_id')
+
+                    delim_sel = ui.select({'pipe': t('fec.delim_pipe'), 'tab': t('fec.delim_tab')},
+                                          value=state['delimiter'], label=t('fec.delimiter_label')) \
+                        .props('outlined dense options-dense').classes('w-56')
+                    delim_sel.bind_value(state, 'delimiter')
+
+                    dec_sel = ui.select({'comma': t('fec.dec_comma'), 'dot': t('fec.dec_dot')},
+                                        value=state['decimal_sep'], label=t('fec.dec_label')) \
+                        .props('outlined dense options-dense').classes('w-44')
+                    dec_sel.bind_value(state, 'decimal_sep')
+
+                    ui.button(t('bud.btn_refresh'), icon='refresh', on_click=lambda: load_preview()).props('outline size=sm')
+
+            w.note(t('fec.note'), icon='verified', tone='teal')
+
+            preview_container = ui.column().classes('w-full gap-4')
+
+            async def load_preview() -> None:
+                preview_container.clear()
+                data = await api.safe(api.get('/reports/fec-ohada/preview', fiscalYearId=state['fy_id']))
+                if not data:
+                    return
+
+                with preview_container:
+                    with w.kpi_row():
+                        w.kpi(t('fec.kpi_file'), data.get('fileName'),
+                              hint='Format SirenFECDateClôture.txt', icon='description', tone='slate')
+                        w.kpi(t('fec.kpi_lines'), w.number(data.get('totalLines')),
+                              hint=t('fec.kpi_lines_hint'), icon='format_list_numbered', tone='sky')
+                        w.kpi(t('fec.kpi_debit'), w.money(data.get('totalDebit'), currency),
+                              hint='Débit = Crédit', icon='balance', tone='teal')
+                        w.kpi(t('gl.balanced'), t('gl.yes'),
+                              hint=t('gl.balanced_hint'), icon='check_circle', tone='emerald')
+
+                    rows = data.get('previewRows') or []
+                    if not rows:
+                        w.empty_state(t('gl.no_data_period'), icon='folder_off')
+                        return
+
+                    columns = [
+                        w.column('JournalCode', 'Journal', classes='lc-num font-semibold'),
+                        w.column('EcritureNum', t('gl.col_entry_no'), classes='lc-num font-semibold'),
+                        w.column('EcritureDate', t('gl.col_date')),
+                        w.column('CompteNum', t('gl.col_code')),
+                        w.column('CompAuxNum', t('gl.col_partner_code')),
+                        w.column('PieceRef', t('gl.col_ref')),
+                        w.column('EcritureLib', t('gl.col_desc')),
+                        w.money_column('Debit', f"{t('gl.col_debit')} ({currency})", currency=currency),
+                        w.money_column('Credit', f"{t('gl.col_credit')} ({currency})", currency=currency),
+                        w.column('EcritureLet', t('gl.col_let')),
+                        w.column('ValidDate', 'ValidDate'),
+                    ]
+                    w.table(columns, rows, pagination=15)
+
+                    async def download_file() -> None:
+                        url = f"/api/reports/fec-ohada?fiscalYearId={state['fy_id']}&delimiter={state['delimiter']}&decimalSep={state['decimal_sep']}"
+                        ui.download(url, filename=data.get('fileName', 'FEC_OHADA.txt'))
+
+                    with ui.row().classes('w-full justify-between items-center pt-3 border-t border-slate-200'):
+                        ui.label(f"Preview (50 / {w.number(data.get('totalLines'))})").classes('text-xs text-slate-500 italic')
+                        ui.button(t('fec.btn_download'), icon='download',
+                                  on_click=download_file).props('unelevated color=teal size=md')
+
+            ui.timer(0.05, load_preview, once=True)
+
+    dialog.open()

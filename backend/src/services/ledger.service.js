@@ -145,10 +145,20 @@ export async function createJournalEntry(tx, input) {
     totalDebit = money(totalDebit + debit);
     totalCredit = money(totalCredit + credit);
 
+    let subledgerId = raw.subledgerId ?? null;
+    if (!subledgerId && raw.partnerId && raw.partnerType && raw.partnerType !== 'none') {
+      const sub = await tx.queryOne(
+        'SELECT id FROM subledger_accounts WHERE org_id = ? AND partner_type = ? AND partner_id = ? LIMIT 1',
+        [orgId, raw.partnerType, raw.partnerId]
+      );
+      if (sub) subledgerId = sub.id;
+    }
+
     prepared.push({
       account,
       costCenterId: raw.costCenterId ?? null,
       assetId: raw.assetId ?? null,
+      subledgerId,
       projectCode: raw.projectCode ?? null,
       description: raw.description ?? null,
       debit,
@@ -196,12 +206,12 @@ export async function createJournalEntry(tx, input) {
   for (const [i, l] of prepared.entries()) {
     await tx.query(
       `INSERT INTO journal_lines
-         (org_id, entry_id, line_no, account_id, cost_center_id, asset_id, project_code,
+         (org_id, entry_id, line_no, account_id, cost_center_id, asset_id, subledger_id, project_code,
           description, debit, credit, currency, fx_rate, debit_func, credit_func,
           tax_code_id, partner_type, partner_id, origin, proposal_source, proposal_rule_code, proposal_reason)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
-        orgId, entryId, i + 1, l.account.id, l.costCenterId, l.assetId, l.projectCode,
+        orgId, entryId, i + 1, l.account.id, l.costCenterId, l.assetId, l.subledgerId, l.projectCode,
         l.description, l.debit, l.credit, l.currency, l.fxRate,
         money(l.debit * l.fxRate), money(l.credit * l.fxRate),
         l.taxCodeId, l.partnerType, l.partnerId,

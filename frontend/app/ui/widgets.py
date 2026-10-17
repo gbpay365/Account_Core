@@ -159,6 +159,24 @@ def page_header(title: str, subtitle: str | None = None, *,
                 actions()
 
 
+def modal_header(title: str, *, subtitle: str | None = None,
+                 emoji: str | None = None, icon: str | None = None,
+                 on_close: Callable | None = None) -> None:
+    """Standardised header for modal dialogs with title, icon/emoji and optional close button."""
+    with ui.row().classes('w-full items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-200'):
+        with ui.row().classes('items-center gap-2.5 min-w-0 no-wrap'):
+            if emoji:
+                ui.label(emoji).classes('text-2xl leading-none shrink-0')
+            elif icon:
+                ui.icon(icon).classes('text-teal-600 text-xl shrink-0')
+            with ui.column().classes('gap-0 min-w-0'):
+                ui.label(title).classes('text-base font-semibold text-slate-900 leading-tight')
+                if subtitle:
+                    ui.label(subtitle).classes('text-xs text-slate-500')
+        if on_close:
+            ui.button(icon='close', on_click=on_close).props('flat round dense size=sm').classes('text-slate-400 hover:text-slate-600')
+
+
 def section(title: str, subtitle: str | None = None, *,
             actions: Callable[[], None] | None = None,
             emoji: str | None = None, icon: str | None = None) -> ui.element:

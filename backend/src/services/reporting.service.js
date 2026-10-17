@@ -838,10 +838,17 @@ function trialBalanceTotals(rows) {
       opening_credit: money(t.opening_credit + r.opening_credit),
       period_debit: money(t.period_debit + r.period_debit),
       period_credit: money(t.period_credit + r.period_credit),
+      ytd_debit: money(t.ytd_debit + (r.ytd_debit ?? (r.opening_debit + r.period_debit))),
+      ytd_credit: money(t.ytd_credit + (r.ytd_credit ?? (r.opening_credit + r.period_credit))),
       closing_debit: money(t.closing_debit + r.closing_debit),
       closing_credit: money(t.closing_credit + r.closing_credit),
     }),
-    { opening_debit: 0, opening_credit: 0, period_debit: 0, period_credit: 0, closing_debit: 0, closing_credit: 0 }
+    {
+      opening_debit: 0, opening_credit: 0,
+      period_debit: 0, period_credit: 0,
+      ytd_debit: 0, ytd_credit: 0,
+      closing_debit: 0, closing_credit: 0,
+    }
   );
   totals.balanced =
     totals.period_debit === totals.period_credit && totals.closing_debit === totals.closing_credit;
@@ -908,6 +915,8 @@ export async function buildIfrsTrialBalance(db, orgId, { from, to, costCenterId 
     .sort((a, b) => a.sort_order - b.sort_order || a.code.localeCompare(b.code))
     .map((l) => {
       const closing = money(l.opening + l.debit - l.credit);
+      const opDr = l.opening > 0 ? l.opening : 0;
+      const opCr = l.opening < 0 ? money(-l.opening) : 0;
       return {
         id: l.id,
         code: l.code,
@@ -915,10 +924,12 @@ export async function buildIfrsTrialBalance(db, orgId, { from, to, costCenterId 
         name_fr: l.name_fr,
         statement: l.statement,
         section: l.section,
-        opening_debit: l.opening > 0 ? l.opening : 0,
-        opening_credit: l.opening < 0 ? money(-l.opening) : 0,
+        opening_debit: opDr,
+        opening_credit: opCr,
         period_debit: l.debit,
         period_credit: l.credit,
+        ytd_debit: money(opDr + l.debit),
+        ytd_credit: money(opCr + l.credit),
         closing_debit: closing > 0 ? closing : 0,
         closing_credit: closing < 0 ? money(-closing) : 0,
         components: l.components,
@@ -939,17 +950,24 @@ export async function buildTrialBalance(db, orgId, { from, to, framework = 'ohad
   const balances = await loadBalances(db, orgId, { from, to, framework, costCenterId });
   const rows = [...balances.values()]
     .filter((a) => includeZero || a.opening !== 0 || a.debit !== 0 || a.credit !== 0)
-    .map((a) => ({
-      code: a.code,
-      name: a.name,
-      account_class: a.account_class,
-      opening_debit: a.opening > 0 ? a.opening : 0,
-      opening_credit: a.opening < 0 ? money(-a.opening) : 0,
-      period_debit: a.debit,
-      period_credit: a.credit,
-      closing_debit: a.closing > 0 ? a.closing : 0,
-      closing_credit: a.closing < 0 ? money(-a.closing) : 0,
-    }));
+    .map((a) => {
+      const opDr = a.opening > 0 ? a.opening : 0;
+      const opCr = a.opening < 0 ? money(-a.opening) : 0;
+      return {
+        code: a.code,
+        name: a.name,
+        name_en: a.name_en,
+        account_class: a.account_class,
+        opening_debit: opDr,
+        opening_credit: opCr,
+        period_debit: a.debit,
+        period_credit: a.credit,
+        ytd_debit: money(opDr + a.debit),
+        ytd_credit: money(opCr + a.credit),
+        closing_debit: a.closing > 0 ? a.closing : 0,
+        closing_credit: a.closing < 0 ? money(-a.closing) : 0,
+      };
+    });
 
   return { from, to, framework, rows, totals: trialBalanceTotals(rows) };
 }

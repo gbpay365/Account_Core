@@ -416,6 +416,16 @@ export async function postWorkOrderCost(tx, orgId, woId, opts = {}) {
     throw new ApiError(403, 'Capitalising an improvement requires the journal.post permission.');
   }
 
+  const supplier = wo.service_provider_id
+    ? wo.service_provider_id
+    : (await tx.queryOne(
+        'SELECT supplier_id FROM work_order_parts WHERE work_order_id = ? AND supplier_id IS NOT NULL LIMIT 1',
+        [woId]
+      ))?.supplier_id
+      || (await tx.queryOne('SELECT id FROM suppliers WHERE org_id = ? ORDER BY id ASC LIMIT 1', [orgId]))?.id;
+  const partnerId = supplier ?? null;
+  const partnerType = partnerId ? 'supplier' : 'none';
+
   const entry = await createJournalEntry(tx, {
     orgId,
     journalCode: capitalize ? 'IMM' : 'ACH',
@@ -443,8 +453,8 @@ export async function postWorkOrderCost(tx, orgId, woId, opts = {}) {
         description: `${wo.wo_no} - ${asset.asset_tag}`,
         debit: 0,
         credit: amount,
-        partnerType: wo.service_provider_id ? 'supplier' : 'none',
-        partnerId: wo.service_provider_id,
+        partnerType,
+        partnerId,
       },
     ],
   });

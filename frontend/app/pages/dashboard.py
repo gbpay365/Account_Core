@@ -14,6 +14,7 @@ from ..ui import chrome, widgets as w
 from ..ui.shell import page
 
 
+@page('/dashboard', title='Dashboard', permissions=('coa.view', 'asset.view', 'wo.view', 'errand.view'))
 @page('/', title='Dashboard', permissions=('coa.view', 'asset.view', 'wo.view', 'errand.view'))
 async def dashboard() -> None:
     view = framework()

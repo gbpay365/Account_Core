@@ -5,7 +5,7 @@ import { handler, requirePermission, validate, requestContext } from '../middlew
 import { writeAudit } from '../services/auth.service.js';
 import { createJournalEntry, postJournalEntry, reverseJournalEntry } from '../services/ledger.service.js';
 import { buildTrialBalance, loadBalances } from '../services/reporting.service.js';
-import { notFound, forbidden } from '../utils/errors.js';
+import { notFound, forbidden, badRequest } from '../utils/errors.js';
 import { money } from '../utils/money.js';
 import { actorOf, can, isoDate, optionalId, boolish, pagination, paged, reportRange } from './helpers.js';
 
@@ -24,6 +24,38 @@ journalRoutes.get(
       [req.orgId]
     );
     res.json({ rows, total: rows.length });
+  })
+);
+
+journalRoutes.post(
+  '/journals',
+  requirePermission('journal.create', 'coa.manage', 'admin.manage'),
+  validate({
+    body: z.object({
+      code: z.string().trim().min(1).max(10).toUpperCase(),
+      name: z.string().trim().min(1).max(100),
+      nameEn: z.string().trim().max(100).optional().nullable(),
+      journalType: z.enum(['sales', 'purchase', 'cash', 'bank', 'payroll', 'asset', 'depreciation', 'general', 'closing', 'fx']).default('general'),
+      defaultAccountId: optionalId.nullable().optional(),
+      allowManual: boolish.default(true),
+    }),
+  }),
+  handler(async (req, res) => {
+    const { code, name, nameEn, journalType, defaultAccountId, allowManual } = req.body;
+    const existing = await queryOne('SELECT id FROM journals WHERE org_id = ? AND code = ?', [req.orgId, code]);
+    if (existing) throw badRequest(`Journal with code ${code} already exists.`);
+    const result = await query(
+      `INSERT INTO journals (org_id, code, name, name_en, journal_type, default_account_id, allow_manual, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+      [req.orgId, code, name, nameEn || null, journalType, defaultAccountId || null, allowManual ? 1 : 0]
+    );
+    const created = await queryOne('SELECT * FROM journals WHERE id = ?', [result.insertId]);
+    await writeAudit({
+      orgId: req.orgId, userId: req.user.id, action: 'create', entity: 'journal', entityId: created.id,
+      summary: `Created journal ${created.code} (${created.name})`,
+      after: created, context: requestContext(req),
+    });
+    res.status(201).json({ journal: created });
   })
 );
 
@@ -122,12 +154,14 @@ journalRoutes.get(
               a.account_class,
               c.code AS cost_center_code, c.name AS cost_center_name, c.name_en AS cost_center_name_en,
               ast.asset_tag, ast.name AS asset_name,
-              t.code AS tax_code
+              t.code AS tax_code,
+              sub.code AS subledger_code, sub.name AS subledger_name
          FROM journal_lines l
          JOIN accounts a ON a.id = l.account_id
          LEFT JOIN cost_centers c ON c.id = l.cost_center_id
          LEFT JOIN assets ast ON ast.id = l.asset_id
          LEFT JOIN tax_codes t ON t.id = l.tax_code_id
+         LEFT JOIN subledger_accounts sub ON sub.id = l.subledger_id
         WHERE l.entry_id = ? ORDER BY l.line_no`,
       [entry.id]
     );
@@ -147,6 +181,7 @@ const lineBody = z.object({
   accountCode: z.string().trim().optional(),
   costCenterId: optionalId.nullable(),
   assetId: optionalId.nullable(),
+  subledgerId: optionalId.nullable(),
   projectCode: z.string().trim().max(40).optional().nullable(),
   description: z.string().trim().max(300).optional().nullable(),
   debit: z.coerce.number().min(0).default(0),
@@ -283,9 +318,10 @@ journalRoutes.get(
   requirePermission('journal.view'),
   validate({ query: reportRange.omit({ framework: true }).extend({
     framework: z.enum(['ohada', 'ifrs']).default('ohada'),
+    matchFilter: z.enum(['all', 'unmatched', 'matched']).default('all'),
   }) }),
   handler(async (req, res) => {
-    const { from, to, framework, costCenterId } = req.query;
+    const { from, to, framework, costCenterId, matchFilter } = req.query;
     const account = await queryOne(
       'SELECT * FROM accounts WHERE id = ? AND org_id = ?',
       [req.params.accountId, req.orgId]
@@ -296,19 +332,28 @@ journalRoutes.get(
     const opening = balances.get(account.code)?.opening ?? 0;
 
     const frameworks = framework === 'ifrs' ? ['both', 'ifrs'] : ['both', 'ohada'];
-    const ccFilter = costCenterId ? ' AND l.cost_center_id = ?' : '';
+    let filter = costCenterId ? ' AND l.cost_center_id = ?' : '';
+    if (matchFilter === 'unmatched') {
+      filter += ' AND l.match_code IS NULL';
+    } else if (matchFilter === 'matched') {
+      filter += ' AND l.match_code IS NOT NULL';
+    }
+
     const rows = await query(
       `SELECT e.id AS entry_id, e.entry_no, e.entry_date, e.reference, e.framework, e.status,
-              j.code AS journal_code, l.line_no, l.description, l.debit, l.credit,
-              c.code AS cost_center_code, ast.asset_tag
+              j.code AS journal_code, l.id AS line_id, l.line_no, l.description, l.debit, l.credit,
+              l.match_code, l.match_date, l.match_type,
+              c.code AS cost_center_code, ast.asset_tag,
+              sub.id AS subledger_id, sub.code AS subledger_code, sub.name AS subledger_name
          FROM journal_lines l
          JOIN journal_entries e ON e.id = l.entry_id
          JOIN journals j ON j.id = e.journal_id
          LEFT JOIN cost_centers c ON c.id = l.cost_center_id
          LEFT JOIN assets ast ON ast.id = l.asset_id
+         LEFT JOIN subledger_accounts sub ON sub.id = l.subledger_id
         WHERE l.account_id = ? AND e.org_id = ? AND e.status = 'posted'
           AND e.framework IN (${frameworks.map(() => '?').join(',')})
-          AND e.entry_date BETWEEN ? AND ?${ccFilter}
+          AND e.entry_date BETWEEN ? AND ?${filter}
         ORDER BY e.entry_date, e.id, l.line_no`,
       [account.id, req.orgId, ...frameworks, from, to, ...(costCenterId ? [costCenterId] : [])]
     );
@@ -324,6 +369,7 @@ journalRoutes.get(
       from,
       to,
       framework,
+      match_filter: matchFilter,
       opening_balance: opening,
       closing_balance: running,
       total_debit: money(rows.reduce((t, r) => t + Number(r.debit), 0)),

@@ -95,6 +95,10 @@ async def patch(path: str, body: Any = None) -> Any:
     return await request('PATCH', path, json=body or {})
 
 
+async def put(path: str, body: Any = None, **params: Any) -> Any:
+    return await request('PUT', path, json=body if body is not None else {}, params=params)
+
+
 async def delete(path: str) -> Any:
     return await request('DELETE', path)
 

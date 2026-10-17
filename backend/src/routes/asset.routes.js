@@ -6,7 +6,7 @@ import { writeAudit } from '../services/auth.service.js';
 import {
   registerAsset, capitalizeAsset, commissionAsset, moveAsset,
   refreshComplianceFlags, requestDisposal, decideDisposal, completeDisposal,
-  assetQrDataUrl, assetQrSvg,
+  assetQrDataUrl, assetQrSvg, getAssetComponentRollup,
 } from '../services/asset.service.js';
 import { notFound, badRequest, unprocessable } from '../utils/errors.js';
 import { money } from '../utils/money.js';
@@ -358,6 +358,8 @@ assetRoutes.post(
       date: isoDate.optional(),
       recoverableVat: z.coerce.number().min(0).default(0),
       creditAccountCode: z.string().trim().max(20).optional(),
+      capitalizeFromWip: boolish.optional(),
+      wipAccountId: optionalId.optional(),
       overrideReason: z.string().trim().max(500).optional().nullable(),
     }).default({}),
   }),
@@ -371,6 +373,15 @@ assetRoutes.post(
       after: entry, context: requestContext(req),
     });
     res.json({ entry });
+  })
+);
+
+assetRoutes.get(
+  '/assets/:id/components-rollup',
+  requirePermission('asset.view'),
+  handler(async (req, res) => {
+    const rollup = await getAssetComponentRollup({ query, queryOne }, req.orgId, Number(req.params.id));
+    res.json(rollup);
   })
 );
 

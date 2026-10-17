@@ -18,41 +18,84 @@ from . import chrome
 
 #: Navigation is declared once and filtered by permission, so a role only ever
 #: sees the parts of the system it can actually use.
-NAV: list[tuple[str, list[tuple[str, str, str, tuple[str, ...]]]]] = [
-    ('nav.overview', [
-        ('/', 'nav.dashboard', 'space_dashboard', ('coa.view', 'asset.view', 'wo.view', 'errand.view')),
-    ]),
-    ('nav.accounting', [
-        ('/accounts', 'nav.accounts', 'account_tree', ('coa.view',)),
-        ('/journal', 'nav.journal', 'receipt_long', ('journal.view',)),
-        ('/ledger', 'nav.ledger', 'menu_book', ('journal.view',)),
-        ('/periods', 'nav.periods', 'event_available', ('period.view', 'close.view')),
-    ]),
-    ('nav.assets', [
-        ('/assets', 'nav.register', 'inventory_2', ('asset.view',)),
-        ('/categories', 'nav.categories', 'category', ('asset.view',)),
-        ('/depreciation', 'nav.depreciation', 'trending_down', ('depr.view',)),
-    ]),
-    ('nav.maintenance', [
-        ('/maintenance', 'nav.work_orders', 'build', ('wo.view',)),
-        ('/plans', 'nav.plans', 'event_repeat', ('maint.plan.view',)),
-        ('/compliance', 'nav.compliance', 'verified_user', ('calibration.view',)),
-        ('/worklist', 'nav.worklist', 'assignment_ind', ('wo.execute', 'wo.request', 'errand.execute')),
-    ]),
-    ('nav.services', [
-        ('/errands', 'nav.errands', 'directions_run', ('errand.view',)),
-        ('/shopping', 'nav.shopping', 'shopping_cart', ('shop.view',)),
-    ]),
-    ('nav.reporting', [
-        ('/reports', 'nav.statements', 'assessment', ('report.financial',)),
-        ('/asset-reports', 'nav.asset_reports', 'summarize', ('report.asset',)),
-        ('/audit', 'nav.audit', 'history', ('admin.audit',)),
-    ]),
-]
+def get_nav() -> list[tuple[str, list[tuple[str, str, str, tuple[str, ...]]]]]:
+    is_ifrs = framework() == 'ifrs'
+
+    if is_ifrs:
+        # IFRS Core Accounting Application sidebar items
+        acct_items = [
+            ('/accounts', 'nav.accounts', 'account_tree', ('coa.view',)),
+            ('/journal', 'nav.journal', 'receipt_long', ('journal.view',)),
+            ('/ledger', 'nav.ledger', 'menu_book', ('journal.view',)),
+            ('/periods', 'nav.periods', 'event_available', ('period.view', 'close.view')),
+            ('/bank-reconciliation', 'nav.bank_reconciliation', 'account_balance', ('journal.view',)),
+        ]
+        # IFRS Assets Management Application sidebar items
+        asset_items = [
+            ('/assets', 'nav.register', 'inventory_2', ('asset.view',)),
+            ('/categories', 'nav.categories', 'category', ('asset.view',)),
+            ('/depreciation', 'nav.depreciation', 'trending_down', ('depr.view',)),
+            ('/leases', 'nav.leases', 'real_estate_agent', ('asset.view',)),
+        ]
+        reporting_items = [
+            ('/reports', 'nav.statements', 'assessment', ('report.financial',)),
+            ('/asset-reports', 'nav.asset_reports', 'summarize', ('report.asset',)),
+            ('/audit', 'nav.audit', 'history', ('admin.audit',)),
+        ]
+    else:
+        # OHADA SYSCOHADA & Regional CEMAC Accounting Application sidebar items
+        acct_items = [
+            ('/accounts', 'nav.accounts', 'account_tree', ('coa.view',)),
+            ('/journal', 'nav.journal', 'receipt_long', ('journal.view',)),
+            ('/ledger', 'nav.ledger', 'menu_book', ('journal.view',)),
+            ('/periods', 'nav.periods', 'event_available', ('period.view', 'close.view')),
+            ('/bank-reconciliation', 'nav.bank_reconciliation', 'account_balance', ('journal.view',)),
+            ('/withholding-tax', 'nav.withholding_tax', 'request_quote', ('journal.view',)),
+            ('/cash-registers', 'nav.cash_registers', 'point_of_sale', ('journal.view',)),
+            ('/donor-projects', 'nav.donor_projects', 'handshake', ('journal.view',)),
+            ('/payroll', 'nav.payroll', 'badge', ('journal.view',)),
+            ('/dfe-invoicing', 'nav.dfe_invoicing', 'receipt', ('journal.view',)),
+        ]
+        # OHADA Fixed Assets & Barcode Inventory sidebar items
+        asset_items = [
+            ('/assets', 'nav.register', 'inventory_2', ('asset.view',)),
+            ('/categories', 'nav.categories', 'category', ('asset.view',)),
+            ('/depreciation', 'nav.depreciation', 'trending_down', ('depr.view',)),
+            ('/fiscal-depreciation', 'nav.fiscal_depreciation', 'calculate', ('depr.view',)),
+            ('/asset-inventory', 'nav.asset_inventory', 'qr_code_scanner', ('asset.view',)),
+        ]
+        reporting_items = [
+            ('/reports', 'nav.statements', 'assessment', ('report.financial',)),
+            ('/dsf', 'nav.dsf', 'table_chart', ('report.financial',)),
+            ('/asset-reports', 'nav.asset_reports', 'summarize', ('report.asset',)),
+            ('/audit', 'nav.audit', 'history', ('admin.audit',)),
+        ]
+
+    return [
+        ('nav.overview', [
+            ('/', 'nav.dashboard', 'space_dashboard', ('coa.view', 'asset.view', 'wo.view', 'errand.view')),
+        ]),
+        ('nav.accounting', acct_items),
+        ('nav.assets', asset_items),
+        ('nav.maintenance', [
+            ('/maintenance', 'nav.work_orders', 'build', ('wo.view',)),
+            ('/plans', 'nav.plans', 'event_repeat', ('maint.plan.view',)),
+            ('/compliance', 'nav.compliance', 'verified_user', ('calibration.view',)),
+            ('/worklist', 'nav.worklist', 'assignment_ind', ('wo.execute', 'wo.request', 'errand.execute')),
+        ]),
+        ('nav.services', [
+            ('/errands', 'nav.errands', 'directions_run', ('errand.view',)),
+            ('/shopping', 'nav.shopping', 'shopping_cart', ('shop.view',)),
+        ]),
+        ('nav.reporting', reporting_items),
+        ('nav.administration', [
+            ('/admin', 'nav.admin_console', 'admin_panel_settings', ('admin.users', 'admin.settings', 'coa.manage', 'admin.audit')),
+        ]),
+    ]
 
 
 def visible_nav() -> Iterable[tuple[str, list[tuple[str, str, str, tuple[str, ...]]]]]:
-    for group, items in NAV:
+    for group, items in get_nav():
         allowed = [item for item in items if api.can(*item[3])]
         if allowed:
             yield group, allowed
@@ -162,7 +205,8 @@ def _brand(user: dict) -> None:
             with ui.element('div').classes('rounded-xl p-2 shrink-0').style(f'background: {ACCENT}'):
                 ui.label('🏥').classes('text-[20px] leading-none')
             with ui.column().classes('gap-0 min-w-0'):
-                ui.label(f"📒 {t('app.product')}").classes('text-white text-[15px] font-bold leading-tight')
+                fw_badge = "🌐" if framework() == 'ifrs' else "📒"
+                ui.label(f"{fw_badge} {t('app.product')}").classes('text-white text-[15px] font-bold leading-tight')
                 ui.label(t('app.tagline')).classes('text-[10.5px] text-slate-400 leading-tight')
         ui.label(f"📍 {user.get('org_name', '')}").classes(
             'text-[11px] text-slate-400 mt-3 truncate w-full')
@@ -184,6 +228,9 @@ def _rail_footer(user: dict) -> None:
                 ui.label(user.get('full_name', '')).classes('text-sm font-semibold')
                 ui.label(user.get('email', '')).classes('text-xs text-slate-500')
             ui.separator()
+            if api.can('coa.manage', 'admin.audit', 'admin.users', 'admin.settings'):
+                ui.menu_item(f"⚙️ {t('nav.admin_console')}", lambda: ui.navigate.to('/admin'))
+                ui.separator()
             ui.menu_item(f"🔑 {t('auth.change_pw')}", lambda: _password_dialog())
             ui.separator()
             ui.menu_item(f"🚪 {t('auth.signout')}", api.logout)
@@ -197,12 +244,12 @@ def _header(user: dict, drawer, active: str = '') -> None:
             with ui.column().classes('gap-0 min-w-0'):
                 ui.label(f"🏥 {user.get('org_name', '')}").classes(
                     'text-[13.5px] font-semibold text-slate-800 truncate leading-tight')
-                # The reporting basis is reference material, and on a phone it
-                # would wrap into the org name it sits under.
+                fw_name = t('fw.ifrs') if framework() == 'ifrs' else t('fw.ohada')
+                fw_tier_desc = "🌐 IFRS" if framework() == 'ifrs' else f"📒 OHADA {str(user.get('reporting_tier', '')).capitalize()}"
                 ui.label(
-                    f"🇨🇲 {user.get('country_code', '')} · 📒 OHADA {str(user.get('reporting_tier', '')).capitalize()}"
+                    f"🇨🇲 {user.get('country_code', '')} · {fw_tier_desc}"
                     f" · 💱 {user.get('functional_currency', '')}"
-                    f" · {t('fw.viewing', fw=t('fw.ifrs') if framework() == 'ifrs' else t('fw.ohada'))}"
+                    f" · {t('fw.viewing', fw=fw_name)}"
                 ).classes('text-[11px] text-slate-500 leading-tight truncate lc-desktop-only')
 
         with ui.row().classes('items-center gap-2 shrink-0 no-wrap'):
@@ -216,22 +263,130 @@ def _header(user: dict, drawer, active: str = '') -> None:
 
 
 def _framework_toggle(active: str) -> None:
+    user = api.user()
+    org_fw = user.get('frameworks')
+    fw_list = []
+    if isinstance(org_fw, (list, tuple)):
+        fw_list = [str(f).lower().strip() for f in org_fw if f]
+    elif isinstance(org_fw, str):
+        fw_list = [f.strip().lower() for f in org_fw.split(',') if f.strip()]
+
     current = framework()
-    toggle = ui.toggle({'ohada': f"🇨🇲 {t('fw.ohada')}", 'ifrs': f"🌐 {t('fw.ifrs')}"}, value=current) \
-        .props('dense unelevated no-caps').classes('lc-seg rounded-lg text-xs')
-    toggle.tooltip(t('fw.switch'))
 
-    def switch(event) -> None:
-        code = event.value if hasattr(event, 'value') else current
-        if code not in ('ohada', 'ifrs') or code == framework():
-            return
-        set_framework(code)
-        ui.navigate.reload()
+    def _open_admin():
+        if api.can('coa.manage', 'admin.audit'):
+            admin_framework_dialog()
 
-    toggle.on_value_change(switch)
+    # 3) If the system is setup for OHADA then show only the OHADA button
+    if current == 'ohada' or fw_list == ['ohada']:
+        ui.button(f"🇨🇲 {t('fw.ohada')}", on_click=_open_admin) \
+            .props('dense unelevated no-caps color=teal text-color=white size=sm') \
+            .classes('rounded-lg px-3 font-semibold shadow-none cursor-pointer') \
+            .tooltip(t('fw.ohada_tip'))
+        return
+
+    # 3) If system is setup to IFRS then show only the IFRS button
+    if current == 'ifrs' or fw_list == ['ifrs']:
+        ui.button(f"🌐 {t('fw.ifrs')}", on_click=_open_admin) \
+            .props('dense unelevated no-caps color=sky-8 text-color=white size=sm') \
+            .classes('rounded-lg px-3 font-semibold shadow-none cursor-pointer') \
+            .tooltip(t('fw.ifrs_tip'))
+        return
+
+
+def admin_framework_dialog(on_saved=None) -> None:
+    user = api.user()
+    org_fw = user.get('frameworks')
+    if isinstance(org_fw, (list, tuple)) and org_fw:
+        current_fw = str(org_fw[0]).lower().strip()
+    elif isinstance(org_fw, str) and org_fw:
+        current_fw = org_fw.lower().strip()
+    else:
+        current_fw = framework()
+
+    current_tier = str(user.get('reporting_tier') or 'normal').lower().strip()
+
+    with ui.dialog() as dialog, ui.card().classes('p-6 w-[560px] max-w-full rounded-2xl shadow-xl'):
+        with ui.row().classes('w-full justify-between items-start mb-2'):
+            with ui.column().classes('gap-0'):
+                ui.label(f"⚙️ {t('admin.dialog_title')}").classes('text-lg font-bold text-slate-900')
+                ui.label(t('admin.dialog_sub')).classes('text-xs text-slate-500')
+            ui.button(icon='close', on_click=dialog.close).props('flat round dense size=sm')
+
+        with ui.column().classes('w-full gap-4 mt-2'):
+            # Org info strip
+            with ui.row().classes('w-full p-3 bg-slate-50 rounded-xl border border-slate-200 items-center justify-between text-xs'):
+                with ui.column().classes('gap-0.5'):
+                    ui.label(t('admin.current_org')).classes('text-[10.5px] uppercase font-bold text-slate-400')
+                    ui.label(f"🏥 {user.get('org_name', '')}").classes('font-semibold text-slate-800')
+                with ui.row().classes('gap-2 items-center'):
+                    ui.chip(f"🇨🇲 {user.get('country_code', '')}", color='slate-2').props('dense text-color=slate-8')
+                    ui.chip(f"💱 {user.get('functional_currency', '')}", color='slate-2').props('dense text-color=slate-8')
+
+            # Framework options
+            ui.label(t('admin.framework_choice')).classes('text-xs uppercase font-bold text-slate-500 tracking-wider')
+
+            fw_radio = ui.radio(
+                {
+                    'ohada': t('admin.fw_ohada_opt'),
+                    'ifrs': t('admin.fw_ifrs_opt'),
+                },
+                value='ifrs' if current_fw == 'ifrs' else 'ohada'
+            ).props('dense color=primary').classes('gap-2 text-xs')
+
+            # Context explanation box
+            with ui.column().classes('w-full p-3.5 bg-teal-50/60 rounded-xl border border-teal-200 gap-1.5 text-xs text-teal-900'):
+                ui.label(f"📌 {t('admin.impact_title')}").classes('font-bold')
+                ui.label(t('admin.impact_ohada')).classes('leading-relaxed')
+                ui.label(t('admin.impact_ifrs')).classes('leading-relaxed')
+
+            # Reporting tier options
+            tier_sel = ui.select(
+                {
+                    'normal': t('admin.tier_normal'),
+                    'allege': t('admin.tier_allege'),
+                    'smt': t('admin.tier_smt'),
+                },
+                value=current_tier if current_tier in ('normal', 'allege', 'smt') else 'normal',
+                label=t('admin.tier_choice')
+            ).props('outlined dense options-dense').classes('w-full text-xs')
+
+            async def submit() -> None:
+                selected_fw = fw_radio.value or 'ohada'
+                selected_tier = tier_sel.value or 'normal'
+                save_btn.props('loading')
+                res = await api.safe(api.patch('/admin/organization', {
+                    'frameworks': selected_fw,
+                    'reporting_tier': selected_tier,
+                }))
+                if res:
+                    await api.refresh_session()
+                    if selected_fw in ('ohada', 'ifrs'):
+                        set_framework(selected_fw)
+                        if selected_fw == 'ifrs':
+                            set_lang('en')
+                            await api.safe(api.patch('/auth/locale', {'locale': 'en'}), notify=False)
+                    dialog.close()
+                    ui.notify(t('admin.save_success', fw=selected_fw.upper()), type='positive')
+                    if callable(on_saved):
+                        await on_saved()
+                    else:
+                        ui.navigate.reload()
+                save_btn.props(remove='loading')
+
+            with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                ui.button(t('common.cancel'), on_click=dialog.close).props('flat color=grey-8 size=sm')
+                save_btn = ui.button(t('admin.save_btn'), icon='save', on_click=submit).props('unelevated color=primary size=sm')
+
+    dialog.open()
+
 
 
 def _language_toggle() -> None:
+    if framework() == 'ifrs':
+        # IFRS framework is strictly English only
+        ui.badge('🇬🇧 EN').props('color=slate-7 outline').classes('text-xs px-2.5 py-1 font-bold')
+        return
     current = lang()
     toggle = ui.toggle({'en': '🇬🇧 EN', 'fr': '🇫🇷 FR'}, value=current) \
         .props('dense unelevated no-caps').classes('lc-seg rounded-lg text-xs')

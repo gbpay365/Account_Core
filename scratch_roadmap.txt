@@ -1,0 +1,319 @@
+# Deep Gap Analysis: Journal Entries, General Ledger & Asset Management
+
+**System Evaluated:** LedgerCore Health (TSSF Shisong Catholic Hospital SOA — Cameroon / CEMAC)  
+**Standard:** Revised SYSCOHADA Uniform Act on Accounting and Financial Reporting (*AUDCIF*) & IFRS  
+**Regional Benchmarks:**
+1. **Sage 100c Comptabilité & Immobilisations OHADA** *(The dominant commercial benchmark across CEMAC/UEMOA)*
+2. **Tompro / Tom2Pro** *(The standard in healthcare, donor-funded projects, NGOs, and public institutions in Francophone Africa)*
+3. **Cegid XRP Ultimate / Sprint** *(Large hospital groups, parastatals)*
+4. **SAP S/4HANA (FI-GL, FI-AP/AR, FI-AA OHADA Localization)**
+5. **Infor / Hexagon EAM & IBM Maximo** *(Biomedical CMMS & asset lifecycle integration)*
+
+---
+
+## 1. Executive Summary & Benchmark Scorecard
+
+LedgerCore Health features a well-crafted dual-framework engine (`both`, `ohada`, `ifrs`) with SYSCOHADA classes 1–9, balanced double-entry checks, period override audit tracking, and automated straight-line/declining depreciation runs. 
+
+However, when compared against regional enterprise applications (Sage 100c, Tompro, SAP), significant functional gaps exist in:
+* **Auxiliary subledgers** (*Comptabilité auxiliaire des tiers*)
+* **Lettrage / matching** (*Lettrage manuel, automatique et partiel*)
+* **Statutory 8-column trial balance** (*Balance à 8 colonnes*)
+* **Donated asset subsidy amortisation** (*Amortissement des subventions d'investissement — Compte 14/799*)
+* **Multi-currency year-end revaluation** (*Écarts de conversion 476/477 & provisions 697/194*)
+* **Audit compliance** (*FEC OHADA & cryptographic entry chaining*)
+
+### Comparative Scorecard
+
+| Domain | LedgerCore Current | Sage 100c OHADA | Tompro | Severity | Effort |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Journal Entry Capture & Workflow** | 🟡 Partial | 🟢 Complete | 🟢 Complete | **Medium** | 2–3 days |
+| **Auxiliary Subledger (Tiers)** | 🔴 Gap | 🟢 Complete | 🟢 Complete | **Critical** | 3–4 days |
+| **Lettrage & Open-Item Matching** | 🔴 Gap | 🟢 Complete | 🟢 Complete | **Critical** | 3–4 days |
+| **Multi-Axial Analytical Accounting** | 🟡 Single Axis | 🟢 Multi-Axial | 🟢 Multi-Project/Donor | **High** | 4–5 days |
+| **Multi-Currency & FX Revaluation** | 🟡 Conversion only | 🟢 Full OHADA | 🟢 Multi-currency | **High** | 2–3 days |
+| **General Ledger & 8-Column Trial Balance**| 🟡 6 Columns | 🟢 6/8 Columns | 🟢 6/8 Columns | **High** | 2 days |
+| **Asset Capitalisation from WIP (23→21)** | 🔴 Gap | 🟢 Supported | 🟡 Manual | **Medium** | 1–2 days |
+| **Donated Assets Subsidy (14→799)** | 🔴 Gap | 🟢 Automated | 🟢 Automated | **Critical** | 2 days |
+| **Physical Inventory to GL Reconciliation**| 🟡 Manual write-off | 🟢 Barcode bridge | 🟡 Manual | **Medium** | 2 days |
+| **FEC OHADA & Cryptographic Audit Trail** | 🔴 Gap | 🟢 Certified | 🟢 Supported | **High** | 2 days |
+
+---
+
+## 2. Deep Gap Breakdown by Module
+
+### Gap 1: Auxiliary Subledger Accounting (*Comptabilité Auxiliaire des Tiers*)
+
+#### What Sage 100c / Tompro / SAP Do:
+In OHADA accounting, collective accounts (Compte Collectif Général: `401100` Fournisseurs, `411100` Clients, `421100` Personnel, `431000` Sécurité Sociale) must be linked to an **Auxiliary Subledger Card** (*Compte Tiers/Auxiliaire*, e.g., `401CAMS` for CENAME/CAMSU, `411MUT` for Mutuelle de Santé, `421004` Dr. Eyenga).
+* A transaction posts to the subledger card and updates the collective general account in lockstep.
+* The system produces two distinct reports:
+  1. **Grand Livre Général** (only shows collective accounts `401`, `411`).
+  2. **Grand Livre Auxiliaire** (displays history per individual supplier/patient/insurer with subledger running balances).
+  3. **Balance Auxiliaire** (lists each third party, opening balance, period movements, and closing balance).
+
+#### LedgerCore Current State:
+* `journal_lines` only has `partner_type ENUM('supplier','customer','employee','bank','none')` and a raw integer `partner_id`.
+* There is no auxiliary ledger view, no subledger trial balance, and no way to inspect the running balance of an individual partner directly from the general ledger page [`frontend/app/pages/ledger.py`](file:///c:/Core%20Accounting%20and%20asset/frontend/app/pages/ledger.py).
+
+#### Implementation Requirements:
+1. Create a `subledger_accounts` (or `third_party_accounts`) table with `code`, `name`, `collective_account_id`, `partner_type`, `partner_id`.
+2. Add `GET /api/ledger/auxiliary-balance` and `GET /api/ledger/third-party/:id` in [`backend/src/routes/journal.routes.js`](file:///c:/Core%20Accounting%20and%20asset/backend/src/routes/journal.routes.js).
+3. Add a **Subledger / Tiers** toggle on the General Ledger UI in [`frontend/app/pages/ledger.py`](file:///c:/Core%20Accounting%20and%20asset/frontend/app/pages/ledger.py).
+
+---
+
+### Gap 2: Lettrage, Matching & Aged Payables/Receivables (*Lettrage & Balances Âgées*)
+
+#### What Sage 100c / Tompro / SAP Do:
+* **Lettrage (Matching):** Allows matching invoices with their payments (or credit notes) using uppercase letter codes (`AA`, `AB`, `AC`...).
+* **Partial Lettrage:** When an invoice is partially paid, lowercase letters (`aa`, `ab`) or partial amounts track the unpaid residual balance.
+* **Unmatched Filter (*Écritures non lettrées*):** In the General Ledger and Subledger, accountants filter out reconciled rows to view only outstanding open items.
+* **Aged Trial Balance (*Balance Âgée*):** Categorizes open items by aging buckets (<30 days, 31–60 days, 61–90 days, >90 days) based on due date.
+
+#### LedgerCore Current State:
+* `journal_lines` contains only `reconciled TINYINT(1)` and `reconciled_at DATETIME`. There is no matching key, no partial matching logic, and no lettrage interface.
+* Users cannot see which specific payment cleared which invoice, nor generate an Aged Balance from the General Ledger.
+
+#### Implementation Requirements:
+1. Update `journal_lines` with:
+   ```sql
+   ALTER TABLE journal_lines
+     ADD COLUMN match_code VARCHAR(10) NULL AFTER reconciled,
+     ADD COLUMN match_date DATETIME NULL AFTER match_code,
+     ADD COLUMN match_type ENUM('none','manual','auto','partial') NOT NULL DEFAULT 'none' AFTER match_date;
+   ```
+2. Build an interactive Lettrage modal in [`frontend/app/pages/journal.py`](file:///c:/Core%20Accounting%20and%20asset/frontend/app/pages/journal.py) or [`frontend/app/pages/ledger.py`](file:///c:/Core%20Accounting%20and%20asset/frontend/app/pages/ledger.py) allowing users to check lines, verify `sum(debit) == sum(credit)`, and apply a matching code.
+3. Build `GET /api/reports/aged-balance` (Aged Receivables & Payables).
+
+---
+
+### Gap 3: Statutory 8-Column Trial Balance (*Balance Générale à 8 Colonnes*)
+
+#### What Sage 100c / Tompro / SYSCOHADA AUDCIF Mandate:
+The official SYSCOHADA reporting standard (AUDCIF Art. 22) requires an 8-column trial balance:
+1. **Soldes d'ouverture Débit** (Opening Debit)
+2. **Soldes d'ouverture Crédit** (Opening Credit)
+3. **Mouvements Période Débit** (Period Debit)
+4. **Mouvements Période Crédit** (Period Credit)
+5. **Cumul Exercice Débit** (Year-to-Date Cumulative Debit)
+6. **Cumul Exercice Crédit** (Year-to-Date Cumulative Credit)
+7. **Soldes de Clôture Débit** (Closing Debit)
+8. **Soldes de Clôture Crédit** (Closing Credit)
+
+#### LedgerCore Current State:
+* [`backend/src/services/reporting.service.js`](file:///c:/Core%20Accounting%20and%20asset/backend/src/services/reporting.service.js) and [`frontend/app/pages/ledger.py`](file:///c:/Core%20Accounting%20and%20asset/frontend/app/pages/ledger.py) only present a 6-column balance:
+  * Opening (Dr/Cr)
+  * Movement (Dr/Cr)
+  * Closing (Dr/Cr)
+* The cumulative year-to-date columns (5 & 6) are missing, which is a compliance non-conformity during statutory audit and DSF (*Déclaration Statistique et Fiscale*) preparation.
+
+#### Implementation Requirements:
+1. Update `buildTrialBalance` in `backend/src/services/reporting.service.js` to compute `ytd_debit = opening_debit + period_debit` and `ytd_credit = opening_credit + period_credit`.
+2. Add a toggle in [`frontend/app/pages/ledger.py`](file:///c:/Core%20Accounting%20and%20asset/frontend/app/pages/ledger.py) to switch between standard view and the official 8-column SYSCOHADA format.
+
+---
+
+### Gap 4: Donated Asset Accounting & Investment Subsidies (*Subventions d'Investissement — Compte 14 / 799*)
+
+#### What Hospital Accounting & SYSCOHADA Mandate:
+Shisong Catholic Hospital frequently receives donated biomedical equipment and facility grants (e.g., from MISEREOR, Italian Episcopal Conference, WHO, Rotary).
+* Under SYSCOHADA Art. 48 & IAS 20:
+  1. **Acquisition/Donation**:
+     * `Debit 24x Matériel médical` (at market or fair value)
+     * `Credit 141 Subventions d'équipement` (Investment Subsidy)
+  2. **Periodic Depreciation Run**:
+     * `Debit 6813 Dotations aux amortissements`
+     * `Credit 2841 Amortissements du matériel médical`
+     * **Simultaneous Subsidy Write-back (*Quote-part virée au résultat*)**:
+       * `Debit 141 Subventions d'investissement`
+       * `Credit 799 Reprises de subventions d'investissement`
+       *(Equal to the exact depreciation fraction, offsetting the net expense in P&L)*.
+
+#### LedgerCore Current State:
+* `assets` table has `funding_source = 'donation'`, `donor_name`, and `funding_reference`.
+* However, [`backend/src/services/depreciation-run.service.js`](file:///c:/Core%20Accounting%20and%20asset/backend/src/services/depreciation-run.service.js) only charges `681` to `281/284`. It **never posts the `141 -> 799` write-back entry**.
+* Consequently, donated assets artificially inflate the hospital's operating deficit without reflecting the matching subsidy release.
+
+#### Implementation Requirements:
+1. Add `subsidy_account_id` (default `141`) and `subsidy_income_account_id` (default `799`) to `asset_categories` or `assets`.
+2. Update `depreciation-run.service.js`: for any asset where `funding_source IN ('donation', 'grant')`, generate the companion debit to `141` and credit to `799` during the monthly run.
+
+---
+
+### Gap 5: Multi-Currency & Period-End Foreign Exchange Revaluation (*Comptes 476, 477, 697, 194*)
+
+#### What Sage 100c / Tompro / SYSCOHADA Mandate:
+Hospitals in Cameroon receive donations and make procurement in foreign currencies (EUR, USD, GBP, CHF).
+1. **Realized FX Gain/Loss on Settlement**:
+   When paying an invoice recorded at 1 USD = 600 XAF with a settlement rate of 620 XAF, Sage automatically posts the 20 XAF difference to `676 Perte de change` (or `776 Gain de change`).
+2. **Year-End Unrealized FX Revaluation (*Écarts de conversion*)**:
+   Under SYSCOHADA AUDCIF:
+   * Latent loss on foreign debt/receivable: `Debit 476 Écart de conversion - Actif` / `Credit 401/411`.
+   * Mandatory provision for latent loss: `Debit 697 Dotations financières` / `Credit 194 Provisions pour pertes de change`.
+   * Latent gain: `Debit 401/411` / `Credit 477 Écart de conversion - Passif`.
+
+#### LedgerCore Current State:
+* Lines store `currency`, `fx_rate`, `debit_func`, `credit_func`.
+* However, payments do not automatically record realized FX gains/losses upon settlement.
+* There is no month-end / year-end FX revaluation engine to post SYSCOHADA 476/477/697/194 entries.
+
+#### Implementation Requirements:
+1. Add payment allocation variance posting: when `payment.fx_rate != invoice.fx_rate`, post the difference to `676` or `776`.
+2. Add an automated tool in Period Close checklist: `Run Currency Revaluation` computing unrealized gains/losses for all open foreign currency balances and generating closing journal entries.
+
+---
+
+### Gap 6: Recurring Journals & Automatic Accrual Reversals (*Abonnements & Extournes Automatiques*)
+
+#### What Sage 100c / Tompro Do:
+* **Recurring Entries (*Écritures d'abonnement*):** Scheduled templates that automatically generate draft journal entries on a fixed day of each month (e.g., insurance amortisation, facility leases, monthly service retainer contracts).
+* **Automatic Reversal (*Extourne automatique à date*):** For period-end cut-off entries (Charges à payer `408`, Factures non parvenues, Produits à recevoir `418`), Sage allows checking **"Extourner au"** (e.g., 01/10/2026 for a 30/09/2026 accrual). On that date, the reversal entry is posted automatically.
+
+#### LedgerCore Current State:
+* LedgerCore has a reversal API endpoint (`POST /entries/:id/reverse`), but it requires manual invocation.
+* There are no recurring subscription journals and no automated reversal scheduling for accruals.
+
+#### Implementation Requirements:
+1. Add `is_recurring TINYINT(1)`, `recurrence_interval`, `next_run_date` to `posting_templates`.
+2. Add `auto_reverse_date DATE` on `journal_entries`. When a period closes or when the system enters a new period, automatically post the counterpart entry.
+
+---
+
+### Gap 7: Multi-Axial Analytical & Budget Commitment Accounting (*Analytique Multi-Axes & Contrôle Budgétaire*)
+
+#### What Tompro / Sage 100c / SAP Do:
+In healthcare and NGO environments (Tompro's core strength):
+* Every expense line must be codeable along **three distinct axes**:
+  1. **Organizational Axis / Cost Center**: Service Cardiologie, Néonatalogie, Radiologie.
+  2. **Funding Source / Program**: Misereor Grant #2024, Catholic Health Care fund, Hospital Operating Fund.
+  3. **Activity / Objective**: Maternal care, Biomedical equipment maintenance, Emergency response.
+* **Pre-commitment (*Contrôle à l'engagement*)**: When capturing a purchase order or journal voucher, the system checks whether the remaining budget on `(Account × Cost Center × Program)` is sufficient, issuing a warning or hard block.
+
+#### LedgerCore Current State:
+* `journal_lines` has `cost_center_id` and a loose string `project_code`.
+* `budgets` exist in the database schema (`budgets`, `budget_lines`), but:
+  * Budget amounts are not checked during journal entry or purchase order capture.
+  * There is no multi-axial analytical balance or reporting matrix.
+
+#### Implementation Requirements:
+1. Promote `project_code` into a formal `programs_or_projects` entity with budgets and donor tracking.
+2. In `createJournalEntry` and `createPurchaseOrder`, check against `budget_lines` and warn if expenditure exceeds allocation.
+3. Build an Analytical P&L (*Compte de résultat analytique par service/projet*).
+
+---
+
+### Gap 8: Capitalization from Work in Progress & Component Hierarchy (*Comptes 23 vers 21/24*)
+
+#### What Sage Immobilisations / Infor EAM / SAP FI-AA Do:
+1. **Capitalization from WIP (*Virement d'immobilisations en cours*)**:
+   When constructing a new oxygen plant, hospital wing, or installing an MRI facility, costs accumulate in `Compte 23 Immobilisations en cours`. Upon commissioning:
+   * `Debit 241 Matériel médical / 213 Bâtiments`
+   * `Credit 231 Immobilisations corporelles en cours`
+2. **Component Decomposition (*Approche par composants — SYSCOHADA Art. 47 & IAS 16*)**:
+   Parent asset (e.g., CT Scanner) is broken down into sub-assets (Tube 3 yrs, Chassis 10 yrs). Each component depreciates independently but reports under the parent asset in the register.
+
+#### LedgerCore Current State:
+* `assets` has `parent_asset_id` and `is_component`, which is good.
+* However, capitalization (`commissionAsset` / `capitalizeAsset`) always posts `Debit 24x / Credit 401 (or 521)`, with **no workflow to capitalize from WIP (`Compte 23`)**.
+
+#### Implementation Requirements:
+1. In `POST /api/assets/:id/capitalize`, add support for `funding_source = 'own_construction'`, generating `Debit 24x / Credit 23x`.
+2. Add a rollup view in the asset register showing parent asset net book value as the sum of its depreciating components.
+
+---
+
+### Gap 9: Regulatory Audit Compliance & FEC OHADA (*Intangibilité & Fichier des Écritures Comptables*)
+
+#### What DGI Cameroon / CEMAC Tax Audits & SYSCOHADA Mandate:
+* **FEC OHADA**: Under tax audit rules, computerized accounts must produce a standardized text/CSV file with 18 mandatory fields (JournalCode, JournalLib, EcritureNum, EcritureDate, CompteNum, CompteLib, CompteAuxNum, CompteAuxLib, PieceRef, PieceDate, EcritureLib, Debit, Credit, EcritureLet, DateLet, ValidDate, Montantdevise, Idevise).
+* **Anti-Tampering Hash Chaining**: Posted entries must have a cryptographic seal (hash of previous entry + current line) to prove to auditors that records were not tampered with retroactively.
+
+#### LedgerCore Current State:
+* LedgerCore has an `audit_log` table and `posted` status.
+* However, there is no export for the official **FEC OHADA** file, nor any cryptographic seal/hash chain on posted entries.
+
+#### Implementation Requirements:
+1. Build an endpoint `GET /api/reports/fec` that formats all posted entries into the official FEC OHADA specification.
+2. Add a SHA-256 seal `entry_hash` on `journal_entries` computed at posting time (`hash = sha256(prev_hash + entry_no + date + debit + credit)`).
+
+---
+
+## 3. Prioritized Implementation Roadmap
+
+```mermaid
+gantt
+    title Gap Implementation Roadmap for LedgerCore Health
+    dateFormat  YYYY-MM-DD
+    section Phase 1: Core Financial Gaps (Immediate)
+    Auxiliary Subledger (Tiers) & Sub-accounts      :p1_1, 2026-10-20, 4d
+    Lettrage & Open-Item Matching Engine             :p1_2, after p1_1, 4d
+    Statutory 8-Column Trial Balance                :p1_3, after p1_2, 2d
+    Donated Assets Subsidy (Compte 14 -> 799)       :p1_4, after p1_3, 2d
+    section Phase 2: Operational Workflows (Mid-term)
+    Multi-Currency FX Gain/Loss & Year-End 476/477  :p2_1, 2026-11-05, 3d
+    Recurring Journals & Auto-Reversal (Extourne)   :p2_2, after p2_1, 3d
+    WIP Asset Capitalization (Compte 23 -> 21/24)   :p2_3, after p2_2, 2d
+    section Phase 3: Governance & Audit (Long-term)
+    Multi-Axial Analytical & Budget Checks          :p3_1, 2026-11-20, 5d
+    FEC OHADA Export & Cryptographic Chaining       :p3_2, after p3_1, 3d
+```
+
+### Phase 1: Core Financial Gaps (Estimated: ~12 Days)
+1. **Auxiliary Subledger (Tiers)**: Link `suppliers`, `customers`, and employees to subledger accounts; build the Grand Livre Auxiliaire.
+2. **Lettrage Engine**: Add `match_code` to `journal_lines` and an interactive matching view in the UI.
+3. **8-Column Trial Balance**: Add the cumulative year-to-date debit/credit columns in the trial balance.
+4. **Donated Asset Subsidy Posting**: Update `depreciation-run.service.js` to automatically post `Debit 141 / Credit 799` for donated hospital equipment.
+
+### Phase 2: Operational Workflows (Estimated: ~8 Days)
+1. **FX Settlement & Revaluation**: Post realized gain/loss on payment and automated unrealized revaluation on 476/477/697/194 at period close.
+2. **Recurring Journals & Accrual Reversals**: Add recurring schedule and automated reversal dates for accruals.
+3. **WIP Capitalisation**: Support `Debit 24x / Credit 23x` for hospital civil works and complex medical equipment installation.
+
+### Phase 3: Governance & Audit (Estimated: ~8 Days)
+1. **Multi-Axial Analytical & Budget Checks**: Implement multi-dimensional coding (Ward × Donor/Program × Activity) with budget ceiling validation.
+2. **FEC OHADA & Audit Seal**: Implement the official French/OHADA electronic accounting audit file export and SHA-256 entry chaining.
+
+---
+
+## 4. Concrete Schema Enhancement Blueprint
+
+For future implementation, the following SQL changes will bridge these gaps:
+
+```sql
+-- 1. Auxiliary Subledgers & Third-Party Codes
+CREATE TABLE IF NOT EXISTS subledger_accounts (
+  id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  org_id                INT UNSIGNED NOT NULL,
+  code                  VARCHAR(30)  NOT NULL,
+  name                  VARCHAR(200) NOT NULL,
+  collective_account_id INT UNSIGNED NOT NULL,
+  partner_type          ENUM('supplier','customer','employee','other') NOT NULL,
+  partner_id            INT UNSIGNED NULL,
+  is_active             TINYINT(1)   NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_sub_code (org_id, code),
+  CONSTRAINT fk_sub_acct FOREIGN KEY (collective_account_id) REFERENCES accounts (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Lettrage & Matching Columns
+ALTER TABLE journal_lines
+  ADD COLUMN subledger_id INT UNSIGNED NULL AFTER partner_id,
+  ADD COLUMN match_code   VARCHAR(10)  NULL AFTER reconciled,
+  ADD COLUMN match_date   DATETIME     NULL AFTER match_code,
+  ADD COLUMN match_type   ENUM('none','manual','auto','partial') NOT NULL DEFAULT 'none' AFTER match_date,
+  ADD CONSTRAINT fk_jl_sub FOREIGN KEY (subledger_id) REFERENCES subledger_accounts (id) ON DELETE SET NULL;
+
+-- 3. Automatic Extourne & Audit Chaining
+ALTER TABLE journal_entries
+  ADD COLUMN auto_reverse_date DATE NULL AFTER reversed_by_entry_id,
+  ADD COLUMN entry_hash        VARCHAR(64) NULL AFTER status,
+  ADD COLUMN prev_hash         VARCHAR(64) NULL AFTER entry_hash;
+
+-- 4. Donated Asset Subsidies
+ALTER TABLE asset_categories
+  ADD COLUMN subsidy_account_id INT UNSIGNED NULL AFTER accum_depr_account_id,
+  ADD COLUMN subsidy_income_account_id INT UNSIGNED NULL AFTER subsidy_account_id;
+```
+
+This analysis provides the complete architectural roadmap to elevate LedgerCore Health from a capable dual-basis ledger to full parity with regional enterprise benchmarks like Sage 100c OHADA and Tompro.
