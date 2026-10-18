@@ -33,13 +33,14 @@ import { interbranchRoutes } from './routes/interbranch.routes.js';
 import { leaseRoutes } from './routes/lease.routes.js';
 import { adminRoutes } from './routes/admin.routes.js';
 import * as dfeService from './services/dfe.service.js';
+import { renderLandingPage } from './views/landing.js';
 
 export function createApp() {
   const app = express();
 
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(compression());
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true }));
@@ -54,6 +55,26 @@ export function createApp() {
   if (config.env !== 'test') {
     app.use(morgan(config.env === 'development' ? 'dev' : 'combined'));
   }
+
+  // Root route — dashboard / landing page for browsers, structured JSON for API clients
+  app.get('/', (req, res) => {
+    if (req.accepts('html')) {
+      return res.type('html').send(renderLandingPage({ env: config.env }));
+    }
+    res.json({
+      service: 'ledgercore-health-api',
+      name: 'LedgerCore Health — Hospital Core Accounting & Asset Management',
+      status: 'online',
+      version: '1.0.0',
+      standards: ['SYSCOHADA (AUDCIF)', 'IFRS (IAS 16, IAS 36, IFRS 16)'],
+      endpoints: {
+        health: '/api/health',
+        auth: '/api/auth/login',
+        reportsCatalog: '/api/reports/catalog',
+        dfeVerify: '/api/dfe/verify/:token',
+      },
+    });
+  });
 
   app.get('/api/health', handler(async (_req, res) => {
     const db = await healthcheck();

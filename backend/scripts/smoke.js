@@ -31,7 +31,12 @@ async function call(method, path, { token, body } = {}) {
 
 console.log(`\nLedgerCore API smoke test against ${BASE}\n`);
 
-console.log('1. Service health');
+console.log('1. Service health and root route');
+const root = await call('GET', '/');
+check('root route returns 200 with service information',
+  root.status === 200 && (root.body?.service === 'ledgercore-health-api' || /LedgerCore Health/i.test(root.raw)),
+  `status ${root.status}`);
+
 const health = await call('GET', '/api/health');
 check('health endpoint reports the database it is bound to',
   health.status === 200 && health.body?.ok === true,
