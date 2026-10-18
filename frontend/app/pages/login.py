@@ -95,19 +95,21 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
                     button.props('loading')
                     try:
                         user = await api.login(email.value.strip(), password.value)
+                        org_fw = user.get('frameworks')
+                        is_ifrs = (org_fw == 'ifrs' or org_fw == ['ifrs'] or str(org_fw).lower() == 'ifrs')
+                        chosen_lang = 'en' if is_ifrs else lang()
+                        set_lang(chosen_lang)
+                        await api.safe(api.patch('/auth/locale', {'locale': chosen_lang}), notify=False)
+                        user_name = (user.get('full_name') or 'User').split()[0]
+                        ui.notify(t('auth.welcome', name=user_name), type='positive', position='top')
+                        target = next if next and next != '/login' else '/'
+                        ui.navigate.to(target if target != '/' else first_allowed_route())
                     except api.ApiError as exc:
                         message.text = exc.message
+                    except Exception as exc:
+                        message.text = f'Login error: {exc}'
+                    finally:
                         button.props(remove='loading')
-                        return
-                    org_fw = user.get('frameworks')
-                    is_ifrs = (org_fw == 'ifrs' or org_fw == ['ifrs'] or str(org_fw).lower() == 'ifrs')
-                    chosen_lang = 'en' if is_ifrs else lang()
-                    set_lang(chosen_lang)
-                    await api.safe(api.patch('/auth/locale', {'locale': chosen_lang}), notify=False)
-                    ui.notify(t('auth.welcome', name=user['full_name'].split()[0]),
-                              type='positive', position='top')
-                    target = next if next and next != '/login' else '/'
-                    ui.navigate.to(target if target != '/' else first_allowed_route())
 
                 button = ui.button(t('auth.submit'), icon='login', on_click=submit).props('unelevated size=md').classes('w-full')
                 password.on('keyup.enter', submit)

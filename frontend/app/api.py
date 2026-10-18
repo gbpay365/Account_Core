@@ -15,7 +15,10 @@ from nicegui import app, ui
 
 from .config import API_BASE_URL
 
-_client = httpx.AsyncClient(base_url=API_BASE_URL, timeout=60.0)
+_client = httpx.AsyncClient(
+    base_url=API_BASE_URL,
+    timeout=httpx.Timeout(10.0, connect=4.0),
+)
 
 
 class ApiError(Exception):
@@ -60,8 +63,12 @@ async def request(method: str, path: str, *, params: dict | None = None, json: A
     clean = {k: v for k, v in (params or {}).items() if v is not None and v != ''}
     try:
         response = await _client.request(method, path, params=clean, json=json, headers=headers)
+    except httpx.ConnectTimeout as exc:
+        raise ApiError(0, f'Connection to backend API at {API_BASE_URL} timed out.') from exc
+    except httpx.ConnectError as exc:
+        raise ApiError(0, f'Cannot reach backend API at {API_BASE_URL}. Ensure the backend service is running.') from exc
     except httpx.HTTPError as exc:
-        raise ApiError(0, f'The accounting service is not reachable ({exc.__class__.__name__}).') from exc
+        raise ApiError(0, f'Backend API unreachable ({exc.__class__.__name__}) at {API_BASE_URL}.') from exc
 
     if response.status_code == 204 or not response.content:
         return None
@@ -105,6 +112,8 @@ async def delete(path: str) -> Any:
 
 async def login(email: str, password: str) -> dict:
     body = await request('POST', '/auth/login', json={'email': email, 'password': password}, authenticated=False)
+    if not isinstance(body, dict) or 'token' not in body or 'user' not in body:
+        raise ApiError(0, 'Unexpected response from auth service. Check backend connection.')
     app.storage.user['token'] = body['token']
     app.storage.user['user'] = body['user']
     return body['user']

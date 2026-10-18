@@ -53,7 +53,7 @@ function parseDbConfig() {
 
 export const config = {
   env: process.env.NODE_ENV || 'development',
-  port: int(process.env.PORT, 4700),
+  port: int(process.env.BACKEND_PORT || process.env.PORT, 4700),
   corsOrigins: (process.env.CORS_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean),
   db: parseDbConfig(),
   jwt: {
