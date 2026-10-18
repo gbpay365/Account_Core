@@ -235,6 +235,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
   name                VARCHAR(200) NOT NULL,
   supplier_type       ENUM('equipment','consumables','services','biomedical_service','utilities','construction','other') NOT NULL DEFAULT 'other',
   tax_id              VARCHAR(50)  NULL,
+  tax_regime          VARCHAR(30)  NOT NULL DEFAULT 'reel',
   contact_name        VARCHAR(150) NULL,
   email               VARCHAR(150) NULL,
   phone               VARCHAR(50)  NULL,

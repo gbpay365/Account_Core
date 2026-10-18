@@ -107,5 +107,7 @@ CREATE TABLE IF NOT EXISTS withholding_certificates (
   CONSTRAINT fk_wc_entry FOREIGN KEY (entry_id) REFERENCES journal_entries (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. Safe metadata check
+-- 5. Supplier Fiscal Regime (Régime Fiscal CEMAC)
+ALTER TABLE suppliers ADD COLUMN tax_regime VARCHAR(30) NOT NULL DEFAULT 'reel';
 UPDATE suppliers SET tax_regime = 'reel' WHERE tax_regime IS NULL OR tax_regime = '';
+

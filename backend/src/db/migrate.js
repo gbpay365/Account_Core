@@ -125,6 +125,11 @@ export async function runMigrations({ drop = false, silent = false } = {}) {
       try {
         await conn.query(stmt);
       } catch (err) {
+        // Idempotent schema operations (e.g. duplicate column/key or table already exists) are safe to ignore
+        if (err.errno === 1060 || err.errno === 1061 || err.errno === 1050 || err.errno === 1068 || err.errno === 1091) {
+          if (!silent) process.stdout.write(`[note: ${err.code || err.sqlState}] `);
+          continue;
+        }
         if (!silent) console.log('FAILED');
         console.error(`\nStatement #${idx + 1} in ${file}:\n${stmt.slice(0, 600)}\n`);
         throw err;
