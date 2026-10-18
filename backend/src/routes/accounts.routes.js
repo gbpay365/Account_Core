@@ -52,8 +52,8 @@ accountRoutes.get(
               a.parent_id, a.level, a.is_postable, a.is_active, a.requires_cost_center,
               a.requires_asset, a.requires_third_party, a.is_reconcilable, a.is_fixed_asset, a.currency,
               a.in_tier_normal, a.in_tier_allege, a.in_tier_smt, a.is_system,
-              p.code AS parent_code,
-              i.code AS ifrs_code, i.name AS ifrs_name
+              MAX(p.code) AS parent_code,
+              MAX(i.code) AS ifrs_code, MAX(i.name) AS ifrs_name
          FROM accounts a
          LEFT JOIN accounts p ON p.id = a.parent_id
          LEFT JOIN account_mappings m ON m.account_id = a.id AND m.org_id = a.org_id

@@ -64,12 +64,102 @@ export async function ensureDemoUsers() {
         );
       } else {
         await tx.query(
-          'UPDATE users SET password_hash = ?, is_active = 1, role_id = COALESCE(role_id, ?) WHERE id = ?',
-          [hash, rId, existing.id]
+          'UPDATE users SET password_hash = ?, is_active = 1, role_id = COALESCE(role_id, ?), org_id = COALESCE(org_id, ?) WHERE id = ?',
+          [hash, rId, orgId, existing.id]
         );
       }
     }
     console.log('[seed] Demonstration users verified and active.');
+  });
+
+  // Ensure organization data (chart of accounts, fiscal calendar, demo assets) is present for all organizations
+  const orgs = await pool.query('SELECT DISTINCT id AS org_id FROM organizations');
+  for (const { org_id } of orgs) {
+    await ensureOrganizationData(org_id, { silent: false }).catch((err) =>
+      console.warn(`[seed] Failed to ensure data for org ${org_id}:`, err.message)
+    );
+  }
+}
+
+export async function ensureOrganizationData(orgId, { skipDemo = false, silent = false } = {}) {
+  const step = (label) => { if (!silent) console.log(`  - ${label}`); };
+
+  return transaction(async (tx) => {
+    // 1. Roles & permissions
+    const roleCount = await tx.queryOne('SELECT COUNT(*) AS n FROM roles');
+    if (Number(roleCount?.n || 0) === 0) {
+      await seedReference(tx, step);
+    }
+
+    // 2. Chart of accounts
+    let accountId = new Map();
+    const acctCount = await tx.queryOne('SELECT COUNT(*) AS n FROM accounts WHERE org_id = ?', [orgId]);
+    if (Number(acctCount?.n || 0) === 0) {
+      step(`Seeding chart of accounts for org ${orgId}...`);
+      const res = await seedOrgReference(tx, orgId, step);
+      accountId = res.accountId;
+    } else {
+      const rows = await tx.query('SELECT code, id FROM accounts WHERE org_id = ?', [orgId]);
+      accountId = new Map(rows.map((r) => [r.code, r.id]));
+    }
+
+    // 3. Asset categories
+    let catId = new Map();
+    const catCount = await tx.queryOne('SELECT COUNT(*) AS n FROM asset_categories WHERE org_id = ?', [orgId]);
+    if (Number(catCount?.n || 0) === 0) {
+      step(`Seeding asset categories for org ${orgId}...`);
+      catId = await seedAssetCategories(tx, orgId, accountId, step);
+    } else {
+      const rows = await tx.query('SELECT code, id FROM asset_categories WHERE org_id = ?', [orgId]);
+      catId = new Map(rows.map((r) => [r.code, r.id]));
+    }
+
+    // 4. Fiscal calendar & periods
+    let periodId = new Map();
+    const fyCount = await tx.queryOne("SELECT COUNT(*) AS n FROM fiscal_years WHERE org_id = ? AND status <> 'closed'", [orgId]);
+    if (Number(fyCount?.n || 0) === 0) {
+      step(`Seeding fiscal calendar & periods for org ${orgId}...`);
+      periodId = await seedFiscalCalendar(
+        tx,
+        orgId,
+        [{ year: 2025, status: 'locked' }, { year: 2026, status: 'open' }],
+        step
+      );
+
+      for (let m = 1; m <= 8; m += 1) {
+        await tx.query("UPDATE accounting_periods SET status = 'open' WHERE id = ?", [periodId.get(`2026-${String(m).padStart(2, '0')}`)]);
+      }
+    } else {
+      const rows = await tx.query('SELECT code, id FROM accounting_periods WHERE org_id = ?', [orgId]);
+      periodId = new Map(rows.map((r) => [r.code, r.id]));
+    }
+
+    // 5. Demo assets & operations
+    const assetCount = await tx.queryOne('SELECT COUNT(*) AS n FROM assets WHERE org_id = ?', [orgId]);
+    if (Number(assetCount?.n || 0) === 0 && !skipDemo) {
+      step(`Seeding demo assets & transactions for org ${orgId}...`);
+      await seedDemo(tx, { orgId, accountId, catId, periodId }, step);
+
+      // Close Jan-Aug 2026, keep Sep 2026 open
+      for (let m = 1; m <= 8; m += 1) {
+        const pId = periodId.get(`2026-${String(m).padStart(2, '0')}`);
+        if (pId) {
+          await tx.query("UPDATE accounting_periods SET status = 'closed', closed_at = NOW() WHERE id = ?", [pId]);
+          const checklistId = await seedCloseChecklist(tx, orgId, pId);
+          await tx.query("UPDATE close_checklists SET status = 'signed_off', started_at = NOW(), completed_at = NOW(), signed_off_at = NOW() WHERE id = ?", [checklistId]);
+          await tx.query("UPDATE close_checklist_items SET status = 'done', completed_at = NOW() WHERE checklist_id = ?", [checklistId]);
+        }
+      }
+      const p9 = periodId.get('2026-09');
+      if (p9) {
+        await tx.query("UPDATE accounting_periods SET status = 'open' WHERE id = ?", [p9]);
+        await seedCloseChecklist(tx, orgId, p9);
+      }
+      const posting = await applyPostingLevel(tx, orgId);
+      step(`posting level 4 applied (${posting.remapped} heading lines remapped, suspense ${posting.suspense})`);
+    }
+
+    return { accountId, catId, periodId };
   });
 }
 
@@ -78,85 +168,26 @@ export async function runSeed({ skipDemo = false, silent = false } = {}) {
   const t0 = Date.now();
   if (!silent) console.log('[seed] LedgerCore reference data + demo hospital');
 
-  const { orgCount, roleCount, acctCount } = await transaction(async (tx) => {
-    const org = await tx.queryOne('SELECT COUNT(*) AS n FROM organizations');
-    const role = await tx.queryOne('SELECT COUNT(*) AS n FROM roles');
-    const acct = await tx.queryOne('SELECT COUNT(*) AS n FROM accounts');
-    return { orgCount: Number(org?.n || 0), roleCount: Number(role?.n || 0), acctCount: Number(acct?.n || 0) };
-  });
-
-  if (orgCount > 0 && roleCount > 0 && acctCount > 0) {
-    if (!silent) console.log('[seed] Database already contains organization, roles, and accounts.');
-    return false;
+  let org = await pool.queryOne('SELECT id FROM organizations LIMIT 1');
+  if (!org) {
+    const orgRes = await pool.query(
+      `INSERT INTO organizations
+         (code, name, legal_name, org_type, country_code, functional_currency, presentation_currency,
+          reporting_tier, frameworks, tax_id, vat_number, address, city, phone, email, retention_years)
+       VALUES ('TSSF', ?, ?, 'hospital', 'CM', 'XAF', 'XAF', 'normal', 'ohada,ifrs', ?, ?, ?, 'Shisong', ?, ?, 10)`,
+      [
+        'TSSF Shisong SOA',
+        'TSSF Shisong SOA — Tertiary Sisters of St. Francis',
+        'M019800012345P', 'CM-TVA-019800012345',
+        'Catholic Hospital Shisong, Kumbo, Northwest Region, BP 08 Kumbo',
+        '+237 677 76 43 21', 'direction@tssf-shisong.cm',
+      ]
+    );
+    org = { id: orgRes.insertId };
+    step('organisation created: TSSF Shisong SOA (OHADA / Cameroun, XAF, Systeme Normal)');
   }
 
-  await transaction(async (tx) => {
-    if (roleCount === 0) {
-      await seedReference(tx, step);
-    }
-
-    let orgId;
-    const existingOrg = await tx.queryOne('SELECT id FROM organizations LIMIT 1');
-    if (!existingOrg) {
-      const org = await tx.query(
-        `INSERT INTO organizations
-           (code, name, legal_name, org_type, country_code, functional_currency, presentation_currency,
-            reporting_tier, frameworks, tax_id, vat_number, address, city, phone, email, retention_years)
-         VALUES ('TSSF', ?, ?, 'hospital', 'CM', 'XAF', 'XAF', 'normal', 'ohada,ifrs', ?, ?, ?, 'Shisong', ?, ?, 10)`,
-        [
-          'TSSF Shisong SOA',
-          'TSSF Shisong SOA — Tertiary Sisters of St. Francis',
-          'M019800012345P', 'CM-TVA-019800012345',
-          'Catholic Hospital Shisong, Kumbo, Northwest Region, BP 08 Kumbo',
-          '+237 677 76 43 21', 'direction@tssf-shisong.cm',
-        ]
-      );
-      orgId = org.insertId;
-      step(`organisation created: TSSF Shisong SOA (OHADA / Cameroun, XAF, Systeme Normal)`);
-    } else {
-      orgId = existingOrg.id;
-    }
-
-    if (acctCount === 0) {
-      const { accountId } = await seedOrgReference(tx, orgId, step);
-      const catId = await seedAssetCategories(tx, orgId, accountId, step);
-      const periodId = await seedFiscalCalendar(
-        tx,
-        orgId,
-        [{ year: 2025, status: 'locked' }, { year: 2026, status: 'open' }],
-        step
-      );
-
-      // FY2026: January to August closed, September onwards open, which mirrors
-      // a hospital that has closed its last month and is working the current one.
-      for (let m = 1; m <= 8; m += 1) {
-        await tx.query("UPDATE accounting_periods SET status = 'open' WHERE id = ?", [periodId.get(`2026-${String(m).padStart(2, '0')}`)]);
-      }
-
-      if (!skipDemo) {
-        await seedDemo(tx, { orgId, accountId, catId, periodId }, step);
-      }
-
-      // Close the months that the demo data has already been posted into, and
-      // leave September open with a fresh checklist for the user to work through.
-      for (let m = 1; m <= 8; m += 1) {
-        await tx.query(
-          "UPDATE accounting_periods SET status = 'closed', closed_at = NOW() WHERE id = ?",
-          [periodId.get(`2026-${String(m).padStart(2, '0')}`)]
-        );
-        const checklistId = await seedCloseChecklist(tx, orgId, periodId.get(`2026-${String(m).padStart(2, '0')}`));
-        await tx.query(
-          "UPDATE close_checklists SET status = 'signed_off', started_at = NOW(), completed_at = NOW(), signed_off_at = NOW() WHERE id = ?",
-          [checklistId]
-        );
-        await tx.query("UPDATE close_checklist_items SET status = 'done', completed_at = NOW() WHERE checklist_id = ?", [checklistId]);
-      }
-      await seedCloseChecklist(tx, orgId, periodId.get('2026-09'));
-      step('FY2026: January-August closed and signed off, September open with a fresh close checklist');
-      const posting = await applyPostingLevel(tx, orgId);
-      step(`posting level 4 applied (${posting.remapped} heading lines remapped, suspense ${posting.suspense})`);
-    }
-  });
+  await ensureOrganizationData(org.id, { skipDemo, silent });
 
   const counts = await transaction(async (tx) =>
     tx.query(`

@@ -11,6 +11,7 @@ import { notFound, badRequest } from '../utils/errors.js';
 import { money } from '../utils/money.js';
 import { today, compare } from '../utils/dates.js';
 import { isoDate, optionalId, boolish } from './helpers.js';
+import { ensureOrganizationData } from '../db/seed.js';
 
 export const reportRoutes = Router();
 
@@ -51,15 +52,31 @@ reportRoutes.get(
       'SELECT name, country_code, functional_currency, reporting_tier, frameworks FROM organizations WHERE id = ?',
       [req.orgId]
     );
-    const years = await query(
+    let years = await query(
       `SELECT y.id, y.code, y.start_date, y.end_date, y.status,
               COUNT(p.id) AS period_count,
               SUM(p.status = 'open') AS open_periods
          FROM fiscal_years y
          LEFT JOIN accounting_periods p ON p.fiscal_year_id = y.id
-        WHERE y.org_id = ? GROUP BY y.id ORDER BY y.start_date DESC`,
+        WHERE y.org_id = ?
+        GROUP BY y.id, y.code, y.start_date, y.end_date, y.status
+        ORDER BY y.start_date DESC`,
       [req.orgId]
     );
+    if (years.length === 0) {
+      await ensureOrganizationData(req.orgId, { silent: false }).catch(() => {});
+      years = await query(
+        `SELECT y.id, y.code, y.start_date, y.end_date, y.status,
+                COUNT(p.id) AS period_count,
+                SUM(p.status = 'open') AS open_periods
+           FROM fiscal_years y
+           LEFT JOIN accounting_periods p ON p.fiscal_year_id = y.id
+          WHERE y.org_id = ?
+          GROUP BY y.id, y.code, y.start_date, y.end_date, y.status
+          ORDER BY y.start_date DESC`,
+        [req.orgId]
+      );
+    }
     res.json({
       organisation: org,
       fiscal_years: years,
@@ -534,17 +551,31 @@ reportRoutes.get(
   validate({ query: z.object({ framework: z.enum(['ohada', 'ifrs']).default('ohada') }) }),
   handler(async (req, res) => {
     const framework = req.query.framework === 'ifrs' ? 'ifrs' : 'ohada';
-    const period = await queryOne(
+    let period = await queryOne(
       `SELECT p.*, y.code AS fiscal_year FROM accounting_periods p
          JOIN fiscal_years y ON y.id = p.fiscal_year_id
         WHERE p.org_id = ? AND p.status = 'open' AND p.is_adjustment = 0
         ORDER BY p.start_date LIMIT 1`,
       [req.orgId]
     );
-    const year = await queryOne(
+    let year = await queryOne(
       "SELECT * FROM fiscal_years WHERE org_id = ? AND status <> 'closed' ORDER BY start_date DESC LIMIT 1",
       [req.orgId]
     );
+    if (!year) {
+      await ensureOrganizationData(req.orgId, { silent: false }).catch(() => {});
+      year = await queryOne(
+        "SELECT * FROM fiscal_years WHERE org_id = ? AND status <> 'closed' ORDER BY start_date DESC LIMIT 1",
+        [req.orgId]
+      );
+      period = await queryOne(
+        `SELECT p.*, y.code AS fiscal_year FROM accounting_periods p
+           JOIN fiscal_years y ON y.id = p.fiscal_year_id
+          WHERE p.org_id = ? AND p.status = 'open' AND p.is_adjustment = 0
+          ORDER BY p.start_date LIMIT 1`,
+        [req.orgId]
+      );
+    }
     if (!year) throw badRequest('No fiscal year is open.');
 
     const range = { from: year.start_date, to: period?.end_date || year.end_date };

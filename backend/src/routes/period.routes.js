@@ -6,6 +6,7 @@ import { writeAudit } from '../services/auth.service.js';
 import { CLOSE_TASKS } from '../db/seed/reference.js';
 import { notFound, unprocessable, conflict } from '../utils/errors.js';
 import { suspenseBalance } from '../services/posting-level.service.js';
+import { ensureOrganizationData } from '../db/seed.js';
 
 export const periodRoutes = Router();
 
@@ -13,7 +14,7 @@ periodRoutes.get(
   '/fiscal-years',
   requirePermission('period.view'),
   handler(async (req, res) => {
-    const rows = await query(
+    let rows = await query(
       `SELECT f.*, COUNT(p.id) AS period_count,
               SUM(p.status = 'open') AS open_periods,
               SUM(p.status = 'closed') AS closed_periods,
@@ -21,9 +22,25 @@ periodRoutes.get(
          FROM fiscal_years f
          LEFT JOIN accounting_periods p ON p.fiscal_year_id = f.id
         WHERE f.org_id = ?
-        GROUP BY f.id ORDER BY f.start_date DESC`,
+        GROUP BY f.id, f.code, f.name, f.start_date, f.end_date, f.status, f.closed_by, f.closed_at
+        ORDER BY f.start_date DESC`,
       [req.orgId]
     );
+    if (rows.length === 0) {
+      await ensureOrganizationData(req.orgId, { silent: false }).catch(() => {});
+      rows = await query(
+        `SELECT f.*, COUNT(p.id) AS period_count,
+                SUM(p.status = 'open') AS open_periods,
+                SUM(p.status = 'closed') AS closed_periods,
+                SUM(p.status = 'locked') AS locked_periods
+           FROM fiscal_years f
+           LEFT JOIN accounting_periods p ON p.fiscal_year_id = f.id
+          WHERE f.org_id = ?
+          GROUP BY f.id, f.code, f.name, f.start_date, f.end_date, f.status, f.closed_by, f.closed_at
+          ORDER BY f.start_date DESC`,
+        [req.orgId]
+      );
+    }
     res.json({ rows, total: rows.length });
   })
 );
@@ -44,11 +61,11 @@ periodRoutes.get(
     if (req.query.status) { filter += ' AND p.status = ?'; params.push(req.query.status); }
 
     const rows = await query(
-      `SELECT p.*, f.code AS fiscal_year_code,
+      `SELECT p.*, MAX(f.code) AS fiscal_year_code,
               COUNT(DISTINCT e.id) AS entry_count,
               COALESCE(SUM(CASE WHEN e.status = 'posted' THEN e.total_debit END), 0) AS posted_debit,
               COUNT(DISTINCT CASE WHEN e.status = 'draft' THEN e.id END) AS draft_count,
-              cl.id AS checklist_id, cl.status AS checklist_status
+              cl.id AS checklist_id, MAX(cl.status) AS checklist_status
          FROM accounting_periods p
          JOIN fiscal_years f ON f.id = p.fiscal_year_id
          LEFT JOIN journal_entries e ON e.period_id = p.id
