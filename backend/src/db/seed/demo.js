@@ -77,10 +77,16 @@ export async function seedDemo(tx, ctx, log) {
   for (const [email, fullName, role, jobTitle, cc, isTech, rate] of DEMO_USERS) {
     const res = await tx.query(
       `INSERT INTO users (org_id, email, password_hash, full_name, job_title, role_id, cost_center_id, locale, is_technician, hourly_rate)
-       VALUES (?,?,?,?,?,?,?,'fr',?,?)`,
+       VALUES (?,?,?,?,?,?,?,'fr',?,?)
+       ON DUPLICATE KEY UPDATE full_name=VALUES(full_name), role_id=VALUES(role_id), cost_center_id=VALUES(cost_center_id)`,
       [orgId, email, hash, fullName, jobTitle, roleId.get(role), ccId.get(cc) ?? null, isTech, rate]
     );
-    userId.set(email, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existing = await tx.queryOne('SELECT id FROM users WHERE email = ?', [email]);
+      id = existing?.id;
+    }
+    userId.set(email, id);
   }
   const admin = { id: userId.get('admin@ledgercore.health'), permissions: new Set(['journal.post_closed']) };
   const assetMgr = userId.get('fatou.diallo@hgy.cm');
@@ -97,11 +103,17 @@ export async function seedDemo(tx, ctx, log) {
     const res = await tx.query(
       `INSERT INTO suppliers (org_id, code, name, supplier_type, tax_id, address, email, phone,
                               country_code, currency, payment_terms_days, account_id, is_service_provider)
-       VALUES (?,?,?,?,?,?,?,?,'CM',?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,'CM',?,?,?,?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), supplier_type=VALUES(supplier_type)`,
       [orgId, code, name, type, taxId, address, email, phone, currency, terms, A('401'),
         ['biomedical_service', 'services'].includes(type) ? 1 : 0]
     );
-    supId.set(code, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existing = await tx.queryOne('SELECT id FROM suppliers WHERE org_id = ? AND code = ?', [orgId, code]);
+      id = existing?.id;
+    }
+    supId.set(code, id);
   }
 
   // --- customers (third-party payers behind hospital receivables) ----------
@@ -118,10 +130,16 @@ export async function seedDemo(tx, ctx, log) {
   for (const [code, name, type, acct] of CUSTOMERS) {
     const res = await tx.query(
       `INSERT INTO customers (org_id, code, name, customer_type, currency, payment_terms_days, account_id)
-       VALUES (?,?,?,?, 'XAF', ?, ?)`,
+       VALUES (?,?,?,?, 'XAF', ?, ?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), customer_type=VALUES(customer_type)`,
       [orgId, code, name, type, type === 'patient' ? 0 : 60, A(acct)]
     );
-    custId.set(code, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existing = await tx.queryOne('SELECT id FROM customers WHERE org_id = ? AND code = ?', [orgId, code]);
+      id = existing?.id;
+    }
+    custId.set(code, id);
   }
 
   // --- bank accounts & FX rates --------------------------------------------
@@ -136,10 +154,16 @@ export async function seedDemo(tx, ctx, log) {
   for (const [code, name, bank, number, currency, acct, kind, opening] of BANKS) {
     const res = await tx.query(
       `INSERT INTO bank_accounts (org_id, code, name, bank_name, account_number, currency, account_id, account_kind, opening_balance)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), account_kind=VALUES(account_kind)`,
       [orgId, code, name, bank, number, currency, A(acct), kind, opening]
     );
-    bankId.set(code, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existing = await tx.queryOne('SELECT id FROM bank_accounts WHERE org_id = ? AND code = ?', [orgId, code]);
+      id = existing?.id;
+    }
+    bankId.set(code, id);
   }
 
   // XAF is pegged to the euro at 655.957; USD moves, so a small series is seeded.
@@ -157,87 +181,95 @@ export async function seedDemo(tx, ctx, log) {
 
   // --- asset register --------------------------------------------------------
   const assets = [];
+  const existingAssetRows = await tx.query('SELECT * FROM assets WHERE org_id = ?', [orgId]);
+  const assetBySerial = new Map(existingAssetRows.map((r) => [r.serial_number, r]));
+
   for (const a of DEMO_ASSETS) {
-    const inService = a.inService || a.acquired;
-    const created = await registerAsset(tx, orgId, {
-      name: a.name,
-      categoryId: catId.get(a.category),
-      manufacturer: a.manufacturer,
-      model: a.model,
-      serialNumber: a.serial,
-      yearOfManufacture: Number(a.acquired.slice(0, 4)),
-      costCenterId: ccId.get(a.cc),
-      locationId: locId.get(a.loc),
-      custodianUserId: a.cc === 'REA' ? userId.get('mensah.kouassi@hgy.cm')
-        : a.cc === 'IMG' ? userId.get('esther.nkodo@hgy.cm')
-        : assetMgr,
-      isMobile: a.mobile ?? 1,
-      status: 'in_service',
-      condition: compare(a.acquired, '2023-01-01') < 0 ? 'fair' : 'good',
-      criticality: a.criticality,
-      acquisitionDate: a.acquired,
-      capitalizationDate: a.acquired,
-      inServiceDate: inService,
-      fundingSource: a.funding || 'purchase',
-      fundingReference: a.fundingRef,
-      donorName: a.donor,
-      supplierId: a.supplier ? supId.get(a.supplier) : null,
-      currency: 'XAF',
-      acquisitionCost: a.cost,
-      warrantyStart: a.warrantyMonths ? a.acquired : null,
-      warrantyEnd: a.warrantyMonths ? addMonths(a.acquired, a.warrantyMonths) : null,
-      warrantyTerms: a.warrantyMonths ? `Garantie constructeur ${a.warrantyMonths} mois, pieces et main d oeuvre.` : null,
-      hasRfid: a.criticality === 'critical' && (a.mobile ?? 1) === 1 ? 1 : 0,
-      rfidTag: a.criticality === 'critical' && (a.mobile ?? 1) === 1 ? `RF-${a.serial || a.name.slice(0, 6).toUpperCase()}` : null,
-    }, { id: assetMgr });
+    let row = assetBySerial.get(a.serial);
+    if (!row) {
+      const inService = a.inService || a.acquired;
+      const created = await registerAsset(tx, orgId, {
+        name: a.name,
+        categoryId: catId.get(a.category),
+        manufacturer: a.manufacturer,
+        model: a.model,
+        serialNumber: a.serial,
+        yearOfManufacture: Number(a.acquired.slice(0, 4)),
+        costCenterId: ccId.get(a.cc),
+        locationId: locId.get(a.loc),
+        custodianUserId: a.cc === 'REA' ? userId.get('mensah.kouassi@hgy.cm')
+          : a.cc === 'IMG' ? userId.get('esther.nkodo@hgy.cm')
+          : assetMgr,
+        isMobile: a.mobile ?? 1,
+        status: 'in_service',
+        condition: compare(a.acquired, '2023-01-01') < 0 ? 'fair' : 'good',
+        criticality: a.criticality,
+        acquisitionDate: a.acquired,
+        capitalizationDate: a.acquired,
+        inServiceDate: inService,
+        fundingSource: a.funding || 'purchase',
+        fundingReference: a.fundingRef,
+        donorName: a.donor,
+        supplierId: a.supplier ? supId.get(a.supplier) : null,
+        currency: 'XAF',
+        acquisitionCost: a.cost,
+        warrantyStart: a.warrantyMonths ? a.acquired : null,
+        warrantyEnd: a.warrantyMonths ? addMonths(a.acquired, a.warrantyMonths) : null,
+        warrantyTerms: a.warrantyMonths ? `Garantie constructeur ${a.warrantyMonths} mois, pieces et main d oeuvre.` : null,
+        hasRfid: a.criticality === 'critical' && (a.mobile ?? 1) === 1 ? 1 : 0,
+        rfidTag: a.criticality === 'critical' && (a.mobile ?? 1) === 1 ? `RF-${a.serial || a.name.slice(0, 6).toUpperCase()}` : null,
+      }, { id: assetMgr });
 
-    const row = await tx.queryOne('SELECT * FROM assets WHERE id = ?', [created.id]);
-    assets.push({ ...row, _def: a });
+      row = await tx.queryOne('SELECT * FROM assets WHERE id = ?', [created.id]);
 
-    await tx.query(
-      'UPDATE assets SET commissioning_done = 1, commissioning_date = ?, commissioning_notes = ? WHERE id = ?',
-      [inService, 'Installation, controle de securite electrique et etalonnage initial valides a la reception.', created.id]
-    );
-
-    if (a.vehicle) {
-      const v = a.vehicle;
       await tx.query(
-        `INSERT INTO vehicle_details
-           (asset_id, registration_no, vin, vehicle_type, fuel_type, current_mileage_km,
-            service_interval_km, last_service_km, next_service_km, insurance_provider,
-            insurance_policy_no, insurance_expiry, license_expiry, medical_equipment_onboard, driver_user_id)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-        [
-          created.id, v.registration, a.serial, v.type, v.fuel, v.mileage,
-          v.serviceIntervalKm, v.mileage - 3200, v.mileage - 3200 + v.serviceIntervalKm,
-          v.insurance, v.policy, v.insuranceExpiry, v.licenseExpiry, v.onboard ?? null,
-          userId.get('andre.fotso@hgy.cm'),
-        ]
+        'UPDATE assets SET commissioning_done = 1, commissioning_date = ?, commissioning_notes = ? WHERE id = ?',
+        [inService, 'Installation, controle de securite electrique et etalonnage initial valides a la reception.', created.id]
       );
-    }
 
-    const facilityTypes = { 'FAC-BLD': 'structure', 'FAC-GEN': 'generator', 'FAC-GAS': 'oxygen_supply', 'FAC-HVAC': 'hvac', 'FAC-LIFT': 'elevator', 'FAC-FIRE': 'fire_safety', 'FAC-WATER': 'water_treatment', 'FAC-STERIL': 'sterilisation' };
-    if (facilityTypes[a.category]) {
-      await tx.query(
-        `INSERT INTO facility_details
-           (asset_id, system_type, capacity_rating, year_built, inspection_interval_months,
-            last_inspection_date, next_inspection_date, compliance_authority, certificate_no, certificate_expiry)
-         VALUES (?,?,?,?,?,?,?,?,?,?)`,
-        [
-          created.id, facilityTypes[a.category],
-          { 'FAC-GEN': '500 kVA / 400 kW', 'FAC-GAS': '60 Nm3/h - purete 93%', 'FAC-HVAC': '350 kW froid - classe ISO 7', 'FAC-LIFT': '1600 kg / 21 personnes', 'FAC-FIRE': '820 detecteurs - 4 zones', 'FAC-BLD': '4 200 m2 sur 3 niveaux' }[a.category] ?? null,
-          Number(a.acquired.slice(0, 4)),
-          a.category === 'FAC-LIFT' || a.category === 'FAC-GAS' ? 6 : 12,
-          '2026-03-15', a.category === 'FAC-LIFT' || a.category === 'FAC-GAS' ? '2026-09-15' : '2027-03-15',
-          a.category === 'FAC-LIFT' ? 'Bureau Veritas' : a.category === 'FAC-FIRE' ? 'Corps National de Sapeurs-Pompiers' : 'Ministere de la Sante Publique',
-          `CERT-${a.category}-2026-001`,
-          a.category === 'FAC-LIFT' || a.category === 'FAC-GAS' ? '2026-09-15' : '2027-03-15',
-        ]
-      );
-      if (a.category === 'FAC-BLD') {
-        await tx.query('UPDATE facility_details SET building_area_sqm = 4200 WHERE asset_id = ?', [created.id]);
+      if (a.vehicle) {
+        const v = a.vehicle;
+        await tx.query(
+          `INSERT INTO vehicle_details
+             (asset_id, registration_no, vin, vehicle_type, fuel_type, current_mileage_km,
+              service_interval_km, last_service_km, next_service_km, insurance_provider,
+              insurance_policy_no, insurance_expiry, license_expiry, medical_equipment_onboard, driver_user_id)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+           ON DUPLICATE KEY UPDATE registration_no=VALUES(registration_no)`,
+          [
+            created.id, v.registration, a.serial, v.type, v.fuel, v.mileage,
+            v.serviceIntervalKm, v.mileage - 3200, v.mileage - 3200 + v.serviceIntervalKm,
+            v.insurance, v.policy, v.insuranceExpiry, v.licenseExpiry, v.onboard ?? null,
+            userId.get('andre.fotso@hgy.cm'),
+          ]
+        );
+      }
+
+      const facilityTypes = { 'FAC-BLD': 'structure', 'FAC-GEN': 'generator', 'FAC-GAS': 'oxygen_supply', 'FAC-HVAC': 'hvac', 'FAC-LIFT': 'elevator', 'FAC-FIRE': 'fire_safety', 'FAC-WATER': 'water_treatment', 'FAC-STERIL': 'sterilisation' };
+      if (facilityTypes[a.category]) {
+        await tx.query(
+          `INSERT INTO facility_details
+             (asset_id, system_type, capacity_rating, year_built, inspection_interval_months,
+              last_inspection_date, next_inspection_date, compliance_authority, certificate_no, certificate_expiry)
+           VALUES (?,?,?,?,?,?,?,?,?,?)
+           ON DUPLICATE KEY UPDATE system_type=VALUES(system_type)`,
+          [
+            created.id, facilityTypes[a.category],
+            { 'FAC-GEN': '500 kVA / 400 kW', 'FAC-GAS': '60 Nm3/h - purete 93%', 'FAC-HVAC': '350 kW froid - classe ISO 7', 'FAC-LIFT': '1600 kg / 21 personnes', 'FAC-FIRE': '820 detecteurs - 4 zones', 'FAC-BLD': '4 200 m2 sur 3 niveaux' }[a.category] ?? null,
+            Number(a.acquired.slice(0, 4)),
+            a.category === 'FAC-LIFT' || a.category === 'FAC-GAS' ? 6 : 12,
+            '2026-03-15', a.category === 'FAC-LIFT' || a.category === 'FAC-GAS' ? '2026-09-15' : '2027-03-15',
+            a.category === 'FAC-LIFT' ? 'Bureau Veritas' : a.category === 'FAC-FIRE' ? 'Corps National de Sapeurs-Pompiers' : 'Ministere de la Sante Publique',
+            `CERT-${a.category}-2026-001`,
+            a.category === 'FAC-LIFT' || a.category === 'FAC-GAS' ? '2026-09-15' : '2027-03-15',
+          ]
+        );
+        if (a.category === 'FAC-BLD') {
+          await tx.query('UPDATE facility_details SET building_area_sqm = 4200 WHERE asset_id = ?', [created.id]);
+        }
       }
     }
+    assets.push({ ...row, _def: a });
   }
   log(`${assets.length} assets registered with QR/RFID tags, maintenance and calibration plans`);
 

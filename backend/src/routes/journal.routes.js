@@ -8,6 +8,7 @@ import { buildTrialBalance, loadBalances } from '../services/reporting.service.j
 import { notFound, forbidden, badRequest } from '../utils/errors.js';
 import { money } from '../utils/money.js';
 import { actorOf, can, isoDate, optionalId, boolish, pagination, paged, reportRange } from './helpers.js';
+import { ensureOrganizationData } from '../db/seed.js';
 
 export const journalRoutes = Router();
 
@@ -101,10 +102,27 @@ journalRoutes.get(
       params.push(like, like, like);
     }
 
-    const { n: total } = await queryOne(
+    let { n: total } = await queryOne(
       `SELECT COUNT(*) AS n FROM journal_entries e WHERE e.org_id = ?${filter}`,
       params
     );
+
+    // If org has 0 journal entries at all, trigger demo seed once so views are never blank
+    if (Number(total || 0) === 0 && !search && !journalId && !periodId && !status && !from && !to) {
+      const { n: allOrgEntries } = await queryOne('SELECT COUNT(*) AS n FROM journal_entries WHERE org_id = ?', [req.orgId]);
+      if (Number(allOrgEntries || 0) === 0) {
+        try {
+          await ensureOrganizationData(req.orgId, { skipDemo: false, silent: true });
+          const re = await queryOne(
+            `SELECT COUNT(*) AS n FROM journal_entries e WHERE e.org_id = ?${filter}`,
+            params
+          );
+          total = re?.n || 0;
+        } catch (err) {
+          console.warn('[journal] ensureOrganizationData error:', err.message);
+        }
+      }
+    }
     const rows = await query(
       `SELECT e.id, e.entry_no, e.entry_date, e.reference, e.description, e.source, e.framework,
               e.total_debit, e.total_credit, e.status, e.is_reversal, e.reverses_entry_id,

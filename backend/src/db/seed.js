@@ -81,55 +81,57 @@ export async function ensureDemoUsers() {
   }
 }
 
+import { daysInMonth } from '../utils/dates.js';
+
 export async function ensureFiscalYearForOrg(orgId) {
-  let year = await queryOne(
-    "SELECT * FROM fiscal_years WHERE org_id = ? AND status <> 'closed' ORDER BY start_date DESC LIMIT 1",
-    [orgId]
-  );
-  if (year) return year;
-
-  // Check if any fiscal year exists
-  const existing = await queryOne(
-    "SELECT * FROM fiscal_years WHERE org_id = ? ORDER BY start_date DESC LIMIT 1",
-    [orgId]
-  );
-  if (existing) {
-    await query("UPDATE fiscal_years SET status = 'open' WHERE id = ?", [existing.id]);
-    return await queryOne("SELECT * FROM fiscal_years WHERE id = ?", [existing.id]);
-  }
-
-  // Insert FY2026
+  // 1. Ensure FY2026 exists and is open
   await query(
     `INSERT INTO fiscal_years (org_id, code, name, start_date, end_date, status)
      VALUES (?, 'FY2026', 'Fiscal year 2026', '2026-01-01', '2026-12-31', 'open')
      ON DUPLICATE KEY UPDATE status = 'open'`,
     [orgId]
   );
-  const fy = await queryOne("SELECT * FROM fiscal_years WHERE org_id = ? AND code = 'FY2026'", [orgId]);
+  const fy2026 = await queryOne("SELECT * FROM fiscal_years WHERE org_id = ? AND code = 'FY2026'", [orgId]);
 
-  // Insert FY2025 (locked) for comparative reporting
+  // 2. Ensure FY2025 exists (locked) for comparative reporting and cutover opening balances
   await query(
     `INSERT INTO fiscal_years (org_id, code, name, start_date, end_date, status)
      VALUES (?, 'FY2025', 'Fiscal year 2025', '2025-01-01', '2025-12-31', 'locked')
-     ON DUPLICATE KEY UPDATE status = VALUES(status)`,
+     ON DUPLICATE KEY UPDATE name = VALUES(name)`,
     [orgId]
   );
+  const fy2025 = await queryOne("SELECT * FROM fiscal_years WHERE org_id = ? AND code = 'FY2025'", [orgId]);
 
-  // Seed periods for 2026
   const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  // 3. Ensure all 12 periods for 2025 exist and end on actual month-end (cutover is 2025-12-31)
   for (let m = 1; m <= 12; m++) {
     const mm = String(m).padStart(2, '0');
+    const lastDay = daysInMonth(2025, m);
+    const pCode = `2025-${mm}`;
+    await query(
+      `INSERT INTO accounting_periods (org_id, fiscal_year_id, period_no, code, name, start_date, end_date, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'locked')
+       ON DUPLICATE KEY UPDATE fiscal_year_id = VALUES(fiscal_year_id), end_date = VALUES(end_date)`,
+      [orgId, fy2025.id, m, pCode, `${names[m - 1]} 2025`, `2025-${mm}-01`, `2025-${mm}-${String(lastDay).padStart(2, '0')}`]
+    );
+  }
+
+  // 4. Ensure all 12 periods for 2026 exist and end on actual month-end
+  for (let m = 1; m <= 12; m++) {
+    const mm = String(m).padStart(2, '0');
+    const lastDay = daysInMonth(2026, m);
     const pCode = `2026-${mm}`;
     const pStatus = (m === 9) ? 'open' : (m < 9 ? 'closed' : 'locked');
     await query(
       `INSERT INTO accounting_periods (org_id, fiscal_year_id, period_no, code, name, start_date, end_date, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE fiscal_year_id = VALUES(fiscal_year_id), status = VALUES(status)`,
-      [orgId, fy.id, m, pCode, `${names[m - 1]} 2026`, `2026-${mm}-01`, `2026-${mm}-28`, pStatus]
+       ON DUPLICATE KEY UPDATE fiscal_year_id = VALUES(fiscal_year_id), end_date = VALUES(end_date)`,
+      [orgId, fy2026.id, m, pCode, `${names[m - 1]} 2026`, `2026-${mm}-01`, `2026-${mm}-${String(lastDay).padStart(2, '0')}`, pStatus]
     );
   }
 
-  return fy;
+  return fy2026;
 }
 
 export async function ensureOpenPeriodForOrg(orgId) {
@@ -181,8 +183,9 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
     // 2. Chart of accounts
     let accountId = new Map();
     const acctCount = await tx.queryOne('SELECT COUNT(*) AS n FROM accounts WHERE org_id = ?', [orgId]);
-    if (Number(acctCount?.n || 0) === 0) {
-      step(`Seeding chart of accounts for org ${orgId}...`);
+    const seqCount = await tx.queryOne('SELECT COUNT(*) AS n FROM sequences WHERE org_id = ?', [orgId]);
+    if (Number(acctCount?.n || 0) === 0 || Number(seqCount?.n || 0) === 0) {
+      step(`Seeding chart of accounts, sequences & settings for org ${orgId}...`);
       const res = await seedOrgReference(tx, orgId, step);
       accountId = res.accountId;
     } else {
@@ -203,8 +206,8 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
 
     // 4. Fiscal calendar & periods
     let periodId = new Map();
-    const existingP = await tx.query('SELECT code, id FROM accounting_periods WHERE org_id = ?', [orgId]);
-    if (existingP.length === 0) {
+    const pCount = await tx.queryOne('SELECT COUNT(*) AS n FROM accounting_periods WHERE org_id = ?', [orgId]);
+    if (Number(pCount?.n || 0) < 24) {
       step(`Seeding fiscal calendar & periods for org ${orgId}...`);
       periodId = await seedFiscalCalendar(
         tx,
@@ -213,6 +216,7 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
         step
       );
     } else {
+      const existingP = await tx.query('SELECT code, id FROM accounting_periods WHERE org_id = ?', [orgId]);
       periodId = new Map(existingP.map((r) => [r.code, r.id]));
     }
 
@@ -236,7 +240,8 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
 
     // 5. Demo assets & operations
     const assetCount = await tx.queryOne('SELECT COUNT(*) AS n FROM assets WHERE org_id = ?', [orgId]);
-    if (Number(assetCount?.n || 0) === 0 && !skipDemo) {
+    const journalCount = await tx.queryOne('SELECT COUNT(*) AS n FROM journal_entries WHERE org_id = ?', [orgId]);
+    if ((Number(assetCount?.n || 0) === 0 || Number(journalCount?.n || 0) === 0) && !skipDemo) {
       step(`Seeding demo assets & transactions for org ${orgId}...`);
       await seedDemo(tx, { orgId, accountId, catId, periodId }, step);
 
@@ -287,7 +292,10 @@ export async function runSeed({ skipDemo = false, silent = false } = {}) {
     step('organisation created: TSSF Shisong SOA (OHADA / Cameroun, XAF, Systeme Normal)');
   }
 
-  await ensureOrganizationData(org.id, { skipDemo, silent });
+  const allOrgs = await query('SELECT id FROM organizations');
+  for (const o of allOrgs) {
+    await ensureOrganizationData(o.id, { skipDemo, silent });
+  }
 
   const counts = await transaction(async (tx) =>
     tx.query(`
