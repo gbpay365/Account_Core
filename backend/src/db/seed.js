@@ -98,7 +98,7 @@ export async function runSeed({ skipDemo = false, silent = false } = {}) {
     console.log('\n[seed] row counts');
     for (const r of counts) console.log(`  ${String(r.n).padStart(7)}  ${r.entity}`);
     console.log(`\n[seed] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-    console.log('[seed] sign in with  admin@ledgercore.health  /  Ledger@2026');
+    console.log('[seed] sign in as admin@ledgercore.health with the password from SEED_DEMO_PASSWORD (demo seed only).');
   }
   return true;
 }
