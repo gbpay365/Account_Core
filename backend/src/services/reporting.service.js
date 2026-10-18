@@ -1,6 +1,7 @@
 import { money } from '../utils/money.js';
 import { toISO, addDays } from '../utils/dates.js';
 import { ApiError } from '../utils/errors.js';
+import { OHADA_REPORT_LINES } from '../db/seed/data/reports-ohada.js';
 
 /**
  * FR-RP-001 :: produce statutory OHADA/SYSCOHADA statements and IFRS
@@ -132,12 +133,36 @@ function evaluate(formula, balances, lineValues) {
 
 /** Template-driven OHADA statement (BILAN / CR / TAFIRE). */
 export async function buildOhadaStatement(db, orgId, statementCode, { from, to, costCenterId = null }) {
-  const template = await db.query(
+  let template = await db.query(
     `SELECT * FROM report_lines
       WHERE org_id = ? AND framework = 'ohada' AND statement_code = ?
       ORDER BY side, sort_order`,
     [orgId, statementCode]
   );
+  if (template.length === 0) {
+    const linesToInsert = OHADA_REPORT_LINES.filter((l) => l.statement_code === statementCode);
+    for (const line of linesToInsert) {
+      await db.query(
+        `INSERT INTO report_lines
+           (org_id, framework, statement_code, line_code, label, label_en, side, line_type,
+            sign, gross_formula, depr_formula, formula, is_bold, note_ref, sort_order)
+         VALUES (?, 'ohada', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE label=VALUES(label), label_en=VALUES(label_en), formula=VALUES(formula)`,
+        [
+          orgId, line.statement_code, line.line_code, line.label, line.label_en,
+          line.side, line.line_type, line.sign ?? 1,
+          line.gross_formula ?? null, line.depr_formula ?? null, line.formula ?? null,
+          line.is_bold ?? 0, line.note_ref ?? null, line.sort_order,
+        ]
+      ).catch(() => {});
+    }
+    template = await db.query(
+      `SELECT * FROM report_lines
+        WHERE org_id = ? AND framework = 'ohada' AND statement_code = ?
+        ORDER BY side, sort_order`,
+      [orgId, statementCode]
+    );
+  }
   if (template.length === 0) throw new ApiError(404, `No OHADA template found for ${statementCode}.`);
 
   const balances = await loadBalances(db, orgId, { from, to, framework: 'ohada', costCenterId });

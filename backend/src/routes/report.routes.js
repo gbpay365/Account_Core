@@ -606,8 +606,8 @@ reportRoutes.get(
         : null,
       can('report.financial')
         ? (framework === 'ifrs'
-          ? buildIfrsStatement(db, req.orgId, 'pl', range)
-          : buildOhadaStatement(db, req.orgId, 'CR', range))
+          ? buildIfrsStatement(db, req.orgId, 'pl', range).catch(() => null)
+          : buildOhadaStatement(db, req.orgId, 'CR', range).catch(() => null))
         : null,
     ]);
 
