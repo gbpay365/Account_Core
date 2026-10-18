@@ -54,6 +54,20 @@ def can(*codes: str) -> bool:
     return any(code in held for code in codes)
 
 
+from pathlib import Path
+
+def _backend_diagnostic() -> str:
+    log_file = Path('/tmp/backend.log')
+    if log_file.exists():
+        try:
+            lines = [l.strip() for l in log_file.read_text(encoding='utf-8', errors='replace').splitlines() if l.strip()]
+            if lines:
+                return f" [Log: {lines[-1]}]"
+        except Exception:
+            pass
+    return ""
+
+
 async def request(method: str, path: str, *, params: dict | None = None, json: Any = None,
                   authenticated: bool = True) -> Any:
     headers: dict[str, str] = {}
@@ -64,11 +78,11 @@ async def request(method: str, path: str, *, params: dict | None = None, json: A
     try:
         response = await _client.request(method, path, params=clean, json=json, headers=headers)
     except httpx.ConnectTimeout as exc:
-        raise ApiError(0, f'Connection to backend API at {API_BASE_URL} timed out.') from exc
+        raise ApiError(0, f'Connection to backend API at {API_BASE_URL} timed out.{_backend_diagnostic()}') from exc
     except httpx.ConnectError as exc:
-        raise ApiError(0, f'Cannot reach backend API at {API_BASE_URL}. Ensure the backend service is running.') from exc
+        raise ApiError(0, f'Cannot reach backend API at {API_BASE_URL}{_backend_diagnostic()}. Ensure the backend service is running.') from exc
     except httpx.HTTPError as exc:
-        raise ApiError(0, f'Backend API unreachable ({exc.__class__.__name__}) at {API_BASE_URL}.') from exc
+        raise ApiError(0, f'Backend API unreachable ({exc.__class__.__name__}) at {API_BASE_URL}{_backend_diagnostic()}.') from exc
 
     if response.status_code == 204 or not response.content:
         return None
