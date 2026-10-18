@@ -21,7 +21,9 @@ export const pool = mysql.createPool({
 });
 
 pool.on('connection', (connection) => {
-  connection.query("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))").catch(() => {});
+  connection.query("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))", (err) => {
+    if (err) console.warn('[pool] sql_mode setup note:', err.message);
+  });
 });
 
 export async function query(sql, params = []) {

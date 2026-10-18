@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pool, transaction } from './pool.js';
+import { pool, query, queryOne, transaction } from './pool.js';
 import { seedReference, seedOrgReference, seedAssetCategories, seedFiscalCalendar, seedCloseChecklist } from './seed/reference.js';
 import { seedDemo } from './seed/demo.js';
 import { applyPostingLevel } from '../../scripts/apply-posting-level.js';
@@ -73,7 +73,7 @@ export async function ensureDemoUsers() {
   });
 
   // Ensure organization data (chart of accounts, fiscal calendar, demo assets) is present for all organizations
-  const orgs = await pool.query('SELECT DISTINCT id AS org_id FROM organizations');
+  const orgs = await query('SELECT DISTINCT id AS org_id FROM organizations');
   for (const { org_id } of orgs) {
     await ensureOrganizationData(org_id, { silent: false }).catch((err) =>
       console.warn(`[seed] Failed to ensure data for org ${org_id}:`, err.message)
@@ -168,9 +168,9 @@ export async function runSeed({ skipDemo = false, silent = false } = {}) {
   const t0 = Date.now();
   if (!silent) console.log('[seed] LedgerCore reference data + demo hospital');
 
-  let org = await pool.queryOne('SELECT id FROM organizations LIMIT 1');
+  let org = await queryOne('SELECT id FROM organizations LIMIT 1');
   if (!org) {
-    const orgRes = await pool.query(
+    const orgRes = await query(
       `INSERT INTO organizations
          (code, name, legal_name, org_type, country_code, functional_currency, presentation_currency,
           reporting_tier, frameworks, tax_id, vat_number, address, city, phone, email, retention_years)

@@ -10,10 +10,10 @@ BACKEND_PORT=4700 PORT=4700 node backend/src/server.js 2>&1 | tee /tmp/backend.l
 BACKEND_PID=$!
 echo "[startup] Node API backend started (PID $BACKEND_PID)"
 
-# Wait up to 25 seconds for Node API backend to report healthy
+# Wait up to 60 seconds for Node API backend to report healthy
 echo "[startup] Awaiting backend database readiness on port 4700..."
 READY=0
-for i in $(seq 1 25); do
+for i in $(seq 1 60); do
   if python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4700/api/health', timeout=2)" 2>/dev/null; then
     echo "[startup] Backend API is live & healthy on http://127.0.0.1:4700/api"
     READY=1
