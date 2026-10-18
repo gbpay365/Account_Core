@@ -410,18 +410,41 @@
       color: #9f1239;
     }
 
+    /* Images & Figures */
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--slate-200);
+      margin: 1.5rem 0 0.5rem;
+      display: block;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    img:hover {
+      box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.2);
+    }
+
+    em {
+      color: var(--slate-600);
+      font-size: 0.875rem;
+      display: inline-block;
+      margin-bottom: 1.25rem;
+    }
+
     /* Print Styles for PDF Rendering */
     @media print {
       @page {
         size: A4;
-        margin: 15mm 15mm 15mm 15mm;
+        margin: 12mm 15mm 15mm 15mm;
       }
 
       body {
         background: white !important;
-        font-size: 11pt !important;
-        line-height: 1.4 !important;
-        color: #000 !important;
+        font-size: 10.5pt !important;
+        line-height: 1.45 !important;
+        color: #0f172a !important;
       }
 
       .top-header, .sidebar, .header-actions {
@@ -440,25 +463,59 @@
       }
 
       h1 {
-        font-size: 24pt !important;
+        font-size: 22pt !important;
         margin-top: 0 !important;
         page-break-before: avoid;
+        color: #0f172a !important;
       }
 
       h2 {
-        font-size: 16pt !important;
-        margin-top: 25pt !important;
+        font-size: 15pt !important;
+        margin-top: 22pt !important;
         page-break-before: auto;
         page-break-after: avoid;
+        color: #0f172a !important;
+        border-bottom: 1.5pt solid #cbd5e1 !important;
       }
 
       h3 {
-        font-size: 13pt !important;
+        font-size: 12pt !important;
+        margin-top: 14pt !important;
         page-break-after: avoid;
+        color: #1e293b !important;
+      }
+
+      img {
+        max-width: 95% !important;
+        margin: 12pt auto 4pt !important;
+        display: block !important;
+        page-break-inside: avoid !important;
+        box-shadow: none !important;
+        border: 1pt solid #cbd5e1 !important;
+        border-radius: 6pt !important;
+      }
+
+      em {
+        font-size: 8.5pt !important;
+        color: #475569 !important;
+        display: block !important;
+        text-align: center !important;
+        margin-bottom: 14pt !important;
+        page-break-before: avoid !important;
       }
 
       table, pre, .callout {
         page-break-inside: avoid;
+      }
+
+      .table-container {
+        box-shadow: none !important;
+        border: 1pt solid #cbd5e1 !important;
+      }
+
+      th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
       }
 
       a {
@@ -511,84 +568,68 @@
 
 <hr />
 
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ul>
-<li><a href="#1-system-overview--architecture">1. System Overview &amp; Architecture</a></li>
-<li><a href="#2-getting-started--authentication">2. Getting Started &amp; Authentication</a></li>
-<li><a href="#3-module-1-executive-dashboard--operational-kpis">3. Module 1: Executive Dashboard &amp; Operational KPIs</a></li>
-<li><a href="#4-module-2-chart-of-accounts--analytical-structure">4. Module 2: Chart of Accounts &amp; Analytical Structure</a></li>
-<li><a href="#5-module-3-journal-entries--audcif-statutory-capture">5. Module 3: Journal Entries &amp; AUDCIF Statutory Capture</a></li>
-<li><a href="#6-module-4-general-ledger-auxiliary-subledgers--lettrage">6. Module 4: General Ledger, Auxiliary Subledgers &amp; Lettrage</a></li>
-<li><a href="#7-module-5-accounting-periods-fiscal-year--year-end-close">7. Module 5: Accounting Periods, Fiscal Year &amp; Year-End Close</a></li>
-<li><a href="#8-module-6-treasury-bank-reconciliation--cash-registers">8. Module 6: Treasury, Bank Reconciliation &amp; Cash Registers</a></li>
-<li><a href="#9-module-7-fiscal-compliance--withholding-tax-wht--tsr">9. Module 7: Fiscal Compliance &amp; Withholding Tax (WHT / TSR)</a></li>
-<li><a href="#10-module-8-donor-funded-projects--grant-accounting">10. Module 8: Donor-Funded Projects &amp; Grant Accounting</a></li>
-<li><a href="#11-module-9-healthcare-payroll--social-declarations-dipe">11. Module 9: Healthcare Payroll &amp; Social Declarations (DIPE)</a></li>
-<li><a href="#12-module-10-patient-billing-dfe--inter-branch-transfers">12. Module 10: Patient Billing, DFE &amp; Inter-Branch Transfers</a></li>
-<li><a href="#13-module-11-enterprise-fixed-asset-register--lifecycle-management">13. Module 11: Enterprise Fixed Asset Register &amp; Lifecycle Management</a></li>
-<li><a href="#14-module-12-asset-depreciation--leases-ifrs-16">14. Module 12: Asset Depreciation &amp; Leases (IFRS 16)</a></li>
-<li><a href="#15-module-13-physical-asset-inventory--barcode-verification">15. Module 13: Physical Asset Inventory &amp; Barcode Verification</a></li>
-<li><a href="#16-module-14-hospital-cmms-work-orders--calibration-iec-60601">16. Module 14: Hospital CMMS, Work Orders &amp; Calibration (IEC 60601)</a></li>
-<li><a href="#17-module-15-general-services-errands--procurement-logistics">17. Module 15: General Services, Errands &amp; Procurement Logistics</a></li>
-<li><a href="#18-module-16-mobile-technician-worklist">18. Module 16: Mobile Technician Worklist</a></li>
-<li><a href="#19-module-17-financial-statements-dsf--tax-packet">19. Module 17: Financial Statements, DSF &amp; Tax Packet</a></li>
-<li><a href="#20-module-18-security-governance--administration">20. Module 18: Security, Governance &amp; Administration</a></li>
-<li><a href="#21-standard-operating-procedures-sops--practical-workflows">21. Standard Operating Procedures (SOPs) &amp; Practical Workflows</a></li>
-</ul>
-
-<hr />
-
 <h2 id="1-system-overview-architecture">1. System Overview &amp; Architecture</h2>
 
-<h3 id="purpose-mission">Purpose &amp; Mission</h3>
+<p><img src="images/01_system_architecture.jpg" alt="LedgerCore System Architecture" />
+<em>Figure 1: LedgerCore Health Dual-Standard Architecture — Unified Double-Entry Core connecting SYSCOHADA Revised (OHADA), IFRS Presentation, Biomedical Asset Lifecycle, and Hospital Cash Desks.</em></p>
 
-<p><strong>LedgerCore Health</strong> is an integrated hospital ERP combining core general ledger accounting, hospital fixed asset tracking, biomedical equipment safety, and healthcare logistics. It is designed to satisfy the strict legal demands of the <strong>OHADA Uniform Act on Accounting and Financial Reporting (<em>AUDCIF</em>)</strong> while simultaneously providing <strong>IFRS presentations</strong> for external donors, partners, and international auditors.</p>
+<h3 id="11-purpose-mission">1.1 Purpose &amp; Mission</h3>
 
-<h3 id="dual-standard-transaction-engine">Dual-Standard Transaction Engine</h3>
+<p><strong>LedgerCore Health</strong> is an enterprise-grade Core Accounting, Healthcare Asset Lifecycle, and Clinical Engineering Management (CMMS) software system engineered specifically for hospitals, specialized clinics, and regional health networks operating in the <strong>OHADA (<em>Organisation pour l'Harmonisation en Afrique du Droit des Affaires</em>)</strong> zone, CEMAC/UEMOA regions, and international development settings.</p>
 
-<p>Every financial movement entered into LedgerCore Health is evaluated through dual accounting lenses:
-- <strong>SYSCOHADA Revised Standard:</strong> Generates the official French/English statutory Bilan, Compte de Résultat, and TAFIRE according to regional CEMAC/UEMOA business laws.
-- <strong>IFRS Presentation:</strong> Produces Statement of Financial Position, Statement of Profit or Loss, and Cash Flows according to international accounting standards.
-- <strong>Dual-Standard Bridge:</strong> Provides an exact mathematical variance bridge quantifying every divergence between local statutory accounting and IFRS (such as IFRS 16 lease capitalization, accelerated tax depreciation vs. useful life depreciation, and subsidy amortization).</p>
+<h3 id="12-dual-framework-transaction-architecture">1.2 Dual-Framework Transaction Architecture</h3>
+
+<p>Unlike legacy enterprise systems that require maintaining parallel databases or duplicate data entries, LedgerCore utilizes a <strong>unified double-entry transactional core</strong>:
+- <strong>Statutory SYSCOHADA Presentation:</strong> Directly complies with the OHADA Uniform Act on Accounting and Financial Reporting (<em>AUDCIF</em>), generating regional tax packets, the 18-column Fichier des Écritures Comptables (FEC), and statutory statements (<em>Bilan, Compte de Résultat, TAFIRE</em>).
+- <strong>International IFRS Presentation:</strong> Evaluates the identical underlying transactions against IFRS principles (such as IFRS 16 lease capitalization, economic useful life component depreciation, and fair value adjustments).
+- <strong>Dual-Standard Bridge:</strong> Quantifies and explains every variance between the statutory net surplus and international profit with zero unexplained discrepancies.</p>
 
 <hr />
 
 <h2 id="2-getting-started-authentication">2. Getting Started &amp; Authentication</h2>
 
-<h3 id="step-by-step-procedure-logging-into-the-system">Step-by-Step Procedure: Logging into the System</h3>
+<h3 id="21-accessing-the-application">2.1 Accessing the Application</h3>
+
+<ul>
+<li>🌐 <strong>Web URL:</strong> <code>http://localhost:8700</code> (or your hospital's secure domain, e.g. <code>https://ledgercore.shisong.health</code>).</li>
+<li>⚡ <strong>Backend API Endpoint:</strong> <code>http://localhost:4700/api</code>.</li>
+<li>💻 <strong>Supported Browsers:</strong> Google Chrome, Microsoft Edge, Mozilla Firefox, Safari.</li>
+</ul>
+
+<h3 id="22-step-by-step-procedure-logging-into-the-system">2.2 Step-by-Step Procedure: Logging into the System</h3>
 
 <ol>
-<li><strong>Open the Web Browser:</strong> Launch Google Chrome, Microsoft Edge, or Mozilla Firefox and navigate to the application URL (Default: <code>http://localhost:8700</code> or your hospital's secure domain).</li>
-<li><strong>Select Preferred Language:</strong>
+<li>🌐 <strong>Open Web Browser:</strong> Navigate to the system URL.</li>
+<li>🌍 <strong>Select Interface Language:</strong>
 <ul>
-<li>On the top right of the login screen, click <strong>English</strong> or <strong>Français</strong> to load your interface language.</li>
+<li>In the top right corner of the authentication card, click <strong>English</strong> or <strong>Français</strong>.</li>
+<li><em>Result:</em> All labels, prompts, account classifications, and statutory terms instantly switch to the chosen language.</li>
 </ul></li>
-<li><strong>Enter Credentials:</strong>
+<li>🔑 <strong>Enter User Credentials:</strong>
 <ul>
-<li>In the <strong>Email address</strong> field, enter your assigned hospital email.</li>
-<li>In the <strong>Password</strong> field, enter your secure password.</li>
+<li>In the <strong>Email address</strong> field, enter your assigned hospital email (e.g., <code>grace.ntamack@hgy.cm</code>).</li>
+<li>In the <strong>Password</strong> field, enter your password.</li>
 <li>Click the <strong>Sign in</strong> button.</li>
 </ul></li>
-<li><strong>Using Quick-Demo Accounts (For Evaluation/Testing):</strong>
+<li>🚀 <strong>Using One-Click Demonstration Profiles:</strong>
 <ul>
-<li>Click any demonstration role card on the sign-in screen to populate credentials automatically:
+<li>On staging or evaluation environments, click any role badge to populate credentials automatically:
 <ul>
-<li><strong>CFO:</strong> <code>grace.ntamack@hgy.cm</code> / <code>Ledger@2026</code></li>
-<li><strong>Accounting Clerk:</strong> <code>amina.bakari@hgy.cm</code> / <code>Ledger@2026</code></li>
-<li><strong>Asset Manager:</strong> <code>fatou.diallo@hgy.cm</code> / <code>Ledger@2026</code></li>
-<li><strong>Biomedical Technician:</strong> <code>samuel.eyenga@hgy.cm</code> / <code>Ledger@2026</code></li>
-<li><strong>Administrator:</strong> <code>admin@ledgercore.health</code> / <code>Ledger@2026</code></li>
+<li>💼 <strong>CFO / Chief Accountant:</strong> <code>grace.ntamack@hgy.cm</code> / <code>Ledger@2026</code></li>
+<li>📝 <strong>Accounting Clerk:</strong> <code>amina.bakari@hgy.cm</code> / <code>Ledger@2026</code></li>
+<li>🔬 <strong>Biomedical &amp; Asset Manager:</strong> <code>fatou.diallo@hgy.cm</code> / <code>Ledger@2026</code></li>
+<li>🛠️ <strong>Biomedical Technician:</strong> <code>samuel.eyenga@hgy.cm</code> / <code>Ledger@2026</code></li>
+<li>🚚 <strong>General Services Technician:</strong> <code>derick.nji@hgy.cm</code> / <code>Ledger@2026</code></li>
+<li>⚙️ <strong>System Administrator:</strong> <code>admin@ledgercore.health</code> / <code>Ledger@2026</code></li>
 </ul></li>
 </ul></li>
-<li><strong>Inspect the Application Header:</strong>
+<li>🔍 <strong>Inspect Top Header Bar Indicators:</strong>
 <ul>
-<li>Once authenticated, verify the header indicators:
+<li>Verify that your organization profile displays at the top:
 <ul>
-<li><strong>Organization Badge:</strong> Displays hospital entity name (e.g., <code>🏥 TSSF Shisong SOA</code>).</li>
-<li><strong>Framework Badge:</strong> Displays active standard (<code>📒 OHADA</code> or <code>🌐 IFRS</code>).</li>
-<li><strong>Currency:</strong> Functional currency indicator (<code>💱 XAF</code>).</li>
-<li><strong>Quick Actions:</strong> Help/User Guide (<code>help_outline</code>), Print (<code>print</code>), and Reload (<code>refresh</code>).</li>
+<li>Entity Name: <code>🏥 TSSF Shisong SOA</code></li>
+<li>Statutory Standard: <code>🇨🇲 CM · 📒 OHADA Système Normal · 💱 XAF</code></li>
+<li>Quick Access Buttons: User Guide (<code>help_outline</code>), Print (<code>print</code>), and Reload (<code>refresh</code>).</li>
 </ul></li>
 </ul></li>
 </ol>
@@ -597,32 +638,32 @@
 
 <h2 id="3-module-1-executive-dashboard-operational-kpis">3. Module 1: Executive Dashboard &amp; Operational KPIs</h2>
 
-<h3 id="purpose-scope">Purpose &amp; Scope</h3>
+<h3 id="31-purpose-scope">3.1 Purpose &amp; Scope</h3>
 
 <p>The Executive Dashboard provides hospital leadership, finance directors, and biomedical heads with an instant real-time operational pulse of revenue, asset values, work order pipelines, and clinical safety compliance.</p>
 
-<h3 id="step-by-step-procedure-reviewing-executive-kpis">Step-by-Step Procedure: Reviewing Executive KPIs</h3>
+<h3 id="32-step-by-step-procedure-reviewing-executive-kpis">3.2 Step-by-Step Procedure: Reviewing Executive KPIs</h3>
 
 <ol>
-<li><strong>Navigate to Dashboard:</strong> Click <strong>Overview -> Dashboard</strong> from the left navigation rail.</li>
-<li><strong>Review Financial Performance Cards:</strong>
+<li>📊 <strong>Navigate to Dashboard:</strong> Click <strong>Overview -> Dashboard</strong> (<code>/</code>) from the left navigation rail.</li>
+<li>💰 <strong>Audit Financial Performance Cards:</strong>
 <ul>
 <li><strong>Net Result (Résultat Net):</strong> Shows year-to-date surplus or deficit calculated from posted revenue and expense lines.</li>
 <li><strong>Operating Turnover:</strong> Displays patient consultation fees, surgical fees, laboratory revenues, and pharmacy sales.</li>
 <li><strong>Operating Subsidies &amp; Grants:</strong> Displays State operational subsidies and recognized donor contributions.</li>
 </ul></li>
-<li><strong>Inspect Asset Health &amp; Net Book Value:</strong>
+<li>🏷️ <strong>Inspect Asset Health &amp; Net Book Value:</strong>
 <ul>
 <li><strong>Asset Net Book Value (VNC):</strong> Displays total capitalised gross cost minus cumulative depreciation.</li>
 <li>Click <strong>Open register</strong> on the asset card to drill down into category-level gross book values.</li>
 </ul></li>
-<li><strong>Audit Maintenance &amp; Biomedical Safety Pipeline:</strong>
+<li>🩺 <strong>Audit Maintenance &amp; Biomedical Safety Pipeline:</strong>
 <ul>
 <li>Review open work orders grouped by status: <em>Awaiting Approval</em>, <em>Scheduled</em>, <em>In Progress</em>, <em>Blocked</em>, <em>Awaiting Verification</em>.</li>
 <li><strong>Restricted / Quarantined Equipment Alert:</strong>
 <ul>
-<li>If the badge is green (<strong>All equipment holds a current certificate</strong>), all clinical assets are compliant.</li>
-<li>If the badge is red (<strong>Equipment restricted from use</strong>), click directly on the warning badge to view machines whose electrical safety (IEC 60601) or metrological calibration has lapsed.</li>
+<li>🟢 <strong>Green Badge:</strong> <em>"All equipment holds a current certificate"</em> — clinical assets are fully compliant.</li>
+<li>🔴 <strong>Red Alert Shield:</strong> <em>"Equipment restricted from use"</em> — one or more life-support or diagnostic devices have lapsed calibration or failed electrical safety tests. Click the badge immediately to review the quarantined assets.</li>
 </ul></li>
 </ul></li>
 </ol>
@@ -631,52 +672,39 @@
 
 <h2 id="4-module-2-chart-of-accounts-analytical-structure">4. Module 2: Chart of Accounts &amp; Analytical Structure</h2>
 
-<h3 id="purpose-scope-2">Purpose &amp; Scope</h3>
+<h3 id="41-purpose-framework-rules">4.1 Purpose &amp; Framework Rules</h3>
 
 <p>The Chart of Accounts module provides the statutory backbone of the hospital, implementing the <strong>SYSCOHADA Revised</strong> 9-class chart of accounts with hierarchical parent-child relationships and 1-to-1 IFRS presentation mapping.</p>
 
-<h3 id="step-by-step-procedure-creating-a-new-postable-account">Step-by-Step Procedure: Creating a New Postable Account</h3>
+<h3 id="42-step-by-step-procedure-creating-a-new-postable-account">4.2 Step-by-Step Procedure: Creating a New Postable Account</h3>
 
 <ol>
-<li><strong>Navigate to Accounts:</strong> Click <strong>Accounting -> Chart of accounts</strong> (<code>/accounts</code>).</li>
-<li><strong>Filter &amp; Search:</strong>
+<li>📂 <strong>Navigate to Accounts:</strong> Click <strong>Accounting -> Chart of accounts</strong> (<code>/accounts</code>).</li>
+<li>🔍 <strong>Filter by Class or Keyword:</strong> Select a class tab (e.g., <strong>Class 6 — Charges</strong>) or search by code (e.g., <code>6011</code>).</li>
+<li>➕ <strong>Initiate Account Creation:</strong> Click the <strong>+ New Account</strong> button.</li>
+<li>📝 <strong>Fill Account Parameters:</strong>
 <ul>
-<li>Select a class tab (e.g., <strong>Class 6 — Charges</strong>) or type an account code in the search bar (e.g., <code>6011</code>).</li>
-</ul></li>
-<li><strong>Click Create Account:</strong>
-<ul>
-<li>Click the <strong>+ New Account</strong> button in the header.</li>
-</ul></li>
-<li><strong>Fill Account Parameters:</strong>
-<ul>
-<li><strong>Account Code:</strong> Must start with the class digit and follow the hierarchical structure of its parent (e.g., <code>601102</code>).</li>
-<li><strong>Name (French statutory):</strong> Mandatory official French title (e.g., <code>Fournitures de cardiologie interventionnelle</code>).</li>
-<li><strong>Name (English):</strong> English operational title (e.g., <code>Interventional Cardiology Supplies</code>).</li>
-<li><strong>Parent Account:</strong> Select the 3-digit or 4-digit heading under which this account sits (e.g., <code>6011</code>).</li>
+<li><strong>Account Code:</strong> Must start with the class digit and follow its parent (e.g., <code>601105</code>).</li>
+<li><strong>Name (French statutory):</strong> Mandatory official French title (e.g., <code>Fournitures consommables chirurgie</code>).</li>
+<li><strong>Name (English):</strong> English title (e.g., <code>Surgical Consumables &amp; Supplies</code>).</li>
+<li><strong>Parent Account:</strong> Select the parent 3-digit or 4-digit heading (e.g., <code>6011</code>).</li>
 <li><strong>Accepts Postings (Switch):</strong> Enable to allow transactional entries.</li>
 <li><strong>Requires Cost Centre (Switch):</strong> Enable for clinical expenses requiring ward/department allocation.</li>
 <li><strong>Requires Third Party (Switch):</strong> Enable for supplier or client collective accounts (<code>401</code>, <code>411</code>).</li>
 <li><strong>Requires Asset Reference (Switch):</strong> Enable for maintenance and equipment accounts (<code>624</code>, <code>605</code>).</li>
 </ul></li>
-<li><strong>Set IFRS Presentation Line:</strong>
-<ul>
-<li>In the <strong>IFRS Mapping</strong> dropdown, select the corresponding international reporting line (e.g., <code>Operating Expenses - Medical Supplies</code>).</li>
-</ul></li>
-<li><strong>Save Account:</strong> Click <strong>Save Account</strong>. The system validates code length and hierarchy and registers the account immediately.</li>
+<li>🌐 <strong>Set IFRS Presentation Line:</strong> Choose the corresponding international reporting line (e.g., <code>Operating Expenses - Medical Supplies</code>).</li>
+<li>💾 <strong>Save Account:</strong> Click <strong>Save Account</strong>. The system verifies account code length and registers the account.</li>
 </ol>
-
-<h3 id="step-by-step-procedure-generating-a-default-child-account">Step-by-Step Procedure: Generating a Default Child Account</h3>
-
-<p>If you select a non-postable heading account (e.g., <code>4011</code> - Fournisseurs):
-1. Click on the heading account in the tree.
-2. In the information banner, click <strong>Create Default Child Account</strong>.
-3. LedgerCore automatically calculates the next sequential code meeting the organization's posting length (e.g., <code>401100</code>) and provisions it ready for use.</p>
 
 <hr />
 
 <h2 id="5-module-3-journal-entries-audcif-statutory-capture">5. Module 3: Journal Entries &amp; AUDCIF Statutory Capture</h2>
 
-<h3 id="purpose-legal-requirements">Purpose &amp; Legal Requirements</h3>
+<p><img src="images/02_journal_lifecycle.jpg" alt="Journal Entry Lifecycle" />
+<em>Figure 2: LedgerCore Journal Entry &amp; Audit Lifecycle under OHADA AUDCIF Standards — From Voucher Input and Double-Entry Balancing to Auxiliary Subledger Allocation, General Ledger Posting, and Tamper-Proof Cryptographic Hash Sealing.</em></p>
+
+<h3 id="51-purpose-legal-controls">5.1 Purpose &amp; Legal Controls</h3>
 
 <p>In strict compliance with <strong>AUDCIF Articles 17, 19, and 20</strong>:
 - Every entry must balance: $\sum \text{Debits} = \sum \text{Credits}$.
@@ -684,14 +712,12 @@
 - Negative numbers are strictly prohibited.
 - Posted entries cannot be edited or deleted; corrections are handled exclusively via contra-entry (<em>extourne</em>).</p>
 
-<h3 id="step-by-step-procedure-capturing-a-double-entry-voucher">Step-by-Step Procedure: Capturing a Double-Entry Voucher</h3>
+<h3 id="52-step-by-step-procedure-capturing-a-double-entry-voucher">5.2 Step-by-Step Procedure: Capturing a Double-Entry Voucher</h3>
 
 <ol>
-<li><strong>Navigate to Journal Entries:</strong> Click <strong>Accounting -> Journal entries</strong> (<code>/journal</code>).</li>
-<li><strong>Open Capture Modal:</strong> Click the <strong>+ New Entry</strong> button.</li>
-<li><strong>Select Specialized Journal:</strong>
-<ul>
-<li>In the <strong>Journal</strong> dropdown, choose the operational journal:
+<li>📝 <strong>Navigate to Journal Entries:</strong> Click <strong>Accounting -> Journal entries</strong> (<code>/journal</code>).</li>
+<li>➕ <strong>Open Capture Modal:</strong> Click the <strong>+ New Entry</strong> button.</li>
+<li>📚 <strong>Select Specialized Journal:</strong>
 <ul>
 <li><code>ACH</code> (Purchases &amp; vendor bills)</li>
 <li><code>VTE</code> (Patient consultations &amp; medical sales)</li>
@@ -699,14 +725,13 @@
 <li><code>CA</code> (Cash desk &amp; Mobile Money)</li>
 <li><code>OD</code> (General accruals &amp; adjustments)</li>
 </ul></li>
-</ul></li>
-<li><strong>Set Accounting Date:</strong> In <strong>Entry date</strong>, enter the transaction date (must fall in an open period).</li>
-<li><strong>Enter Mandatory Supporting Voucher Reference (AUDCIF Art. 17):</strong>
+<li>📅 <strong>Set Accounting Date:</strong> In <strong>Entry date</strong>, enter the transaction date (must fall in an open period).</li>
+<li>🏷️ <strong>Enter Mandatory Supporting Voucher Reference (AUDCIF Art. 17):</strong>
 <ul>
 <li>In <strong>Reference *</strong>, type the invoice number, receipt number, or bank slip ID (e.g., <code>FAC-2026-9901</code>). Leaving this blank triggers an immediate validation rejection.</li>
 </ul></li>
-<li><strong>Enter Header Description:</strong> Provide an operational summary (e.g., <code>Achat réactifs de laboratoire - BioMed</code>).</li>
-<li><strong>Populate Journal Lines (Minimum 2 Lines):</strong>
+<li>📄 <strong>Enter Header Description:</strong> Provide an operational summary (e.g., <code>Achat réactifs de laboratoire - BioMed</code>).</li>
+<li>✍️ <strong>Populate Journal Lines (Minimum 2 Lines):</strong>
 <ul>
 <li><strong>Line 1 (Debit):</strong>
 <ul>
@@ -721,85 +746,85 @@
 <li>Under <strong>Third Party</strong>, choose the specific vendor (e.g., <code>[FRN] BioMed Services Afrique</code>).</li>
 </ul></li>
 </ul></li>
-<li><strong>Verify Balance Indicator:</strong>
+<li>⚖️ <strong>Verify Balance Indicator:</strong>
 <ul>
 <li>Check the <strong>Out of Balance</strong> counter at the bottom right. When balanced, it displays <code>0.00</code> in green.</li>
 </ul></li>
-<li><strong>Save Voucher:</strong>
+<li>💾 <strong>Save Voucher:</strong>
 <ul>
 <li>Click <strong>Save as Draft</strong> to queue for chief accountant review.</li>
 <li>Click <strong>Save and Post</strong> (if holding <code>journal.post</code> permission) to commit lines to the General Ledger immediately.</li>
 </ul></li>
 </ol>
 
-<h3 id="step-by-step-procedure-reversing-a-posted-entry-extourne">Step-by-Step Procedure: Reversing a Posted Entry (<em>Extourne</em>)</h3>
+<h3 id="53-step-by-step-procedure-reversing-a-posted-entry-extourne">5.3 Step-by-Step Procedure: Reversing a Posted Entry (<em>Extourne</em>)</h3>
 
 <ol>
-<li>Locate the posted entry in the journal list and click to open its detail modal.</li>
-<li>In the footer, click the <strong>Reverse (Extourner)</strong> button (<code>undo</code> icon).</li>
-<li>In the reversal dialog:
+<li>🔍 Locate the posted entry in the journal list and click to open its detail modal.</li>
+<li>↩️ In the footer, click the <strong>Reverse (Extourner)</strong> button (<code>undo</code> icon).</li>
+<li>📝 In the reversal dialog:
 <ul>
 <li>Verify the <strong>Reversal Date</strong> (defaults to today's date).</li>
 <li>In <strong>Reason for Reversal</strong>, enter an audit justification of at least 5 characters (e.g., <code>Correction erreur imputation compte de tiers</code>).</li>
 </ul></li>
-<li>Click <strong>Reverse entry</strong>.</li>
-<li>LedgerCore automatically creates an inverted contra-entry, links it to the original voucher, and commits it with a distinct sequential entry number.</li>
+<li>🚀 Click <strong>Reverse entry</strong>. LedgerCore creates an inverted contra-entry, links it to the original voucher, and commits it with a distinct sequential entry number.</li>
 </ol>
 
 <hr />
 
 <h2 id="6-module-4-general-ledger-auxiliary-subledgers-lettrage">6. Module 4: General Ledger, Auxiliary Subledgers &amp; Lettrage</h2>
 
-<h3 id="purpose-scope-3">Purpose &amp; Scope</h3>
+<h3 id="61-purpose-scope">6.1 Purpose &amp; Scope</h3>
 
 <p>The General Ledger provides complete chronological running balances, while auxiliary subledgers maintain itemized partner accounts for suppliers, patients, and insurers.</p>
 
-<h3 id="step-by-step-procedure-generating-the-8-column-trial-balance">Step-by-Step Procedure: Generating the 8-Column Trial Balance</h3>
+<h3 id="62-step-by-step-procedure-generating-the-8-column-trial-balance">6.2 Step-by-Step Procedure: Generating the 8-Column Trial Balance</h3>
 
 <ol>
-<li>Navigate to <strong>Accounting -> General Ledger</strong> (<code>/ledger</code>).</li>
-<li>Click the <strong>Trial Balance</strong> tab.</li>
-<li>Select the reporting date range (<strong>From</strong> and <strong>To</strong>).</li>
-<li>Select the <strong>Framework</strong> (<code>OHADA</code> or <code>IFRS</code>).</li>
-<li>Click <strong>Apply Range</strong>.</li>
-<li>The system generates the statutory 8-column table:
+<li>📖 Navigate to <strong>Accounting -> General Ledger</strong> (<code>/ledger</code>).</li>
+<li>📊 Click the <strong>Trial Balance</strong> tab.</li>
+<li>📅 Select the reporting date range (<strong>From</strong> and <strong>To</strong>).</li>
+<li>🌐 Select the <strong>Framework</strong> (<code>OHADA</code> or <code>IFRS</code>).</li>
+<li>🔍 Click <strong>Apply Range</strong>. The system generates the statutory 8-column table:
 <ul>
 <li><em>Columns 1 &amp; 2:</em> Opening Debit &amp; Opening Credit</li>
 <li><em>Columns 3 &amp; 4:</em> Period Movement Debit &amp; Period Movement Credit</li>
 <li><em>Columns 5 &amp; 6:</em> Year-to-Date Cumulative Debit &amp; Credit</li>
 <li><em>Columns 7 &amp; 8:</em> Closing Debit &amp; Closing Credit</li>
 </ul></li>
-<li>Verify that total debits equal total credits across all column pairs. Click <strong>Excel</strong> or <strong>PDF</strong> to export.</li>
+<li>📥 Verify that total debits equal total credits across all column pairs. Click <strong>Excel</strong> or <strong>PDF</strong> to export.</li>
 </ol>
 
-<h3 id="step-by-step-procedure-executing-open-item-lettrage-matching">Step-by-Step Procedure: Executing Open-Item Lettrage (Matching)</h3>
+<h3 id="63-step-by-step-procedure-executing-open-item-lettrage-matching">6.3 Step-by-Step Procedure: Executing Open-Item Lettrage (Matching)</h3>
 
 <ol>
-<li>In the General Ledger, select an auxiliary partner account (e.g., <code>401100 - Fournisseurs</code>).</li>
-<li>Set the <strong>Matching Filter</strong> to <strong>Unmatched (<em>Non-lettrées</em>)</strong>.</li>
-<li>Locate the original supplier bill credit entry and the corresponding bank payment debit entry.</li>
-<li>Check the selection boxes next to both entries.</li>
-<li>Verify that the net difference between selected debits and credits is zero.</li>
-<li>Click <strong>Match Selected (Lettrer)</strong>. The system assigns a matching code (e.g., <code>AA</code>) and locks the matched pair.</li>
+<li>👤 In the General Ledger, select an auxiliary partner account (e.g., <code>401100 - Fournisseurs</code>).</li>
+<li>🔍 Set the <strong>Matching Filter</strong> to <strong>Unmatched (<em>Non-lettrées</em>)</strong>.</li>
+<li>☑️ Locate the original supplier bill credit entry and the corresponding bank payment debit entry.</li>
+<li>⚖️ Check the selection boxes next to both entries. Verify the net difference between selected debits and credits is zero.</li>
+<li>🔤 Click <strong>Match Selected (Lettrer)</strong>. The system assigns a matching code (e.g., <code>AA</code>) and locks the matched pair.</li>
 </ol>
 
 <hr />
 
 <h2 id="7-module-5-accounting-periods-fiscal-year-year-end-close">7. Module 5: Accounting Periods, Fiscal Year &amp; Year-End Close</h2>
 
-<h3 id="purpose-legal-controls">Purpose &amp; Legal Controls</h3>
+<p><img src="images/04_close_and_hash_seal.jpg" alt="Month-End Close and Hash Seal" />
+<em>Figure 3: 12-Step Month-End Closing Procedure &amp; Cryptographic SHA-256 Hash Chaining in LedgerCore Health — Flowing from Verified Reconciliations into a Tamper-Proof Permanent Ledger.</em></p>
+
+<h3 id="71-purpose-statutory-cycle">7.1 Purpose &amp; Statutory Cycle</h3>
 
 <p>Under <strong>AUDCIF Article 13</strong>, books must be closed periodically. LedgerCore implements a strict 3-tier lifecycle:
 - <strong>Open:</strong> Postings allowed by authorized clerks.
 - <strong>Closed:</strong> General postings blocked; adjustments require CFO override and audit logging.
 - <strong>Locked:</strong> Permanent immutable state sealed with a SHA-256 cryptographic hash.</p>
 
-<h3 id="step-by-step-procedure-executing-month-end-closure">Step-by-Step Procedure: Executing Month-End Closure</h3>
+<h3 id="72-step-by-step-procedure-executing-month-end-closure">7.2 Step-by-Step Procedure: Executing Month-End Closure</h3>
 
 <ol>
-<li>Navigate to <strong>Accounting -> Periods and close</strong> (<code>/periods</code>).</li>
-<li>Locate the active period (e.g., <code>2026-09</code>) and click <strong>Inspect Period</strong>.</li>
-<li>Complete the <strong>12-Step Close Checklist</strong>:
+<li>📅 Navigate to <strong>Accounting -> Periods and close</strong> (<code>/periods</code>).</li>
+<li>🔎 Locate the active period (e.g., <code>2026-09</code>) and click <strong>Inspect Period</strong>.</li>
+<li>✅ Complete the <strong>12-Step Close Checklist</strong>:
 <ul>
 <li>[x] Step 1: All draft entries verified and posted or deleted.</li>
 <li>[x] Step 2: Bank and Mobile Money reconciliations completed with zero variance.</li>
@@ -814,122 +839,114 @@
 <li>[x] Step 11: Departmental cost allocations reviewed.</li>
 <li>[x] Step 12: Trial balance equilibrium confirmed.</li>
 </ul></li>
-<li>Click <strong>Close Period</strong>. Postings for the period are now locked to standard users.</li>
-<li>For year-end closure, click <strong>Lock Period (Final Seal)</strong> to generate the cryptographic hash chain.</li>
+<li>🔒 Click <strong>Close Period</strong>. Postings for the period are now locked to standard users.</li>
+<li>🔐 For year-end closure, click <strong>Lock Period (Final Seal)</strong> to generate the cryptographic hash chain.</li>
 </ol>
 
 <hr />
 
 <h2 id="8-module-6-treasury-bank-reconciliation-cash-registers">8. Module 6: Treasury, Bank Reconciliation &amp; Cash Registers</h2>
 
-<h3 id="step-by-step-procedure-reconciling-a-bank-account">Step-by-Step Procedure: Reconciling a Bank Account</h3>
+<h3 id="81-step-by-step-procedure-reconciling-a-bank-account">8.1 Step-by-Step Procedure: Reconciling a Bank Account</h3>
 
 <ol>
-<li>Navigate to <strong>Accounting -> Bank reconciliation</strong> (<code>/bank-reconciliation</code>).</li>
-<li>In the <strong>Bank Account</strong> selector, choose the commercial bank account (e.g., <code>5211 — BICEC Main Account</code>).</li>
-<li>Click <strong>Import Statement</strong> and upload the electronic bank file (<code>MT940</code>, <code>OFX</code>, or standardized <code>CSV</code>).</li>
-<li>Review the side-by-side reconciliation table:
+<li>🏦 Navigate to <strong>Accounting -> Bank reconciliation</strong> (<code>/bank-reconciliation</code>).</li>
+<li>💳 In the <strong>Bank Account</strong> selector, choose the commercial bank account (e.g., <code>5211 — BICEC Main Account</code>).</li>
+<li>📥 Click <strong>Import Statement</strong> and upload the electronic bank file (<code>MT940</code>, <code>OFX</code>, or standardized <code>CSV</code>).</li>
+<li>🔍 Review the side-by-side reconciliation table:
 <ul>
 <li><em>Left column:</em> Bank statement lines.</li>
 <li><em>Right column:</em> General Ledger cash book lines.</li>
 </ul></li>
-<li>Click <strong>Auto-Match</strong>. Transactions with identical amounts, dates, and references are automatically reconciled.</li>
-<li>For unmatched bank charges (Account <code>631</code>) or interest fees, click <strong>Post Adjustment</strong> directly from the statement line to create the balancing voucher in Journal <code>BQ</code>.</li>
-<li>Once the <strong>Unreconciled Variance</strong> reaches <code>0.00 XAF</code>, click <strong>Sign Off Reconciliation</strong>.</li>
+<li>⚡ Click <strong>Auto-Match</strong>. Transactions with identical amounts, dates, and references are automatically reconciled.</li>
+<li>✍️ For unmatched bank charges (Account <code>631</code>) or interest fees, click <strong>Post Adjustment</strong> directly from the statement line to create the balancing voucher in Journal <code>BQ</code>.</li>
+<li>🎯 Once the <strong>Unreconciled Variance</strong> reaches <code>0.00 XAF</code>, click <strong>Sign Off Reconciliation</strong>.</li>
 </ol>
 
-<h3 id="step-by-step-procedure-daily-cash-desk-balancing">Step-by-Step Procedure: Daily Cash Desk Balancing</h3>
+<h3 id="82-step-by-step-procedure-daily-cash-desk-balancing">8.2 Step-by-Step Procedure: Daily Cash Desk Balancing</h3>
 
 <ol>
-<li>Navigate to <strong>Accounting -> Cash &amp; Mobile Money</strong> (<code>/cash-registers</code>).</li>
-<li>Select the cash register (e.g., <code>Main Outpatient Cashier Desk</code>).</li>
-<li>Click <strong>Count Cash / Denomination Sheet</strong>.</li>
-<li>Enter physical bill and coin counts (10,000 XAF, 5,000 XAF, 2,000 XAF, etc.).</li>
-<li>The system computes total counted cash against system recorded receipts.</li>
-<li>If surplus or deficit exists, enter the explanation.</li>
-<li>Click <strong>Confirm Count &amp; Transfer to Vault</strong> to generate the transfer voucher (Account <code>571</code> $\to$ <code>585</code>).</li>
+<li>💵 Navigate to <strong>Accounting -> Cash &amp; Mobile Money</strong> (<code>/cash-registers</code>).</li>
+<li>🏬 Select the cash register (e.g., <code>Main Outpatient Cashier Desk</code>).</li>
+<li>🧮 Click <strong>Count Cash / Denomination Sheet</strong>.</li>
+<li>🔢 Enter physical bill and coin counts (10,000 XAF, 5,000 XAF, 2,000 XAF, etc.).</li>
+<li>⚖️ The system computes total counted cash against system recorded receipts.</li>
+<li>📝 If surplus or deficit exists, enter the explanation.</li>
+<li>🏦 Click <strong>Confirm Count &amp; Transfer to Vault</strong> to generate the transfer voucher (Account <code>571</code> $\to$ <code>585</code>).</li>
 </ol>
 
 <hr />
 
 <h2 id="9-module-7-fiscal-compliance-withholding-tax-wht-tsr">9. Module 7: Fiscal Compliance &amp; Withholding Tax (WHT / TSR)</h2>
 
-<h3 id="step-by-step-procedure-generating-withholding-tax-certificates">Step-by-Step Procedure: Generating Withholding Tax Certificates</h3>
+<h3 id="91-step-by-step-procedure-generating-withholding-tax-certificates">9.1 Step-by-Step Procedure: Generating Withholding Tax Certificates</h3>
 
 <ol>
-<li>Navigate to <strong>Accounting -> Withholding tax (WHT)</strong> (<code>/withholding-tax</code>).</li>
-<li>Select the fiscal tax period (e.g., <code>September 2026</code>).</li>
-<li>The table lists all supplier payments subject to statutory deductions:
+<li>📜 Navigate to <strong>Accounting -> Withholding tax (WHT)</strong> (<code>/withholding-tax</code>).</li>
+<li>📅 Select the fiscal tax period (e.g., <code>September 2026</code>).</li>
+<li>📋 The table lists all supplier payments subject to statutory deductions:
 <ul>
 <li><strong>TSR (Taxe Spéciale sur le Revenu):</strong> For international software licenses and foreign consulting.</li>
 <li><strong>Acompte d'Impôt / Prélèvement sur Achats:</strong> For vendors lacking certified tax clearance (<em>Attestation de Non-Redevance</em>).</li>
 <li><strong>Precompte TVA:</strong> VAT withheld at source.</li>
 </ul></li>
-<li>Check the box next to the supplier payment.</li>
-<li>Click <strong>Generate Statutory Certificate</strong>.</li>
-<li>Download and print the official signed certificate to accompany vendor payment and tax filing.</li>
+<li>☑️ Check the box next to the supplier payment.</li>
+<li>🖨️ Click <strong>Generate Statutory Certificate</strong>.</li>
+<li>📥 Download and print the official signed certificate to accompany vendor payment and tax filing.</li>
 </ol>
 
 <hr />
 
 <h2 id="10-module-8-donor-funded-projects-grant-accounting">10. Module 8: Donor-Funded Projects &amp; Grant Accounting</h2>
 
-<h3 id="step-by-step-procedure-creating-and-tracking-a-grant-budget">Step-by-Step Procedure: Creating and Tracking a Grant Budget</h3>
+<h3 id="101-step-by-step-procedure-creating-and-tracking-a-grant-budget">10.1 Step-by-Step Procedure: Creating and Tracking a Grant Budget</h3>
 
 <ol>
-<li>Navigate to <strong>Accounting -> Donor Projects</strong> (<code>/donor-projects</code>).</li>
-<li>Click <strong>+ New Project</strong>.</li>
-<li>Enter Project Code (e.g., <code>PRJ-GLOBALFUND-2026</code>), Title, Donor Agency, Grant Currency (USD/EUR), and Total Envelope.</li>
-<li>Define approved line-item budget categories (Personnel, Medical Equipment, Consumables, Training).</li>
-<li><strong>Tagging Expenses to Projects:</strong>
-<ul>
-<li>When capturing purchase vouchers in Journal <code>ACH</code>, enter the Project Code in the <strong>Project</strong> field on each relevant line.</li>
-</ul></li>
-<li><strong>Monitoring Project Execution:</strong>
-<ul>
-<li>In the project overview, inspect the real-time <strong>Budget vs. Actuals</strong> comparison and burn rate percentage.</li>
-<li>Click <strong>Export Donor Report</strong> to generate the formatted financial summary required by the granting agency.</li>
-</ul></li>
+<li>🤝 Navigate to <strong>Accounting -> Donor Projects</strong> (<code>/donor-projects</code>).</li>
+<li>➕ Click <strong>+ New Project</strong>.</li>
+<li>📝 Enter Project Code (e.g., <code>PRJ-GLOBALFUND-2026</code>), Title, Donor Agency, Grant Currency (USD/EUR), and Total Envelope.</li>
+<li>📊 Define approved line-item budget categories (Personnel, Medical Equipment, Consumables, Training).</li>
+<li>🏷️ <strong>Tagging Expenses to Projects:</strong> When capturing purchase vouchers in Journal <code>ACH</code>, enter the Project Code in the <strong>Project</strong> field on each relevant line.</li>
+<li>📈 <strong>Monitoring Project Execution:</strong> In the project overview, inspect the real-time <strong>Budget vs. Actuals</strong> comparison and burn rate percentage. Click <strong>Export Donor Report</strong> to generate the formatted financial summary.</li>
 </ol>
 
 <hr />
 
 <h2 id="11-module-9-healthcare-payroll-social-declarations-dipe">11. Module 9: Healthcare Payroll &amp; Social Declarations (DIPE)</h2>
 
-<h3 id="step-by-step-procedure-monthly-payroll-processing-dipe-generation">Step-by-Step Procedure: Monthly Payroll Processing &amp; DIPE Generation</h3>
+<h3 id="111-step-by-step-procedure-monthly-payroll-processing-dipe-generation">11.1 Step-by-Step Procedure: Monthly Payroll Processing &amp; DIPE Generation</h3>
 
 <ol>
-<li>Navigate to <strong>Accounting -> Payroll &amp; DIPE</strong> (<code>/payroll</code>).</li>
-<li>Select the payroll month (e.g., <code>September 2026</code>).</li>
-<li>Click <strong>Compute Payroll</strong>.</li>
-<li>Review the salary components:
+<li>👥 Navigate to <strong>Accounting -> Payroll &amp; DIPE</strong> (<code>/payroll</code>).</li>
+<li>📅 Select the payroll month (e.g., <code>September 2026</code>).</li>
+<li>⚙️ Click <strong>Compute Payroll</strong>. Review salary components:
 <ul>
 <li>Base Salaries (<em>Salaires de base</em>)</li>
 <li>Technical Medical Allowances (<em>Primes de technicité</em>)</li>
 <li>On-Call Night Duty Primes (<em>Primes d'astreintes et de garde</em>)</li>
 <li>Hazard Allowances (<em>Primes de risque</em>)</li>
 </ul></li>
-<li>Review statutory social and tax withholdings:
+<li>🔍 Review statutory social and tax withholdings:
 <ul>
 <li><strong>CNPS:</strong> Employee share (4.2%) and employer share (family allowances, occupational risks, pension).</li>
 <li><strong>IRPP &amp; CAC:</strong> Personal income tax and local council surcharges.</li>
 </ul></li>
-<li>Click <strong>Generate DIPE File</strong>. The system compiles the statutory electronic format required for tax and social security electronic submission.</li>
-<li>Click <strong>Post Wage Journal Entry</strong>. LedgerCore automatically creates the balanced double-entry in Journal <code>PAI</code> (Debit Class 66 / Credit Class 42 &amp; 43).</li>
+<li>📄 Click <strong>Generate DIPE File</strong>. The system compiles the statutory electronic format required for tax and social security electronic submission.</li>
+<li>🚀 Click <strong>Post Wage Journal Entry</strong>. LedgerCore automatically creates the balanced double-entry in Journal <code>PAI</code> (Debit Class 66 / Credit Class 42 &amp; 43).</li>
 </ol>
 
 <hr />
 
 <h2 id="12-module-10-patient-billing-dfe-inter-branch-transfers">12. Module 10: Patient Billing, DFE &amp; Inter-Branch Transfers</h2>
 
-<h3 id="step-by-step-procedure-raising-a-patient-billing-package">Step-by-Step Procedure: Raising a Patient Billing Package</h3>
+<h3 id="121-step-by-step-procedure-raising-a-patient-billing-package">12.1 Step-by-Step Procedure: Raising a Patient Billing Package</h3>
 
 <ol>
-<li>Navigate to <strong>Accounting -> DFE &amp; Branches</strong> (<code>/dfe-invoicing</code>).</li>
-<li>Click <strong>+ New Patient Invoice</strong>.</li>
-<li>Select Patient Name, Hospital File Number, and Ward.</li>
-<li>Add billed services from the standardized medical fee schedule (e.g., Surgery Package, Anesthesia, Hospitalization Bed Nights, Laboratory Tests).</li>
-<li><strong>Configure Multi-Payer Split:</strong>
+<li>🏥 Navigate to <strong>Accounting -> DFE &amp; Branches</strong> (<code>/dfe-invoicing</code>).</li>
+<li>➕ Click <strong>+ New Patient Invoice</strong>.</li>
+<li>👤 Select Patient Name, Hospital File Number, and Ward.</li>
+<li>🩺 Add billed services from the standardized medical fee schedule (e.g., Surgery Package, Anesthesia, Hospitalization Bed Nights, Laboratory Tests).</li>
+<li>💳 <strong>Configure Multi-Payer Split:</strong>
 <ul>
 <li>In the <strong>Payer Allocation</strong> section:
 <ul>
@@ -938,231 +955,201 @@
 <li>Select Third-Party Insurer account (e.g., <code>[CLI] Activa Assurances Santé</code>).</li>
 </ul></li>
 </ul></li>
-<li>Click <strong>Issue Invoice</strong>. The system prints the receipt and automatically creates the receivable entries in Journal <code>VTE</code>.</li>
+<li>🖨️ Click <strong>Issue Invoice</strong>. The system prints the receipt and automatically creates the receivable entries in Journal <code>VTE</code>.</li>
 </ol>
 
 <hr />
 
 <h2 id="13-module-11-enterprise-fixed-asset-register-lifecycle-management">13. Module 11: Enterprise Fixed Asset Register &amp; Lifecycle Management</h2>
 
-<h3 id="step-by-step-procedure-registering-new-medical-equipment">Step-by-Step Procedure: Registering New Medical Equipment</h3>
+<p><img src="images/03_biomedical_asset_lifecycle.jpg" alt="Biomedical Asset Lifecycle" />
+<em>Figure 4: Medical Equipment Lifecycle &amp; Clinical Engineering Infographic — 6 integrated stages: Procurement &amp; WIP Capitalisation, QR Tagging, Maintenance &amp; Electrical Safety, Calibration &amp; Quarantine Warning, Depreciation &amp; Subsidy Amortisation, and Decommissioning.</em></p>
+
+<h3 id="131-step-by-step-procedure-registering-new-medical-equipment">13.1 Step-by-Step Procedure: Registering New Medical Equipment</h3>
 
 <ol>
-<li>Navigate to <strong>Assets -> Asset register</strong> (<code>/assets</code>).</li>
-<li>Click <strong>+ Register Asset</strong>.</li>
-<li><strong>Fill General Attributes:</strong>
+<li>🏷️ Navigate to <strong>Assets -> Asset register</strong> (<code>/assets</code>).</li>
+<li>➕ Click <strong>+ Register Asset</strong>.</li>
+<li>📝 <strong>Fill General Attributes:</strong>
 <ul>
 <li><strong>Asset Name:</strong> Official equipment description (e.g., <code>Ventilateur de Réanimation Hamilton-C3</code>).</li>
 <li><strong>Domain:</strong> Select <code>Biomedical</code>.</li>
 <li><strong>Category:</strong> Choose category (e.g., <code>Matériel Médical &amp; Chirurgical</code>).</li>
 <li><strong>Serial Number &amp; Model:</strong> Manufacturer serial number and model designation.</li>
 </ul></li>
-<li><strong>Valuation &amp; Accounting Parameters:</strong>
+<li>💰 <strong>Valuation &amp; Accounting Parameters:</strong>
 <ul>
 <li><strong>Acquisition Cost:</strong> Invoice gross cost in XAF.</li>
 <li><strong>Commissioning Date:</strong> Date equipment entered clinical service.</li>
 <li><strong>Depreciation Method:</strong> Straight-line (<em>Linéaire</em>) or Degressive (<em>Dégressif</em>).</li>
 <li><strong>Useful Lifetime:</strong> Set operational life (e.g., 5 years / 60 months).</li>
 </ul></li>
-<li><strong>Location &amp; Custody Assignment:</strong>
+<li>📍 <strong>Location &amp; Custody Assignment:</strong>
 <ul>
 <li><strong>Department / Ward:</strong> Assign to clinical unit (e.g., <code>Intensive Care Unit</code>).</li>
 <li><strong>Room:</strong> Room/bed location (e.g., <code>ICU Bay 2</code>).</li>
 <li><strong>Custodian:</strong> Assign supervising ward head.</li>
 </ul></li>
-<li><strong>Save &amp; Print QR Tag:</strong>
+<li>🖨️ <strong>Save &amp; Print QR Tag:</strong>
 <ul>
 <li>Click <strong>Save Asset</strong>.</li>
-<li>Click <strong>Print QR Tag</strong> to generate the barcode sticker to affix to the machine chassis.</li>
+<li>Click <strong>Print QR Tag</strong> to generate the waterproof barcode sticker to affix to the machine chassis.</li>
 </ul></li>
 </ol>
 
-<h3 id="step-by-step-procedure-capitalizing-work-in-progress-wip-transfer-23-21">Step-by-Step Procedure: Capitalizing Work-in-Progress (WIP Transfer 23 -> 21)</h3>
+<h3 id="132-step-by-step-procedure-capitalizing-work-in-progress-wip-transfer-23-21">13.2 Step-by-Step Procedure: Capitalizing Work-in-Progress (WIP Transfer 23 -> 21)</h3>
 
 <ol>
-<li>In the Asset Register, click the <strong>Capitalise WIP</strong> button.</li>
-<li>Select the accumulated WIP cost lines sitting in Account <code>231</code> (Immobilisations en cours).</li>
-<li>Specify the final destination asset account (e.g., <code>2151 — Installations complexes</code>).</li>
-<li>Click <strong>Execute Capitalisation</strong>. The system registers the completed physical asset and posts the balancing journal entry in Journal <code>IMM</code> (<code>Debit 2151 / Credit 231</code>).</li>
+<li>🏗️ In the Asset Register, click the <strong>Capitalise WIP</strong> button.</li>
+<li>📋 Select the accumulated WIP cost lines sitting in Account <code>231</code> (Immobilisations en cours).</li>
+<li>🎯 Specify the final destination asset account (e.g., <code>2151 — Installations complexes</code>).</li>
+<li>🚀 Click <strong>Execute Capitalisation</strong>. The system registers the completed physical asset and posts the balancing journal entry in Journal <code>IMM</code> (<code>Debit 2151 / Credit 231</code>).</li>
 </ol>
 
 <hr />
 
 <h2 id="14-module-12-asset-depreciation-leases-ifrs-16">14. Module 12: Asset Depreciation &amp; Leases (IFRS 16)</h2>
 
-<h3 id="step-by-step-procedure-executing-a-monthly-depreciation-run">Step-by-Step Procedure: Executing a Monthly Depreciation Run</h3>
+<h3 id="141-step-by-step-procedure-executing-a-monthly-depreciation-run">14.1 Step-by-Step Procedure: Executing a Monthly Depreciation Run</h3>
 
 <ol>
-<li>Navigate to <strong>Assets -> Depreciation</strong> (<code>/depreciation</code>).</li>
-<li>Click <strong>Run Depreciation</strong>.</li>
-<li>Select the period (e.g., <code>September 2026</code>).</li>
-<li>Click <strong>Simulate</strong>. The engine computes depreciation charges line-by-line across all active assets under both OHADA and IFRS rules.</li>
-<li>Review the simulation table:
+<li>📉 Navigate to <strong>Assets -> Depreciation</strong> (<code>/depreciation</code>).</li>
+<li>⚙️ Click <strong>Run Depreciation</strong>.</li>
+<li>📅 Select the period (e.g., <code>September 2026</code>).</li>
+<li>🔍 Click <strong>Simulate</strong>. The engine computes depreciation charges line-by-line across all active assets under both OHADA and IFRS rules.</li>
+<li>📊 Review the simulation table:
 <ul>
 <li><em>Statutory OHADA Dotation:</em> Debits Account <code>681</code> / Credits Account <code>28x</code>.</li>
 <li><em>IFRS Depreciation:</em> Evaluated on economic useful life.</li>
 <li><em>IFRS Delta:</em> Variance between statutory and international depreciation.</li>
 <li><em>Subsidy Amortization:</em> Write-back of donor subsidies (Debit Account <code>14</code> / Credit Account <code>799</code>).</li>
 </ul></li>
-<li>Click <strong>Post Run</strong>. LedgerCore generates and commits the automated entry in Journal <code>AMO</code>.</li>
+<li>🚀 Click <strong>Post Run</strong>. LedgerCore generates and commits the automated entry in Journal <code>AMO</code>.</li>
 </ol>
 
 <hr />
 
 <h2 id="15-module-13-physical-asset-inventory-barcode-verification">15. Module 13: Physical Asset Inventory &amp; Barcode Verification</h2>
 
-<h3 id="step-by-step-procedure-conducting-a-physical-asset-audit">Step-by-Step Procedure: Conducting a Physical Asset Audit</h3>
+<h3 id="151-step-by-step-procedure-conducting-a-physical-asset-audit">15.1 Step-by-Step Procedure: Conducting a Physical Asset Audit</h3>
 
 <ol>
-<li>Navigate to <strong>Assets -> Physical inventory</strong> (<code>/asset-inventory</code>).</li>
-<li>Click <strong>+ New Campaign</strong> (e.g., <code>Annual Inventory 2026 - Surgery &amp; ICU</code>).</li>
-<li>Set the target building and asset domain.</li>
-<li><strong>Conduct Field Auditing:</strong>
-<ul>
-<li>Open the web application on a mobile tablet equipped with a camera or barcode scanner.</li>
-<li>Scan the QR code on each physical machine.</li>
-<li>The system checks off the asset as <strong>Verified</strong> and records the audit timestamp and GPS/room coordinates.</li>
-</ul></li>
-<li><strong>Review Variance Analysis:</strong>
+<li>📱 Navigate to <strong>Assets -> Physical inventory</strong> (<code>/asset-inventory</code>).</li>
+<li>➕ Click <strong>+ New Campaign</strong> (e.g., <code>Annual Inventory 2026 - Surgery &amp; ICU</code>).</li>
+<li>📍 Set the target building and asset domain.</li>
+<li>📷 <strong>Conduct Field Auditing:</strong> Open the web application on a mobile tablet; scan the QR code on each physical machine. The system checks off the asset as <strong>Verified</strong> and records timestamp and coordinates.</li>
+<li>📊 <strong>Review Variance Analysis:</strong>
 <ul>
 <li><strong>Verified:</strong> Machine present in its assigned location.</li>
 <li><strong>Displaced:</strong> Machine found in a different ward than registered. Click <strong>Reassign Location</strong> to update custody.</li>
 <li><strong>Missing:</strong> Equipment not scanned during the sweep. Flag for clinical investigation or write-off.</li>
 </ul></li>
-<li>Click <strong>Finalize Campaign</strong> to publish the audit report.</li>
+<li>🏁 Click <strong>Finalize Campaign</strong> to publish the audit report.</li>
 </ol>
 
 <hr />
 
 <h2 id="16-module-14-hospital-cmms-work-orders-calibration-iec-60601">16. Module 14: Hospital CMMS, Work Orders &amp; Calibration (IEC 60601)</h2>
 
-<h3 id="step-by-step-procedure-raising-executing-closing-a-work-order">Step-by-Step Procedure: Raising, Executing &amp; Closing a Work Order</h3>
+<h3 id="161-step-by-step-procedure-raising-executing-closing-a-work-order">16.1 Step-by-Step Procedure: Raising, Executing &amp; Closing a Work Order</h3>
 
 <ol>
-<li><strong>Raising a Breakdown Request (Ward Staff):</strong>
+<li>🚨 <strong>Raising a Breakdown Request (Ward Staff):</strong>
 <ul>
 <li>Click <strong>Maintenance -> Work orders</strong> (<code>/maintenance</code>). Click <strong>+ Raise Work Order</strong>.</li>
 <li>Select the affected Asset Tag (e.g., <code>AST-BIO-2026-0042</code>).</li>
 <li>Describe the clinical fault (e.g., <code>Infusion pump alarming error E04 - occlusion sensor failure</code>).</li>
 <li>Set urgency: <em>Critical</em>, <em>High</em>, <em>Medium</em>, <em>Low</em>. Click <strong>Submit Request</strong>.</li>
 </ul></li>
-<li><strong>Triaging &amp; Assignment (Biomedical Manager):</strong>
+<li>👨‍💼 <strong>Triaging &amp; Assignment (Biomedical Manager):</strong>
 <ul>
 <li>In the work order queue, open the ticket under <code>Awaiting Approval</code>.</li>
 <li>Assign to a Biomedical Technician (e.g., <code>samuel.eyenga@hgy.cm</code>). Click <strong>Approve &amp; Dispatch</strong>.</li>
 </ul></li>
-<li><strong>Execution &amp; Parts Consumption (Technician):</strong>
+<li>🛠️ <strong>Execution &amp; Parts Consumption (Technician):</strong>
 <ul>
 <li>Technician opens ticket on mobile device and clicks <strong>Start Job</strong>.</li>
 <li>Under <strong>Parts Used</strong>, click <strong>+ Add Part</strong>. Select parts consumed from warehouse stock (e.g., <code>Pressure Sensor Membrane</code>).</li>
 <li>Enter technician diagnostic notes.</li>
 </ul></li>
-<li><strong>Clinical Verification &amp; Closeout:</strong>
-<ul>
-<li>Ward nurse or doctor tests functionality and signs on screen.</li>
-<li>Biomedical manager verifies electrical safety and clicks <strong>Verify &amp; Close</strong>.</li>
-</ul></li>
+<li>🩺 <strong>Clinical Verification &amp; Closeout:</strong> Ward nurse or doctor tests functionality and signs on screen. Biomedical manager verifies electrical safety and clicks <strong>Verify &amp; Close</strong>.</li>
 </ol>
 
-<h3 id="step-by-step-procedure-logging-iec-60601-safety-calibration-tests">Step-by-Step Procedure: Logging IEC 60601 Safety &amp; Calibration Tests</h3>
+<h3 id="162-step-by-step-procedure-logging-iec-60601-safety-calibration-tests">16.2 Step-by-Step Procedure: Logging IEC 60601 Safety &amp; Calibration Tests</h3>
 
 <ol>
-<li>In the asset card, select the <strong>Compliance &amp; Safety</strong> tab.</li>
-<li>Under <strong>IEC 60601-1 Electrical Safety Test</strong>, enter measured readings:
+<li>🔬 In the asset card, select the <strong>Compliance &amp; Safety</strong> tab.</li>
+<li>⚡ Under <strong>IEC 60601-1 Electrical Safety Test</strong>, enter measured readings:
 <ul>
 <li>Protective Earth Resistance ($\le 0.2\ \Omega$)</li>
 <li>Chassis Leakage Current ($\le 500\ \mu\text{A}$)</li>
 <li>Patient Lead Leakage ($\le 10\ \mu\text{A}$)</li>
 </ul></li>
-<li>Under <strong>Calibration</strong>, enter the test date, issuing laboratory, certificate number, and expiry date. Attach the PDF certificate.</li>
-<li><strong>Automatic Quarantine Behavior:</strong>
-<ul>
-<li>If an electrical safety reading fails, or if the calibration expiry date passes, LedgerCore instantly sets the asset's status to <strong>Quarantined</strong>.</li>
-<li>A prominent red warning appears on the clinical dashboard prohibiting the machine from patient use until re-tested and passed.</li>
-</ul></li>
+<li>📜 Under <strong>Calibration</strong>, enter the test date, issuing laboratory, certificate number, and expiry date. Attach the PDF certificate.</li>
+<li>🚨 <strong>Automatic Quarantine Behavior:</strong> If an electrical safety reading fails, or if the calibration expiry date passes, LedgerCore instantly sets the asset's status to <strong>Quarantined</strong>. A prominent red warning appears on the clinical dashboard prohibiting the machine from patient use until re-tested and passed.</li>
 </ol>
 
 <hr />
 
 <h2 id="17-module-15-general-services-errands-procurement-logistics">17. Module 15: General Services, Errands &amp; Procurement Logistics</h2>
 
-<h3 id="step-by-step-procedure-executing-errand-runs-shopping-lists">Step-by-Step Procedure: Executing Errand Runs &amp; Shopping Lists</h3>
+<h3 id="171-step-by-step-procedure-executing-errand-runs-shopping-lists">17.1 Step-by-Step Procedure: Executing Errand Runs &amp; Shopping Lists</h3>
 
 <ol>
-<li>Navigate to <strong>General Services -> Shopping list</strong> (<code>/shopping</code>) or <strong>Errands</strong> (<code>/errands</code>).</li>
-<li>General Services supervisor creates an errand run (e.g., <code>Procurement of Diesel for Standby Generator</code>).</li>
-<li>Driver / Logistics officer opens the task on their mobile phone.</li>
-<li>At the supply depot, check off each acquired item and enter the unit purchase price.</li>
-<li>Tap <strong>Attach Receipt</strong> to snap a photo of the cash receipt or delivery note using the device camera.</li>
-<li>Tap <strong>Complete Errand</strong>. The system routes the expense voucher to accounting for petty cash reimbursement.</li>
+<li>🛒 Navigate to <strong>General Services -> Shopping list</strong> (<code>/shopping</code>) or <strong>Errands</strong> (<code>/errands</code>).</li>
+<li>📋 General Services supervisor creates an errand run (e.g., <code>Procurement of Diesel for Standby Generator</code>).</li>
+<li>📱 Driver / Logistics officer opens the task on their mobile phone.</li>
+<li>💵 At the supply depot, check off each acquired item and enter the unit purchase price.</li>
+<li>📷 Tap <strong>Attach Receipt</strong> to snap a photo of the cash receipt or delivery note using the device camera.</li>
+<li>🏁 Tap <strong>Complete Errand</strong>. The system routes the expense voucher to accounting for petty cash reimbursement.</li>
 </ol>
 
 <hr />
 
 <h2 id="18-module-16-mobile-technician-worklist">18. Module 16: Mobile Technician Worklist</h2>
 
-<h3 id="step-by-step-procedure-using-the-touch-friendly-mobile-interface">Step-by-Step Procedure: Using the Touch-Friendly Mobile Interface</h3>
+<h3 id="181-step-by-step-procedure-using-the-touch-friendly-mobile-interface">18.1 Step-by-Step Procedure: Using the Touch-Friendly Mobile Interface</h3>
 
 <ol>
-<li>Log into LedgerCore on a mobile device as a technician (e.g., <code>samuel.eyenga@hgy.cm</code>).</li>
-<li>Navigate to <strong>Maintenance -> My worklist</strong> (<code>/worklist</code>).</li>
-<li>The screen displays prioritized tasks scheduled for today.</li>
-<li>Tap <strong>Scan Asset</strong> to activate the camera; scan the equipment QR tag to immediately view service manual PDFs and historical repair logs.</li>
-<li>Tap <strong>Start Timer</strong> to track active wrench time.</li>
-<li>When work is completed, tap <strong>Sign &amp; Complete</strong> to capture digital clinical sign-off.</li>
+<li>📱 Log into LedgerCore on a mobile device as a technician (e.g., <code>samuel.eyenga@hgy.cm</code>).</li>
+<li>📋 Navigate to <strong>Maintenance -> My worklist</strong> (<code>/worklist</code>).</li>
+<li>🎯 The screen displays prioritized tasks scheduled for today.</li>
+<li>📷 Tap <strong>Scan Asset</strong> to activate the camera; scan the equipment QR tag to immediately view service manual PDFs and historical repair logs.</li>
+<li>⏱️ Tap <strong>Start Timer</strong> to track active wrench time.</li>
+<li>✍️ When work is completed, tap <strong>Sign &amp; Complete</strong> to capture digital clinical sign-off.</li>
 </ol>
 
 <hr />
 
 <h2 id="19-module-17-financial-statements-dsf-tax-packet">19. Module 17: Financial Statements, DSF &amp; Tax Packet</h2>
 
-<h3 id="step-by-step-procedure-generating-statutory-financial-statements">Step-by-Step Procedure: Generating Statutory Financial Statements</h3>
+<h3 id="191-step-by-step-procedure-generating-statutory-financial-statements">19.1 Step-by-Step Procedure: Generating Statutory Financial Statements</h3>
 
 <ol>
-<li>Navigate to <strong>Reporting -> Financial statements</strong> (<code>/reports</code>).</li>
-<li>Select the target fiscal period and standard (<strong>OHADA</strong> or <strong>IFRS</strong>).</li>
-<li><strong>OHADA Presentation:</strong>
+<li>📊 Navigate to <strong>Reporting -> Financial statements</strong> (<code>/reports</code>).</li>
+<li>📅 Select the target fiscal period and standard (<strong>OHADA</strong> or <strong>IFRS</strong>).</li>
+<li>📒 <strong>OHADA Presentation:</strong>
 <ul>
 <li><strong>Bilan (Balance Sheet):</strong> Actif Immobilisé, Actif Circulant, Trésorerie-Actif, Capitaux Propres, Dettes, Trésorerie-Passif.</li>
 <li><strong>Compte de Résultat:</strong> Production, Chiffre d'affaires, Valeur Ajoutée, EBE, Résultat d'Exploitation, Résultat Financier, Résultat HAO, Résultat Net.</li>
 <li><strong>TAFIRE:</strong> Cash flow and financing statement.</li>
 </ul></li>
-<li><strong>IFRS Presentation:</strong>
-<ul>
-<li>Statement of Financial Position, Statement of Profit or Loss, Statement of Cash Flows, Statement of Changes in Equity (SOCE).</li>
-</ul></li>
-<li><strong>Inspecting the Dual-Standard Bridge:</strong>
-<ul>
-<li>Click the <strong>Dual-Standard Bridge</strong> tab.</li>
-<li>The table displays: $\text{OHADA Net Result} + \sum \text{IFRS Adjustments} = \text{IFRS Net Profit}$.</li>
-</ul></li>
-<li><strong>Exporting the FEC (Fichier des Écritures Comptables):</strong>
-<ul>
-<li>Click <strong>Export FEC</strong>. The system downloads the 18-column dematerialized journal file compliant with CEMAC tax inspection standards.</li>
-</ul></li>
+<li>🌐 <strong>IFRS Presentation:</strong> Statement of Financial Position, Statement of Profit or Loss, Statement of Cash Flows, Statement of Changes in Equity (SOCE).</li>
+<li>🌉 <strong>Inspecting the Dual-Standard Bridge:</strong> Click the <strong>Dual-Standard Bridge</strong> tab. The table displays: $\text{OHADA Net Result} + \sum \text{IFRS Adjustments} = \text{IFRS Net Profit}$.</li>
+<li>📄 <strong>Exporting the FEC (Fichier des Écritures Comptables):</strong> Click <strong>Export FEC</strong>. The system downloads the 18-column dematerialized journal file compliant with CEMAC tax inspection standards.</li>
 </ol>
 
 <hr />
 
 <h2 id="20-module-18-security-governance-administration">20. Module 18: Security, Governance &amp; Administration</h2>
 
-<h3 id="step-by-step-procedure-provisioning-users-and-inspecting-audit-logs">Step-by-Step Procedure: Provisioning Users and Inspecting Audit Logs</h3>
+<h3 id="201-step-by-step-procedure-provisioning-users-and-inspecting-audit-logs">20.1 Step-by-Step Procedure: Provisioning Users and Inspecting Audit Logs</h3>
 
 <ol>
-<li>Navigate to <strong>Administration -> Admin console</strong> (<code>/admin</code>).</li>
-<li><strong>User Creation:</strong>
-<ul>
-<li>Click <strong>+ Add User</strong>. Enter user details, email, and assign role permissions (<code>admin</code>, <code>cfo</code>, <code>accountant</code>, <code>asset_manager</code>, <code>biomed_tech</code>, <code>services_tech</code>, <code>ward_head</code>).</li>
-</ul></li>
-<li><strong>Audit Trail Inspection:</strong>
-<ul>
-<li>Click <strong>Reporting -> Action history</strong> (<code>/audit</code>).</li>
-<li>Every transaction creation, posting, modification, deletion, and reversal is logged with timestamp, user ID, client IP address, and before/after JSON payloads.</li>
-</ul></li>
-<li><strong>Verifying Cryptographic Seal:</strong>
-<ul>
-<li>Under <strong>Audit Seal Verification</strong>, run the automated scanner. The system re-computes SHA-256 hashes across all journal entries to confirm zero manual SQL tampering.</li>
-</ul></li>
+<li>⚙️ Navigate to <strong>Administration -> Admin console</strong> (<code>/admin</code>).</li>
+<li>👤 <strong>User Creation:</strong> Click <strong>+ Add User</strong>. Enter user details, email, and assign role permissions (<code>admin</code>, <code>cfo</code>, <code>accountant</code>, <code>asset_manager</code>, <code>biomed_tech</code>, <code>services_tech</code>, <code>ward_head</code>).</li>
+<li>🕵️ <strong>Audit Trail Inspection:</strong> Click <strong>Reporting -> Action history</strong> (<code>/audit</code>). Every transaction creation, posting, modification, deletion, and reversal is logged with timestamp, user ID, client IP address, and before/after JSON payloads.</li>
+<li>🔐 <strong>Verifying Cryptographic Seal:</strong> Under <strong>Audit Seal Verification</strong>, run the automated scanner. The system re-computes SHA-256 hashes across all journal entries to confirm zero manual SQL tampering.</li>
 </ol>
 
 <hr />
@@ -1172,23 +1159,23 @@
 <h3 id="sop-1-supplier-invoice-reception-3-way-match-saisie">SOP 1: Supplier Invoice Reception, 3-Way Match &amp; Saisie</h3>
 
 <ol>
-<li>Procurement receives supplier delivery note and vendor invoice.</li>
-<li>Verify delivery note against physical warehouse goods received note.</li>
-<li>Accounting clerk opens LedgerCore: <strong>Accounting -> Journal Entries -> + New Entry</strong>.</li>
-<li>Select Journal <code>ACH</code>. Enter supplier invoice number in <strong>Reference *</strong>.</li>
-<li>Impute expense account (Class 6), input cost centre, and credit auxiliary supplier subledger (Account <code>401100</code>, partner selected).</li>
-<li>Save as Draft for Chief Accountant verification.</li>
+<li>📦 Procurement receives supplier delivery note and vendor invoice.</li>
+<li>🔍 Verify delivery note against physical warehouse goods received note.</li>
+<li>💻 Accounting clerk opens LedgerCore: <strong>Accounting -> Journal Entries -> + New Entry</strong>.</li>
+<li>📚 Select Journal <code>ACH</code>. Enter supplier invoice number in <strong>Reference *</strong>.</li>
+<li>✍️ Impute expense account (Class 6), input cost centre, and credit auxiliary supplier subledger (Account <code>401100</code>, partner selected).</li>
+<li>💾 Save as Draft for Chief Accountant verification.</li>
 </ol>
 
 <h3 id="sop-2-clinical-equipment-breakdown-to-return-to-service-protocol">SOP 2: Clinical Equipment Breakdown to Return-to-Service Protocol</h3>
 
 <ol>
-<li>Nurse notices ventilator failure; navigates to <strong>Maintenance -> Work orders -> + Raise Work Order</strong>.</li>
-<li>Selects equipment tag and marks priority <em>Critical</em>.</li>
-<li>Biomedical manager receives instant dashboard notification; assigns ticket to technician.</li>
-<li>Technician arrives in ward, scans asset QR tag, replaces sensor, and executes IEC 60601 electrical leakage test.</li>
-<li>Technician logs safety test results: status updates from <em>Quarantined</em> to <em>Operational</em>.</li>
-<li>Clinical head inspects machine, signs on mobile screen, and technician marks ticket <em>Completed</em>.</li>
+<li>🚨 Nurse notices ventilator failure; navigates to <strong>Maintenance -> Work orders -> + Raise Work Order</strong>.</li>
+<li>🏷️ Selects equipment tag and marks priority <em>Critical</em>.</li>
+<li>👨‍💼 Biomedical manager receives instant dashboard notification; assigns ticket to technician.</li>
+<li>🛠️ Technician arrives in ward, scans asset QR tag, replaces sensor, and executes IEC 60601 electrical leakage test.</li>
+<li>⚡ Technician logs safety test results: status updates from <em>Quarantined</em> to <em>Operational</em>.</li>
+<li>✍️ Clinical head inspects machine, signs on mobile screen, and technician marks ticket <em>Completed</em>.</li>
 </ol>
 
 <hr />

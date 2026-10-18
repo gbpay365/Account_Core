@@ -458,18 +458,41 @@ def build():
       color: #9f1239;
     }}
 
+    /* Images & Figures */
+    img {{
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--slate-200);
+      margin: 1.5rem 0 0.5rem;
+      display: block;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }}
+
+    img:hover {{
+      box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.2);
+    }}
+
+    em {{
+      color: var(--slate-600);
+      font-size: 0.875rem;
+      display: inline-block;
+      margin-bottom: 1.25rem;
+    }}
+
     /* Print Styles for PDF Rendering */
     @media print {{
       @page {{
         size: A4;
-        margin: 15mm 15mm 15mm 15mm;
+        margin: 12mm 15mm 15mm 15mm;
       }}
 
       body {{
         background: white !important;
-        font-size: 11pt !important;
-        line-height: 1.4 !important;
-        color: #000 !important;
+        font-size: 10.5pt !important;
+        line-height: 1.45 !important;
+        color: #0f172a !important;
       }}
 
       .top-header, .sidebar, .header-actions {{
@@ -488,25 +511,59 @@ def build():
       }}
 
       h1 {{
-        font-size: 24pt !important;
+        font-size: 22pt !important;
         margin-top: 0 !important;
         page-break-before: avoid;
+        color: #0f172a !important;
       }}
 
       h2 {{
-        font-size: 16pt !important;
-        margin-top: 25pt !important;
+        font-size: 15pt !important;
+        margin-top: 22pt !important;
         page-break-before: auto;
         page-break-after: avoid;
+        color: #0f172a !important;
+        border-bottom: 1.5pt solid #cbd5e1 !important;
       }}
 
       h3 {{
-        font-size: 13pt !important;
+        font-size: 12pt !important;
+        margin-top: 14pt !important;
         page-break-after: avoid;
+        color: #1e293b !important;
+      }}
+
+      img {{
+        max-width: 95% !important;
+        margin: 12pt auto 4pt !important;
+        display: block !important;
+        page-break-inside: avoid !important;
+        box-shadow: none !important;
+        border: 1pt solid #cbd5e1 !important;
+        border-radius: 6pt !important;
+      }}
+
+      em {{
+        font-size: 8.5pt !important;
+        color: #475569 !important;
+        display: block !important;
+        text-align: center !important;
+        margin-bottom: 14pt !important;
+        page-break-before: avoid !important;
       }}
 
       table, pre, .callout {{
         page-break-inside: avoid;
+      }}
+
+      .table-container {{
+        box-shadow: none !important;
+        border: 1pt solid #cbd5e1 !important;
+      }}
+
+      th {{
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
       }}
 
       a {{
