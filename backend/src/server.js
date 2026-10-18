@@ -2,7 +2,7 @@ import { createApp } from './app.js';
 import { config } from './config.js';
 import { pool, healthcheck } from './db/pool.js';
 import { runMigrations } from './db/migrate.js';
-import { runSeed, ensureDemoUsers } from './db/seed.js';
+import { runSeed } from './db/seed.js';
 
 const { app } = createApp();
 
@@ -16,8 +16,6 @@ try {
       await runSeed({ skipDemo: process.env.SEED_DEMO === 'false', silent: false });
     }
   }
-  // Ensure default demo users always exist with valid credentials
-  await ensureDemoUsers().catch((err) => console.warn('[seed] demo user check warning:', err.message));
 } catch (err) {
   console.error(`[api] cannot reach MySQL at ${config.db.host}:${config.db.port} - ${err.message}`);
   if (config.db.host === '127.0.0.1' || config.db.host === 'localhost') {
