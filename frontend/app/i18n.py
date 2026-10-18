@@ -58,6 +58,7 @@ STRINGS: dict[str, dict[str, str]] = {
         'nav.statements': 'Financial statements',
         'nav.asset_reports': 'Asset and compliance reports',
         'nav.audit': 'Action history',
+        'nav.user_guide': 'User Guide',
 
         'auth.signin': 'Sign in',
         'auth.email': 'Email address',
@@ -1209,6 +1210,7 @@ STRINGS: dict[str, dict[str, str]] = {
         'nav.statements': 'États financiers',
         'nav.asset_reports': 'Rapports patrimoine et conformité',
         'nav.audit': 'Historique des actions',
+        'nav.user_guide': 'Manuel d’utilisation',
 
         'auth.signin': 'Connexion',
         'auth.email': 'Adresse e-mail',

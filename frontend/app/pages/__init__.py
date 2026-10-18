@@ -30,4 +30,5 @@ from . import (  # noqa: F401
     dfe_invoicing,
     leases,
     admin,
+    user_guide,
 )

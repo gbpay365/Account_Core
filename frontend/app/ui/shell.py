@@ -90,6 +90,7 @@ def get_nav() -> list[tuple[str, list[tuple[str, str, str, tuple[str, ...]]]]]:
         ('nav.reporting', reporting_items),
         ('nav.administration', [
             ('/admin', 'nav.admin_console', 'admin_panel_settings', ('admin.users', 'admin.settings', 'coa.manage', 'admin.audit')),
+            ('/user-guide', 'nav.user_guide', 'menu_book', ('coa.view', 'asset.view', 'wo.view', 'errand.view')),
         ]),
     ]
 
@@ -256,6 +257,8 @@ def _header(user: dict, drawer, active: str = '') -> None:
             _framework_toggle(active)
             ui.element('div').classes('w-px h-6 bg-slate-200 mx-1 lc-desktop-only')
             _language_toggle()
+            ui.button(icon='help_outline', on_click=lambda: ui.navigate.to('/user-guide')) \
+                .props('flat dense round color=teal-7').tooltip(t('nav.user_guide'))
             ui.button(icon='print', on_click=lambda: ui.run_javascript('window.print()')) \
                 .props('flat dense round color=grey-7').tooltip(t('common.print'))
             ui.button(icon='refresh', on_click=lambda: ui.navigate.reload()) \
