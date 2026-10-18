@@ -60,6 +60,10 @@ export function createApp() {
     res.json({ ok: true, service: 'ledgercore-api', env: config.env, database: db });
   }));
 
+  app.get('/', (_req, res) => {
+    res.json({ ok: true, service: 'ledgercore-api', message: 'LedgerCore API. Web UI is served separately. See /api/health.' });
+  });
+
   app.use('/api/auth', authRoutes);
 
   app.get('/api/dfe/verify/:token', handler(async (req, res) => {

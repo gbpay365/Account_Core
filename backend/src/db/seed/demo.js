@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 import { money } from '../../utils/money.js';
 import { toISO, addMonths, addDays, daysInMonth, compare } from '../../utils/dates.js';
 import { createJournalEntry, nextSequence } from '../../services/ledger.service.js';
@@ -7,7 +8,7 @@ import { createRun, postRun } from '../../services/depreciation-run.service.js';
 import { ensureDefaultKinds } from '../../services/errand.service.js';
 import { DEMO_ASSETS, DEMO_COST_CENTERS, DEMO_LOCATIONS, DEMO_SUPPLIERS, DEMO_USERS } from './data/demo-assets.js';
 
-const DEMO_PASSWORD = 'Ledger@2026';
+const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD || randomBytes(12).toString('base64url');
 const OPENING_DATE = '2026-01-01';
 const CUTOVER = '2025-12-31';
 
@@ -77,7 +78,7 @@ export async function seedDemo(tx, ctx, log) {
   for (const [cc, email] of [['REA', 'mensah.kouassi@hgy.cm'], ['IMG', 'esther.nkodo@hgy.cm'], ['TECH', 'fatou.diallo@hgy.cm'], ['FIN', 'grace.ntamack@hgy.cm']]) {
     await tx.query('UPDATE cost_centers SET manager_user_id = ? WHERE id = ?', [userId.get(email), ccId.get(cc)]);
   }
-  log(`${DEMO_COST_CENTERS.length} cost centres, ${DEMO_LOCATIONS.length} locations, ${DEMO_USERS.length} users (password: ${DEMO_PASSWORD})`);
+  log(`${DEMO_COST_CENTERS.length} cost centres, ${DEMO_LOCATIONS.length} locations, ${DEMO_USERS.length} users (demo password set from SEED_DEMO_PASSWORD, or randomly generated and not logged)`);
 
   // --- suppliers -----------------------------------------------------------
   const supId = new Map();
