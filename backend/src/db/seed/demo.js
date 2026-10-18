@@ -284,13 +284,21 @@ export async function seedDemo(tx, ctx, log) {
 
   for (const a of preCutover) {
     const cat = await tx.queryOne('SELECT * FROM asset_categories WHERE id = ?', [a.category_id]);
-    const gross = await tx.queryOne('SELECT code FROM accounts WHERE id = ?', [cat.asset_account_id]);
-    const accum = await tx.queryOne('SELECT code FROM accounts WHERE id = ?', [cat.accum_depr_account_id]);
+    let grossCode = '2411';
+    let accumCode = '2841';
+    if (cat?.asset_account_id) {
+      const gross = await tx.queryOne('SELECT code FROM accounts WHERE id = ?', [cat.asset_account_id]);
+      if (gross?.code) grossCode = gross.code;
+    }
+    if (cat?.accum_depr_account_id) {
+      const accum = await tx.queryOne('SELECT code FROM accounts WHERE id = ?', [cat.accum_depr_account_id]);
+      if (accum?.code) accumCode = accum.code;
+    }
     const opening = openingAccumulated(a, CUTOVER);
 
-    add(grossByAccount, gross.code, money(a.ohada_cost));
-    add(accumByAccountOhada, accum.code, opening.ohada);
-    add(accumByAccountIfrs, accum.code, opening.ifrs);
+    add(grossByAccount, grossCode, money(a.ohada_cost));
+    add(accumByAccountOhada, accumCode, opening.ohada);
+    add(accumByAccountIfrs, accumCode, opening.ifrs);
 
     await tx.query(
       `UPDATE assets

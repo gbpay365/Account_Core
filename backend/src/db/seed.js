@@ -196,8 +196,9 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
     // 3. Asset categories
     let catId = new Map();
     const catCount = await tx.queryOne('SELECT COUNT(*) AS n FROM asset_categories WHERE org_id = ?', [orgId]);
-    if (Number(catCount?.n || 0) === 0) {
-      step(`Seeding asset categories for org ${orgId}...`);
+    const nullCatAccts = await tx.queryOne('SELECT COUNT(*) AS n FROM asset_categories WHERE org_id = ? AND asset_account_id IS NULL', [orgId]);
+    if (Number(catCount?.n || 0) === 0 || Number(nullCatAccts?.n || 0) > 0) {
+      step(`Seeding/updating asset categories for org ${orgId}...`);
       catId = await seedAssetCategories(tx, orgId, accountId, step);
     } else {
       const rows = await tx.query('SELECT code, id FROM asset_categories WHERE org_id = ?', [orgId]);

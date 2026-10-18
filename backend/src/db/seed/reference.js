@@ -349,7 +349,15 @@ export async function seedAssetCategories(tx, orgId, accountId, log) {
          pm_interval_months, pm_interval_hours, pm_interval_km,
          capitalization_threshold, default_criticality)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-       ON DUPLICATE KEY UPDATE name=VALUES(name), name_en=VALUES(name_en)`,
+       ON DUPLICATE KEY UPDATE
+         name=VALUES(name),
+         name_en=VALUES(name_en),
+         asset_account_id=VALUES(asset_account_id),
+         accum_depr_account_id=VALUES(accum_depr_account_id),
+         depr_expense_account_id=VALUES(depr_expense_account_id),
+         disposal_gain_account_id=VALUES(disposal_gain_account_id),
+         disposal_loss_account_id=VALUES(disposal_loss_account_id),
+         maintenance_account_id=VALUES(maintenance_account_id)`,
       [
         orgId, c.code, c.name, c.name_en, c.domain, parentId,
         c.taxonomy_system || 'internal', c.taxonomy_code || null,
