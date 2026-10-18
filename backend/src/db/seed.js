@@ -5,6 +5,40 @@ import { seedReference, seedOrgReference, seedAssetCategories, seedFiscalCalenda
 import { seedDemo } from './seed/demo.js';
 import { applyPostingLevel } from '../../scripts/apply-posting-level.js';
 
+import bcrypt from 'bcryptjs';
+import { DEMO_USERS } from './seed/data/demo-assets.js';
+
+export async function ensureDemoUsers() {
+  const org = await pool.queryOne('SELECT id FROM organizations LIMIT 1');
+  if (!org) {
+    return runSeed({ silent: false });
+  }
+  const orgId = org.id;
+  const hash = await bcrypt.hash('Ledger@2026', 10);
+
+  const roleRows = await pool.query('SELECT id, code FROM roles');
+  const roleId = new Map(roleRows.map((r) => [r.code, r.id]));
+
+  for (const [email, fullName, role, jobTitle, _cc, isTech, rate] of DEMO_USERS) {
+    const rId = roleId.get(role);
+    if (!rId) continue;
+    const existing = await pool.queryOne('SELECT id FROM users WHERE email = ?', [email]);
+    if (!existing) {
+      await pool.query(
+        `INSERT INTO users (org_id, email, password_hash, full_name, job_title, role_id, locale, is_technician, hourly_rate, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, 'fr', ?, ?, 1)`,
+        [orgId, email, hash, fullName, jobTitle, rId, isTech ? 1 : 0, rate]
+      );
+    } else {
+      await pool.query(
+        'UPDATE users SET password_hash = ?, is_active = 1 WHERE id = ?',
+        [hash, existing.id]
+      );
+    }
+  }
+  console.log('[seed] Demonstration users verified and active.');
+}
+
 export async function runSeed({ skipDemo = false, silent = false } = {}) {
   const step = (label) => { if (!silent) console.log(`  - ${label}`); };
   const t0 = Date.now();
