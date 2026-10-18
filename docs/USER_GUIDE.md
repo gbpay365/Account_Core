@@ -6,519 +6,489 @@
 
 ## Table of Contents
 
-1. [System Overview & Architecture](#1-system-overview--architecture)
-   - [Core Mission & Capabilities](#core-mission--capabilities)
-   - [Dual-Framework Accounting (OHADA & IFRS)](#dual-framework-accounting-ohada--ifrs)
-   - [Biomedical & Healthcare CMMS Integration](#biomedical--healthcare-cmms-integration)
-2. [Getting Started & Authentication](#2-getting-started--authentication)
-   - [Accessing the Application](#accessing-the-application)
-   - [Bilingual Interface (English & French)](#bilingual-interface-english--french)
-   - [Roles & Permissions Matrix](#roles--permissions-matrix)
-   - [Demonstration Accounts](#demonstration-accounts)
-3. [Module 1: Executive Dashboard & KPIs](#3-module-1-executive-dashboard--kpis)
-   - [Financial Performance & Funding Metrics](#financial-performance--funding-metrics)
-   - [Asset Net Book Value & Register Overview](#asset-net-book-value--register-overview)
-   - [Maintenance Pipeline & Equipment Safety Status](#maintenance-pipeline--equipment-safety-status)
-4. [Module 2: Chart of Accounts & Analytical Structure](#4-module-2-chart-of-accounts--analytical-structure)
-   - [SYSCOHADA Revised Classification (Classes 1–9)](#syscohada-revised-classification-classes-19)
-   - [Posting Level Constraints & Child Account Generator](#posting-level-constraints--child-account-generator)
-   - [IFRS Line Mapping Configuration](#ifrs-line-mapping-configuration)
-   - [Analytical Cost Centres (Departments & Wards)](#analytical-cost-centres-departments--wards)
-5. [Module 3: Journal Entries & AUDCIF Statutory Capture](#5-module-3-journal-entries--audcif-statutory-capture)
-   - [Statutory Principles (AUDCIF Articles 17–24)](#statutory-principles-audcif-articles-1724)
-   - [Specialized Journals (Journaux Divisionnaires)](#specialized-journals-journaux-divisionnaires)
-   - [Capturing a Double-Entry Voucher](#capturing-a-double-entry-voucher)
-   - [Auto-Counterpart Suggestion Engine](#auto-counterpart-suggestion-engine)
-   - [Posting, Immutability & Reversals (Extourne)](#posting-immutability--reversals-extourne)
-   - [Recurring Journals & Scheduled Accruals](#recurring-journals--scheduled-accruals)
-6. [Module 4: General Ledger, Auxiliary Subledgers & Lettrage](#6-module-4-general-ledger-auxiliary-subledgers--lettrage)
-   - [General Ledger Account Statements](#general-ledger-account-statements)
-   - [Statutory 8-Column Trial Balance](#statutory-8-column-trial-balance)
-   - [Auxiliary Third-Party Subledgers (Clients & Fournisseurs)](#auxiliary-third-party-subledgers-clients--fournisseurs)
-   - [Lettrage (Open-Item Invoice & Payment Matching)](#lettrage-open-item-invoice--payment-matching)
-7. [Module 5: Accounting Periods, Fiscal Year & Year-End Close](#7-module-5-accounting-periods-fiscal-year--year-end-close)
-   - [Period Statuses (Open, Closed, Locked)](#period-statuses-open-closed-locked)
-   - [Structured 12-Step Close Checklist](#structured-12-step-close-checklist)
-   - [Closed Period Overrides & Governance](#closed-period-overrides--governance)
-   - [Cryptographic Audit Sealing (SHA-256 Chaining)](#cryptographic-audit-sealing-sha-256-chaining)
-8. [Module 6: Treasury, Bank Reconciliation & Cash Registers](#8-module-6-treasury-bank-reconciliation--cash-registers)
-   - [Bank Account Reconciliation (MT940 / CSV Import)](#bank-account-reconciliation-mt940--csv-import)
-   - [Automated & Manual Transaction Matching](#automated--manual-transaction-matching)
-   - [Petty Cash Registers & Mobile Money (MTN MoMo / Orange Money)](#petty-cash-registers--mobile-money-mtn-momo--orange-money)
-   - [Cash Audits & Discrepancy Settlements](#cash-audits--discrepancy-settlements)
-9. [Module 7: Fiscal Compliance & Withholding Tax (WHT / TSR)](#9-module-7-fiscal-compliance--withholding-tax-wht--tsr)
-   - [Cameroon / CEMAC Tax Retentions](#cameroon--cemac-tax-retentions)
-   - [Generating WHT Certificates (Acomptes & Prélèvements)](#generating-wht-certificates-acomptes--prélèvements)
-   - [Monthly Tax Declaration Summary](#monthly-tax-declaration-summary)
-10. [Module 8: Donor-Funded Projects & Grant Accounting](#10-module-8-donor-funded-projects--grant-accounting)
-    - [Project Budgeting & Multi-Currency Setup](#project-budgeting--multi-currency-setup)
-    - [Restricted Funding & Eligible Expense Allocation](#restricted-funding--eligible-expense-allocation)
-    - [Donor Financial Reports & Burn-Rate Tracking](#donor-financial-reports--burn-rate-tracking)
-11. [Module 9: Healthcare Payroll & Social Declarations (DIPE)](#11-module-9-healthcare-payroll--social-declarations-dipe)
-    - [Salary Grid, Allowances & On-Call Primes](#salary-grid-allowances--on-call-primes)
-    - [CNPS Social Security & IRPP Tax Computations](#cnps-social-security--irpp-tax-computations)
-    - [DIPE (Document d'Information sur le Personnel Employé)](#dipe-document-dinformation-sur-le-personnel-employé)
-    - [Automated Wage Journal Integration](#automated-wage-journal-integration)
-12. [Module 10: Patient Billing, DFE & Inter-Branch Transfers](#12-module-10-patient-billing-dfe--inter-branch-transfers)
-    - [Direction des Forfaits et Évacuations (DFE) Invoicing](#direction-des-forfaits-et-évacuations-dfe-invoicing)
-    - [Medical Procedures & Patient Accounts](#medical-procedures--patient-accounts)
-    - [Inter-Branch Reconciliations (Account 181 / 185)](#inter-branch-reconciliations-account-181--185)
-13. [Module 11: Enterprise Fixed Asset Register](#13-module-11-enterprise-fixed-asset-register)
-    - [Asset Classification (Biomedical, Facility, IT, Fleet, Furniture)](#asset-classification-biomedical-facility-it-fleet-furniture)
-    - [Capitalisation & Work-In-Progress Transfers (Account 23 -> 21)](#capitalisation--work-in-progress-transfers-account-23---21)
-    - [Asset Tagging, QR Code Generation & Custody Tracking](#asset-tagging-qr-code-generation--custody-tracking)
-    - [Disposals, Scrap & Asset Sales (Accounts 28, 654, 81/82)](#disposals-scrap--asset-sales-accounts-28-654-8182)
-14. [Module 12: Asset Depreciation & Leases (IFRS 16)](#14-module-12-asset-depreciation--leases-ifrs-16)
-    - [Automated Monthly & Annual Depreciation Runs](#automated-monthly--annual-depreciation-runs)
-    - [OHADA vs IFRS Depreciation Delta Calculation](#ohada-vs-ifrs-depreciation-delta-calculation)
-    - [Donated Asset Subsidy Amortisation (Accounts 14 -> 799)](#donated-asset-subsidy-amortisation-accounts-14---799)
-    - [IFRS 16 Lease Accounting (Right-of-Use & Liabilities)](#ifrs-16-lease-accounting-right-of-use--liabilities)
-    - [Fiscal Tax Depreciation vs Book Depreciation](#fiscal-tax-depreciation-vs-book-depreciation)
-15. [Module 13: Physical Inventory & Barcode Reconciliation](#15-module-13-physical-inventory--barcode-reconciliation)
-    - [Launching an Annual / Periodic Asset Audit](#launching-an-annual--periodic-asset-audit)
-    - [Scanner Verification & Mobile Auditing](#scanner-verification--mobile-auditing)
-    - [Discrepancy Resolution & General Ledger Adjustments](#discrepancy-resolution--general-ledger-adjustments)
-16. [Module 14: Hospital CMMS, Work Orders & Calibration](#16-module-14-hospital-cmms-work-orders--calibration)
-    - [Preventive & Corrective Maintenance Workflows](#preventive--corrective-maintenance-workflows)
-    - [Raising, Approving & Assigning Work Orders](#raising-approving--assigning-work-orders)
-    - [Electrical Safety (IEC 60601) & Metrological Calibration](#electrical-safety-iec-60601--metrological-calibration)
-    - [Quarantine Flags & Restriction Management](#quarantine-flags--restriction-management)
-17. [Module 15: General Services, Errands & Procurement Logistics](#17-module-15-general-services-errands--procurement-logistics)
-    - [Errands & Shopping Lists Execution](#errands--shopping-lists-execution)
-    - [Vehicle Fleet Logs & Trip Dispatch](#vehicle-fleet-logs--trip-dispatch)
-18. [Module 16: Mobile Technician Worklist](#18-module-16-mobile-technician-worklist)
-    - [Mobile Interface for Field Technicians](#mobile-interface-for-field-technicians)
-    - [Parts Usage & Time Logging](#parts-usage--time-logging)
-19. [Module 17: Financial Statements, DSF & Tax Packet](#19-module-17-financial-statements-dsf--tax-packet)
-    - [OHADA Statutory Statements (Bilan, Compte de Résultat, TAFIRE)](#ohada-statutory-statements-bilan-compte-de-résultat-tafire)
-    - [IFRS Financial Statements (SOFP, P&L, Cash Flows, SOCE)](#ifrs-financial-statements-sofp-pl-cash-flows-soce)
-    - [Dual-Standard Bridge Analysis](#dual-standard-bridge-analysis)
-    - [FEC Dematerialized Tax Audit File Export](#fec-dematerialized-tax-audit-file-export)
-    - [Déclaration Statistique et Fiscale (DSF CEMAC)](#déclaration-statistique-et-fiscale-dsf-cemac)
-20. [Module 18: Security, Governance & Administration](#20-module-18-security-governance--administration)
-    - [User Management & Role Assignment](#user-management--role-assignment)
-    - [Immutable Audit Trail Inspection](#immutable-audit-trail-inspection)
-    - [System Backup & Disaster Recovery Protocols](#system-backup--disaster-recovery-protocols)
-21. [Standard Operating Procedures (SOPs) & Cheat Sheets](#21-standard-operating-procedures-sops--cheat-sheets)
+- [1. System Overview & Architecture](#1-system-overview--architecture)
+- [2. Getting Started & Authentication](#2-getting-started--authentication)
+- [3. Module 1: Executive Dashboard & Operational KPIs](#3-module-1-executive-dashboard--operational-kpis)
+- [4. Module 2: Chart of Accounts & Analytical Structure](#4-module-2-chart-of-accounts--analytical-structure)
+- [5. Module 3: Journal Entries & AUDCIF Statutory Capture](#5-module-3-journal-entries--audcif-statutory-capture)
+- [6. Module 4: General Ledger, Auxiliary Subledgers & Lettrage](#6-module-4-general-ledger-auxiliary-subledgers--lettrage)
+- [7. Module 5: Accounting Periods, Fiscal Year & Year-End Close](#7-module-5-accounting-periods-fiscal-year--year-end-close)
+- [8. Module 6: Treasury, Bank Reconciliation & Cash Registers](#8-module-6-treasury-bank-reconciliation--cash-registers)
+- [9. Module 7: Fiscal Compliance & Withholding Tax (WHT / TSR)](#9-module-7-fiscal-compliance--withholding-tax-wht--tsr)
+- [10. Module 8: Donor-Funded Projects & Grant Accounting](#10-module-8-donor-funded-projects--grant-accounting)
+- [11. Module 9: Healthcare Payroll & Social Declarations (DIPE)](#11-module-9-healthcare-payroll--social-declarations-dipe)
+- [12. Module 10: Patient Billing, DFE & Inter-Branch Transfers](#12-module-10-patient-billing-dfe--inter-branch-transfers)
+- [13. Module 11: Enterprise Fixed Asset Register & Lifecycle Management](#13-module-11-enterprise-fixed-asset-register--lifecycle-management)
+- [14. Module 12: Asset Depreciation & Leases (IFRS 16)](#14-module-12-asset-depreciation--leases-ifrs-16)
+- [15. Module 13: Physical Asset Inventory & Barcode Verification](#15-module-13-physical-asset-inventory--barcode-verification)
+- [16. Module 14: Hospital CMMS, Work Orders & Calibration (IEC 60601)](#16-module-14-hospital-cmms-work-orders--calibration-iec-60601)
+- [17. Module 15: General Services, Errands & Procurement Logistics](#17-module-15-general-services-errands--procurement-logistics)
+- [18. Module 16: Mobile Technician Worklist](#18-module-16-mobile-technician-worklist)
+- [19. Module 17: Financial Statements, DSF & Tax Packet](#19-module-17-financial-statements-dsf--tax-packet)
+- [20. Module 18: Security, Governance & Administration](#20-module-18-security-governance--administration)
+- [21. Standard Operating Procedures (SOPs) & Practical Workflows](#21-standard-operating-procedures-sops--practical-workflows)
 
 ---
 
 ## 1. System Overview & Architecture
 
-### Core Mission & Capabilities
-**LedgerCore Health** is an enterprise-grade Core Accounting, Asset Lifecycle, and Healthcare Facility Management (CMMS) software system engineered specifically for hospitals, clinics, and healthcare networks operating under the **OHADA (*Organisation pour l'Harmonisation en Afrique du Droit des Affaires*)** jurisdiction and international accounting frameworks (**IFRS**).
+### Purpose & Mission
+**LedgerCore Health** is an integrated hospital ERP combining core general ledger accounting, hospital fixed asset tracking, biomedical equipment safety, and healthcare logistics. It is designed to satisfy the strict legal demands of the **OHADA Uniform Act on Accounting and Financial Reporting (*AUDCIF*)** while simultaneously providing **IFRS presentations** for external donors, partners, and international auditors.
 
-### Dual-Framework Accounting (OHADA & IFRS)
-Unlike conventional ERPs that require redundant data entry or parallel databases, LedgerCore Health utilizes a **unified double-entry transactional engine** that captures each event once and evaluates it across both standards:
-- **Statutory Presentation (OHADA / SYSCOHADA Revised):** Formatted for local legal compliance, tax filings, and regional CEMAC/UEMOA banking compliance.
-- **Investor & International Presentation (IFRS):** Formatted for international donors, development banks, and corporate stakeholders.
-- **Dual-Standard Bridge:** Real-time reconciliation quantifying every difference (e.g., IFRS 16 lease capitalisation, fair value adjustments, depreciation period variances).
-
-### Biomedical & Healthcare CMMS Integration
-LedgerCore seamlessly links medical equipment (CT scanners, ventilators, surgical autoclaves) with the General Ledger. When a biomedical engineer conducts maintenance or when an asset is depreciated, the operational and financial records remain permanently synchronised with zero variance between the physical register and the balance sheet.
+### Dual-Standard Transaction Engine
+Every financial movement entered into LedgerCore Health is evaluated through dual accounting lenses:
+- **SYSCOHADA Revised Standard:** Generates the official French/English statutory Bilan, Compte de Résultat, and TAFIRE according to regional CEMAC/UEMOA business laws.
+- **IFRS Presentation:** Produces Statement of Financial Position, Statement of Profit or Loss, and Cash Flows according to international accounting standards.
+- **Dual-Standard Bridge:** Provides an exact mathematical variance bridge quantifying every divergence between local statutory accounting and IFRS (such as IFRS 16 lease capitalization, accelerated tax depreciation vs. useful life depreciation, and subsidy amortization).
 
 ---
 
 ## 2. Getting Started & Authentication
 
-### Accessing the Application
-- **Web Application URL:** `http://localhost:8700` (or your hospital's secure domain, e.g., `https://ledgercore.shisong.health`)
-- **API Endpoint:** `http://localhost:4700/api`
-- **Supported Browsers:** Google Chrome, Mozilla Firefox, Microsoft Edge, Safari (modern desktop and tablet browsers).
-
-### Bilingual Interface (English & French)
-The entire application operates in full bilingual mode:
-- **Toggle Language:** Click the **Language** toggle button in the top navigation bar or the sign-in screen to instantly switch between **English** and **Français**.
-- All account names, financial statements, validation alerts, and technical terms are natively translated according to official SYSCOHADA terminology.
-
-### Roles & Permissions Matrix
-
-| Role | Default Access Scope | Key Permissions |
-| :--- | :--- | :--- |
-| **System Administrator** | Full System & Configuration | User provisioning, role assignment, audit log inspection, organization settings, backup. |
-| **CFO / Chief Accountant** | Financial Leadership | Post journal entries, lock periods, execute depreciation, approve reversals, sign off financial statements. |
-| **Accounting Clerk** | Operational Bookkeeping | Saisie of journal entries, vendor bill capture, patient invoice review, bank statement import. Cannot post to General Ledger. |
-| **Asset Manager** | Asset Register & Procurement | Asset registration, disposal requests, preventive plan scheduling, physical inventory management. |
-| **Biomedical Technician** | Medical Equipment CMMS | Execute work orders, log calibration certificates, perform IEC 60601 safety tests, record parts used. |
-| **General Services Technician**| Facility & Logistics | Execute errand runs, shopping list purchasing, non-clinical facility repairs, vehicle fleet logs. |
-| **Ward / Department Head** | Operational Unit View | Request equipment repair, inspect custody of ward assets, view departmental budget consumption. |
-
-### Demonstration Accounts
-For testing and onboarding, predefined demonstration users are available (Password for all: `Ledger@2026`):
-
-- **System Administrator:** `admin@ledgercore.health`
-- **CFO:** `grace.ntamack@hgy.cm`
-- **Accounting Clerk:** `amina.bakari@hgy.cm`
-- **Asset Manager:** `fatou.diallo@hgy.cm`
-- **Biomedical Technician:** `samuel.eyenga@hgy.cm`
-- **General Services Tech:** `derick.nji@hgy.cm`
-- **Ward Head (Surgery):** `mensah.kouassi@hgy.cm`
+### Step-by-Step Procedure: Logging into the System
+1. **Open the Web Browser:** Launch Google Chrome, Microsoft Edge, or Mozilla Firefox and navigate to the application URL (Default: `http://localhost:8700` or your hospital's secure domain).
+2. **Select Preferred Language:**
+   - On the top right of the login screen, click **English** or **Français** to load your interface language.
+3. **Enter Credentials:**
+   - In the **Email address** field, enter your assigned hospital email.
+   - In the **Password** field, enter your secure password.
+   - Click the **Sign in** button.
+4. **Using Quick-Demo Accounts (For Evaluation/Testing):**
+   - Click any demonstration role card on the sign-in screen to populate credentials automatically:
+     - **CFO:** `grace.ntamack@hgy.cm` / `Ledger@2026`
+     - **Accounting Clerk:** `amina.bakari@hgy.cm` / `Ledger@2026`
+     - **Asset Manager:** `fatou.diallo@hgy.cm` / `Ledger@2026`
+     - **Biomedical Technician:** `samuel.eyenga@hgy.cm` / `Ledger@2026`
+     - **Administrator:** `admin@ledgercore.health` / `Ledger@2026`
+5. **Inspect the Application Header:**
+   - Once authenticated, verify the header indicators:
+     - **Organization Badge:** Displays hospital entity name (e.g., `🏥 TSSF Shisong SOA`).
+     - **Framework Badge:** Displays active standard (`📒 OHADA` or `🌐 IFRS`).
+     - **Currency:** Functional currency indicator (`💱 XAF`).
+     - **Quick Actions:** Help/User Guide (`help_outline`), Print (`print`), and Reload (`refresh`).
 
 ---
 
-## 3. Module 1: Executive Dashboard & KPIs
+## 3. Module 1: Executive Dashboard & Operational KPIs
 
-The Executive Dashboard provides hospital directors and department heads with an instantaneous snapshot of financial and operational health.
+### Purpose & Scope
+The Executive Dashboard provides hospital leadership, finance directors, and biomedical heads with an instant real-time operational pulse of revenue, asset values, work order pipelines, and clinical safety compliance.
 
-### Financial Performance & Funding Metrics
-- **Net Result (Résultat Net):** Tracks the surplus or deficit for the fiscal year to date under both OHADA and IFRS presentations.
-- **Operating Turnover:** Patient fees, surgery billing, and medical services rendered.
-- **Grants & Subsidies:** Operating subsidies received from the State, donor funding, and foundation grants.
-- **Cash & Liquidity Positions:** Aggregated balances across commercial banks, petty cash, and mobile money accounts.
-
-### Asset Net Book Value & Register Overview
-- **Total Asset Cost (Valeur Brute):** Historical acquisition cost of all capitalised assets.
-- **Cumulative Depreciation (Amortissements Cumulés):** Total statutory depreciation charged to date.
-- **Net Book Value (Valeur Nette Comptable - VNC):** Residual book balance matching account Class 2 minus Class 28 in the General Ledger.
-
-### Maintenance Pipeline & Equipment Safety Status
-- **Work Orders Breakdown:** Real-time counter of tickets awaiting approval, scheduled, in progress, blocked, or awaiting verification.
-- **Restricted / Quarantined Equipment:** Instant alert showing any medical equipment whose metrological calibration or electrical safety certification has lapsed.
+### Step-by-Step Procedure: Reviewing Executive KPIs
+1. **Navigate to Dashboard:** Click **Overview -> Dashboard** from the left navigation rail.
+2. **Review Financial Performance Cards:**
+   - **Net Result (Résultat Net):** Shows year-to-date surplus or deficit calculated from posted revenue and expense lines.
+   - **Operating Turnover:** Displays patient consultation fees, surgical fees, laboratory revenues, and pharmacy sales.
+   - **Operating Subsidies & Grants:** Displays State operational subsidies and recognized donor contributions.
+3. **Inspect Asset Health & Net Book Value:**
+   - **Asset Net Book Value (VNC):** Displays total capitalised gross cost minus cumulative depreciation.
+   - Click **Open register** on the asset card to drill down into category-level gross book values.
+4. **Audit Maintenance & Biomedical Safety Pipeline:**
+   - Review open work orders grouped by status: *Awaiting Approval*, *Scheduled*, *In Progress*, *Blocked*, *Awaiting Verification*.
+   - **Restricted / Quarantined Equipment Alert:**
+     - If the badge is green (**All equipment holds a current certificate**), all clinical assets are compliant.
+     - If the badge is red (**Equipment restricted from use**), click directly on the warning badge to view machines whose electrical safety (IEC 60601) or metrological calibration has lapsed.
 
 ---
 
 ## 4. Module 2: Chart of Accounts & Analytical Structure
 
-### SYSCOHADA Revised Classification (Classes 1–9)
-LedgerCore Health implements the complete **SYSCOHADA Revised Chart of Accounts** structured into 9 statutory classes:
-- **Classe 1:** Comptes de ressources durables (Capitaux propres, emprunts, subventions d'investissement).
-- **Classe 2:** Comptes de l'actif immobilisé (Immobilisations corporelles, incorporelles et financières).
-- **Classe 3:** Comptes de stocks (Médicaments, consommables médicaux, pièces détachées).
-- **Classe 4:** Comptes de tiers (Fournisseurs, clients hospitalisés, personnel, État et organismes sociaux).
-- **Classe 5:** Comptes de trésorerie (Banques, caisses régies, mobile money).
-- **Classe 6:** Comptes de charges des activités ordinaires (Achats médicaux, salaires, entretiens).
-- **Classe 7:** Comptes de produits des activités ordinaires (Prestations de soins, hospitalisations, subventions).
-- **Classe 8:** Comptes des autres charges et autres produits (Charges et produits Hors Activités Ordinaires - HAO).
-- **Classe 9:** Comptes des engagements hors bilan et comptabilité analytique hospitalière.
+### Purpose & Scope
+The Chart of Accounts module provides the statutory backbone of the hospital, implementing the **SYSCOHADA Revised** 9-class chart of accounts with hierarchical parent-child relationships and 1-to-1 IFRS presentation mapping.
 
-### Posting Level Constraints & Child Account Generator
-To maintain statutory integrity, LedgerCore enforces the **Niveau d'Imputation Rule**:
-- **Heading Accounts (*Comptes de Regroupement*):** 2-digit and 3-digit accounts (e.g., `60`, `401`) are non-postable (`is_postable = 0`). Postings made directly to heading accounts are rejected.
-- **Configurable Posting Length:** System administrators can set the posting length (typically 4, 6, or 8 characters).
-- **Default Child Generator:** If a user selects a heading account, clicking **Create Default Child** automatically creates the first compliant postable sub-account (e.g., under `4011`, it creates `401100`).
+### Step-by-Step Procedure: Creating a New Postable Account
+1. **Navigate to Accounts:** Click **Accounting -> Chart of accounts** (`/accounts`).
+2. **Filter & Search:**
+   - Select a class tab (e.g., **Class 6 — Charges**) or type an account code in the search bar (e.g., `6011`).
+3. **Click Create Account:**
+   - Click the **+ New Account** button in the header.
+4. **Fill Account Parameters:**
+   - **Account Code:** Must start with the class digit and follow the hierarchical structure of its parent (e.g., `601102`).
+   - **Name (French statutory):** Mandatory official French title (e.g., `Fournitures de cardiologie interventionnelle`).
+   - **Name (English):** English operational title (e.g., `Interventional Cardiology Supplies`).
+   - **Parent Account:** Select the 3-digit or 4-digit heading under which this account sits (e.g., `6011`).
+   - **Accepts Postings (Switch):** Enable to allow transactional entries.
+   - **Requires Cost Centre (Switch):** Enable for clinical expenses requiring ward/department allocation.
+   - **Requires Third Party (Switch):** Enable for supplier or client collective accounts (`401`, `411`).
+   - **Requires Asset Reference (Switch):** Enable for maintenance and equipment accounts (`624`, `605`).
+5. **Set IFRS Presentation Line:**
+   - In the **IFRS Mapping** dropdown, select the corresponding international reporting line (e.g., `Operating Expenses - Medical Supplies`).
+6. **Save Account:** Click **Save Account**. The system validates code length and hierarchy and registers the account immediately.
 
-### IFRS Line Mapping Configuration
-Every postable SYSCOHADA account has a corresponding 1-to-1 IFRS presentation mapping:
-- Example: SYSCOHADA `2411` (Matériel médical) maps to IFRS `Property, Plant and Equipment - Medical Equipment`.
-- Example: SYSCOHADA `6611` (Rémunérations directes au personnel) maps to IFRS `Employee Benefits Expense`.
-
-### Analytical Cost Centres (Departments & Wards)
-To satisfy internal cost management, charges in Class 6 require an assigned **Cost Centre**:
-- Clinical Wards: Surgery, Intensive Care Unit (ICU), Maternity, Outpatient, Cardiology.
-- Support Services: Medical Laboratory, Pharmacy, Biomedical Engineering, Administration.
+### Step-by-Step Procedure: Generating a Default Child Account
+If you select a non-postable heading account (e.g., `4011` - Fournisseurs):
+1. Click on the heading account in the tree.
+2. In the information banner, click **Create Default Child Account**.
+3. LedgerCore automatically calculates the next sequential code meeting the organization's posting length (e.g., `401100`) and provisions it ready for use.
 
 ---
 
 ## 5. Module 3: Journal Entries & AUDCIF Statutory Capture
 
-### Statutory Principles (AUDCIF Articles 17–24)
-LedgerCore Health complies strictly with the OHADA Uniform Act (*AUDCIF*):
-1. **Article 17 (Pièce Justificative Obligatoire):** Every entry must have a supporting voucher reference (e.g., Invoice number, Receipt number, Bank advice). Unreferenced manual entries are prohibited.
-2. **Article 17 (Partie Double):** Total Debits must exactly equal Total Credits. Every entry requires at least two lines.
-3. **Article 17 (Interdiction des Montants Négatifs):** Negative numbers in debit or credit fields are rejected. Adjustments must be made by swapping debit and credit positions or through contra-entries.
-4. **Article 19 (Comptabilité Auxiliaire):** Collective accounts (`401`, `411`, `421`) must specify the individual third-party partner.
-5. **Article 20 (Intangibilité des Écritures):** Once an entry is validated and posted, it cannot be modified or deleted. Errors are corrected strictly via contra-entry (*extourne*).
+### Purpose & Legal Requirements
+In strict compliance with **AUDCIF Articles 17, 19, and 20**:
+- Every entry must balance: $\sum \text{Debits} = \sum \text{Credits}$.
+- Every manual entry must cite a verifiable supporting voucher reference (*Pièce justificative*).
+- Negative numbers are strictly prohibited.
+- Posted entries cannot be edited or deleted; corrections are handled exclusively via contra-entry (*extourne*).
 
-### Specialized Journals (Journaux Divisionnaires)
-LedgerCore provides 10 standard auxiliary journals:
-- `ACH` — Journal des Achats (Supplier invoices for pharmaceuticals, medical supplies)
-- `VTE` — Journal des Ventes (Patient billing, clinic consultations, insurer billings)
-- `BQ` — Journal de Banque (Bank deposits, transfers, direct debits)
-- `CA` — Journal de Caisse (Cash desk receipts and petty cash expenses)
-- `OD` — Journal des Opérations Diverses (General accruals, adjustments)
-- `IMM` — Journal des Immobilisations (Asset acquisitions, WIP capitalisation)
-- `AMO` — Journal des Amortissements (Monthly and year-end depreciation runs)
-- `PAI` — Journal de Paie (Monthly wage and social charge integrations)
-- `CHG` — Journal des Charges (Miscellaneous recurring overhead charges)
-- `AN` — Journal des À-Nouveaux (Opening balances carried forward)
+### Step-by-Step Procedure: Capturing a Double-Entry Voucher
+1. **Navigate to Journal Entries:** Click **Accounting -> Journal entries** (`/journal`).
+2. **Open Capture Modal:** Click the **+ New Entry** button.
+3. **Select Specialized Journal:**
+   - In the **Journal** dropdown, choose the operational journal:
+     - `ACH` (Purchases & vendor bills)
+     - `VTE` (Patient consultations & medical sales)
+     - `BQ` (Bank transactions)
+     - `CA` (Cash desk & Mobile Money)
+     - `OD` (General accruals & adjustments)
+4. **Set Accounting Date:** In **Entry date**, enter the transaction date (must fall in an open period).
+5. **Enter Mandatory Supporting Voucher Reference (AUDCIF Art. 17):**
+   - In **Reference \***, type the invoice number, receipt number, or bank slip ID (e.g., `FAC-2026-9901`). Leaving this blank triggers an immediate validation rejection.
+6. **Enter Header Description:** Provide an operational summary (e.g., `Achat réactifs de laboratoire - BioMed`).
+7. **Populate Journal Lines (Minimum 2 Lines):**
+   - **Line 1 (Debit):**
+     - Select **Account** (e.g., `601100 — Fournitures médicales`).
+     - Enter **Debit Amount** (e.g., `150,000.00`).
+     - Select **Cost Centre** (e.g., `Medical Laboratory`).
+   - **Line 2 (Credit):**
+     - Select **Account** (e.g., `401100 — Fournisseurs`).
+     - Enter **Credit Amount** (e.g., `150,000.00`).
+     - Under **Third Party**, choose the specific vendor (e.g., `[FRN] BioMed Services Afrique`).
+8. **Verify Balance Indicator:**
+   - Check the **Out of Balance** counter at the bottom right. When balanced, it displays `0.00` in green.
+9. **Save Voucher:**
+   - Click **Save as Draft** to queue for chief accountant review.
+   - Click **Save and Post** (if holding `journal.post` permission) to commit lines to the General Ledger immediately.
 
-### Capturing a Double-Entry Voucher
-1. Navigate to **Accounting -> Journal Entries** and click **New Entry**.
-2. Select the **Journal Code** (e.g., `ACH` for Purchases).
-3. Set the **Entry Date** (must be within an open period).
-4. Enter the **Reference \*** (e.g., `FAC-2026-9912` from the supplier invoice).
-5. Enter the **Description** of the transaction.
-6. In the **Lines Table**:
-   - Choose the debit account (e.g., `6011 — Fournitures médicales`). Enter amount. Select the **Cost Centre**.
-   - Choose the counterpart credit account (e.g., `4011 — Fournisseurs`).
-   - Select the **Third Party / Partner** (e.g., `[FRN] Air Liquide Santé`).
-7. Inspect the **Out of Balance Indicator**: The badge displays `0.00` in green when balanced.
-8. Click **Save as Draft** or **Save and Post** (requires `journal.post` permission).
-
-### Auto-Counterpart Suggestion Engine
-When typing the first line of a transaction, the intelligent auto-propose engine evaluates transaction templates and historical postings:
-- Entering an expense line automatically suggests the default balancing liability or treasury account.
-- The user can accept the proposal or modify lines as necessary.
-
-### Posting, Immutability & Reversals (Extourne)
-- **Drafts:** Can be reviewed, edited, or deleted prior to validation.
-- **Posting:** Commits lines to the General Ledger, assigns a sequential entry number, and locks the record.
-- **Reversals (*Extourne*):** Click **Reverse** on any posted entry. Enter the reversal date and mandatory justification. LedgerCore automatically generates an inverted contra-entry, linking both transactions in the audit trail.
+### Step-by-Step Procedure: Reversing a Posted Entry (*Extourne*)
+1. Locate the posted entry in the journal list and click to open its detail modal.
+2. In the footer, click the **Reverse (Extourner)** button (`undo` icon).
+3. In the reversal dialog:
+   - Verify the **Reversal Date** (defaults to today's date).
+   - In **Reason for Reversal**, enter an audit justification of at least 5 characters (e.g., `Correction erreur imputation compte de tiers`).
+4. Click **Reverse entry**.
+5. LedgerCore automatically creates an inverted contra-entry, links it to the original voucher, and commits it with a distinct sequential entry number.
 
 ---
 
 ## 6. Module 4: General Ledger, Auxiliary Subledgers & Lettrage
 
-### General Ledger Account Statements
-The General Ledger view displays running movements and balances for any account across any chosen timeframe:
-- Filter by date range, journal, or analytical cost centre.
-- Running balance is recalculated instantly with drill-down to the originating voucher.
+### Purpose & Scope
+The General Ledger provides complete chronological running balances, while auxiliary subledgers maintain itemized partner accounts for suppliers, patients, and insurers.
 
-### Statutory 8-Column Trial Balance
-Accessible via **Accounting -> General Ledger -> Trial Balance**, the statutory OHADA trial balance presents 8 columns:
-1. **Soldes d'ouverture Débit** (Opening Debit Balance)
-2. **Soldes d'ouverture Crédit** (Opening Credit Balance)
-3. **Mouvements Période Débit** (Period Movements Debit)
-4. **Mouvements Période Crédit** (Period Movements Credit)
-5. **Cumul Exercice Débit** (Year-to-Date Cumulative Debit)
-6. **Cumul Exercice Crédit** (Year-to-Date Cumulative Credit)
-7. **Solde de Clôture Débit** (Closing Debit Balance)
-8. **Solde de Clôture Crédit** (Closing Credit Balance)
+### Step-by-Step Procedure: Generating the 8-Column Trial Balance
+1. Navigate to **Accounting -> General Ledger** (`/ledger`).
+2. Click the **Trial Balance** tab.
+3. Select the reporting date range (**From** and **To**).
+4. Select the **Framework** (`OHADA` or `IFRS`).
+5. Click **Apply Range**.
+6. The system generates the statutory 8-column table:
+   - *Columns 1 & 2:* Opening Debit & Opening Credit
+   - *Columns 3 & 4:* Period Movement Debit & Period Movement Credit
+   - *Columns 5 & 6:* Year-to-Date Cumulative Debit & Credit
+   - *Columns 7 & 8:* Closing Debit & Closing Credit
+7. Verify that total debits equal total credits across all column pairs. Click **Excel** or **PDF** to export.
 
-### Auxiliary Third-Party Subledgers (Clients & Fournisseurs)
-- Collective general ledger accounts (e.g., `401100`, `411100`) can be expanded into individual partner cards.
-- View individual supplier aging, outstanding invoices, and payment histories.
-
-### Lettrage (Open-Item Invoice & Payment Matching)
-Lettrage allows accountants to match vendor invoices against payments:
-1. Select the third-party account in the General Ledger.
-2. Filter for **Unmatched (*Non-lettrées*)** entries.
-3. Select the invoice credit line and the corresponding bank payment debit line.
-4. Click **Match (Lettrer)**. LedgerCore assigns an uppercase letter code (`AA`, `AB`...) and records the reconciliation timestamp.
+### Step-by-Step Procedure: Executing Open-Item Lettrage (Matching)
+1. In the General Ledger, select an auxiliary partner account (e.g., `401100 - Fournisseurs`).
+2. Set the **Matching Filter** to **Unmatched (*Non-lettrées*)**.
+3. Locate the original supplier bill credit entry and the corresponding bank payment debit entry.
+4. Check the selection boxes next to both entries.
+5. Verify that the net difference between selected debits and credits is zero.
+6. Click **Match Selected (Lettrer)**. The system assigns a matching code (e.g., `AA`) and locks the matched pair.
 
 ---
 
 ## 7. Module 5: Accounting Periods, Fiscal Year & Year-End Close
 
-### Period Statuses (Open, Closed, Locked)
-- **Open:** Standard transactional state; all authorized clerks can capture and post entries.
-- **Closed:** Standard month-end closure; general postings blocked. Posting requires the `journal.post_closed` permission and a mandatory written audit justification.
-- **Locked:** Finalized state; sealed against all modifications after the year-end audit is completed.
+### Purpose & Legal Controls
+Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore implements a strict 3-tier lifecycle:
+- **Open:** Postings allowed by authorized clerks.
+- **Closed:** General postings blocked; adjustments require CFO override and audit logging.
+- **Locked:** Permanent immutable state sealed with a SHA-256 cryptographic hash.
 
-### Structured 12-Step Close Checklist
-Before closing a monthly or annual period, the system enforces a comprehensive pre-close checklist:
-1. All drafts in the period posted or cleared.
-2. Bank and mobile money reconciliations completed with zero unreconciled variance.
-3. Petty cash registers audited and reconciled.
-4. Monthly depreciation runs executed and posted to General Ledger.
-5. Monthly payroll entry posted and reconciled against DIPE.
-6. Withholding tax declarations generated.
-7. Patient billing (DFE) reconciled against pharmacy and ward logs.
-8. Foreign currency monetary assets/liabilities revalued at month-end closing rates.
-9. Inter-branch accounts (181/185) reconciled with zero discrepancy.
-10. Inventory count variances booked.
-11. Analytical cost allocations verified.
-12. Final Trial Balance verified for equilibrium.
-
-### Cryptographic Audit Sealing (SHA-256 Chaining)
-When a period is locked, LedgerCore executes a **cryptographic blockchain-style hash seal**:
-- Every journal line is hashed using SHA-256, incorporating the previous entry's hash, timestamp, user ID, and entry contents.
-- Any attempt to tamper with the database at the SQL level breaks the hash chain, immediately alerting auditors to data manipulation.
+### Step-by-Step Procedure: Executing Month-End Closure
+1. Navigate to **Accounting -> Periods and close** (`/periods`).
+2. Locate the active period (e.g., `2026-09`) and click **Inspect Period**.
+3. Complete the **12-Step Close Checklist**:
+   - [x] Step 1: All draft entries verified and posted or deleted.
+   - [x] Step 2: Bank and Mobile Money reconciliations completed with zero variance.
+   - [x] Step 3: Cash desk registers audited and vault transfers verified.
+   - [x] Step 4: Monthly asset depreciation run posted to Journal `AMO`.
+   - [x] Step 5: Monthly payroll wage entry posted and reconciled against DIPE.
+   - [x] Step 6: Withholding taxes (WHT/TSR) reconciled and certificates generated.
+   - [x] Step 7: Patient billing (DFE) reconciled against pharmacy/ward consumption.
+   - [x] Step 8: Foreign currency accounts revalued at month-end closing exchange rates.
+   - [x] Step 9: Inter-branch reciprocal accounts (`181`/`185`) reconciled.
+   - [x] Step 10: Physical inventory adjustments booked.
+   - [x] Step 11: Departmental cost allocations reviewed.
+   - [x] Step 12: Trial balance equilibrium confirmed.
+4. Click **Close Period**. Postings for the period are now locked to standard users.
+5. For year-end closure, click **Lock Period (Final Seal)** to generate the cryptographic hash chain.
 
 ---
 
 ## 8. Module 6: Treasury, Bank Reconciliation & Cash Registers
 
-### Bank Account Reconciliation (MT940 / CSV Import)
-1. Navigate to **Accounting -> Bank Reconciliation**.
-2. Select the bank account (e.g., `5211 — BICEC Main Account`).
-3. Import the electronic bank statement (`MT940`, `OFX`, or standardized `CSV`).
-4. LedgerCore displays the bank statement lines side-by-side with the General Ledger cash book movements.
+### Step-by-Step Procedure: Reconciling a Bank Account
+1. Navigate to **Accounting -> Bank reconciliation** (`/bank-reconciliation`).
+2. In the **Bank Account** selector, choose the commercial bank account (e.g., `5211 — BICEC Main Account`).
+3. Click **Import Statement** and upload the electronic bank file (`MT940`, `OFX`, or standardized `CSV`).
+4. Review the side-by-side reconciliation table:
+   - *Left column:* Bank statement lines.
+   - *Right column:* General Ledger cash book lines.
+5. Click **Auto-Match**. Transactions with identical amounts, dates, and references are automatically reconciled.
+6. For unmatched bank charges (Account `631`) or interest fees, click **Post Adjustment** directly from the statement line to create the balancing voucher in Journal `BQ`.
+7. Once the **Unreconciled Variance** reaches `0.00 XAF`, click **Sign Off Reconciliation**.
 
-### Automated & Manual Transaction Matching
-- **Automated Matching:** Matches transactions based on exact amount, reference number, and value date.
-- **Manual Reconciliation:** Allows matching a single bank deposit to multiple patient consultation receipts, or resolving bank charges (Account 631) directly into the bank journal.
-
-### Petty Cash Registers & Mobile Money (MTN MoMo / Orange Money)
-In African healthcare environments, digital mobile payments represent a critical revenue and expenditure channel:
-- Create dedicated cash books for **MTN Mobile Money** and **Orange Money**.
-- Record daily merchant settlement payouts, cash collection from patients, and urgent cash errand disbursements.
+### Step-by-Step Procedure: Daily Cash Desk Balancing
+1. Navigate to **Accounting -> Cash & Mobile Money** (`/cash-registers`).
+2. Select the cash register (e.g., `Main Outpatient Cashier Desk`).
+3. Click **Count Cash / Denomination Sheet**.
+4. Enter physical bill and coin counts (10,000 XAF, 5,000 XAF, 2,000 XAF, etc.).
+5. The system computes total counted cash against system recorded receipts.
+6. If surplus or deficit exists, enter the explanation.
+7. Click **Confirm Count & Transfer to Vault** to generate the transfer voucher (Account `571` $\to$ `585`).
 
 ---
 
 ## 9. Module 7: Fiscal Compliance & Withholding Tax (WHT / TSR)
 
-### Cameroon / CEMAC Tax Retentions
-LedgerCore incorporates statutory tax retention schedules:
-- **TSR (Taxe Spéciale sur le Revenu):** Withheld on foreign technical assistance, IT licenses, and foreign medical consultancy.
-- **Prélèvement sur Achats / Acompte d'Impôt:** Withheld on local supplier payments without a certified tax number (*Attestation de Non-Redevance*).
-- **Precompte TVA:** Automatic retention of VAT for designated withholding agents.
-
-### Generating WHT Certificates
-- Under **Accounting -> Withholding Tax**, click **Generate Certificate**.
-- Filter by supplier and date range. The system formats and prints the statutory CEMAC deduction certificate to accompany payment.
+### Step-by-Step Procedure: Generating Withholding Tax Certificates
+1. Navigate to **Accounting -> Withholding tax (WHT)** (`/withholding-tax`).
+2. Select the fiscal tax period (e.g., `September 2026`).
+3. The table lists all supplier payments subject to statutory deductions:
+   - **TSR (Taxe Spéciale sur le Revenu):** For international software licenses and foreign consulting.
+   - **Acompte d'Impôt / Prélèvement sur Achats:** For vendors lacking certified tax clearance (*Attestation de Non-Redevance*).
+   - **Precompte TVA:** VAT withheld at source.
+4. Check the box next to the supplier payment.
+5. Click **Generate Statutory Certificate**.
+6. Download and print the official signed certificate to accompany vendor payment and tax filing.
 
 ---
 
 ## 10. Module 8: Donor-Funded Projects & Grant Accounting
 
-### Project Budgeting & Multi-Currency Setup
-Healthcare institutions often manage donor grants (e.g., Global Fund, USAID, Misereor, Catholic Relief Services):
-- Assign unique Project Codes (e.g., `PRJ-HIV-2026`, `PRJ-MATERNAL-EU`).
-- Record multi-currency grant allocations (EUR, USD, XAF) with statutory conversion tracking.
-
-### Restricted Funding & Eligible Expense Allocation
-- Tag operational expenses, equipment purchases, and salary lines directly to donor project codes.
-- Restrict expenditures exceeding approved line-item budget envelopes.
+### Step-by-Step Procedure: Creating and Tracking a Grant Budget
+1. Navigate to **Accounting -> Donor Projects** (`/donor-projects`).
+2. Click **+ New Project**.
+3. Enter Project Code (e.g., `PRJ-GLOBALFUND-2026`), Title, Donor Agency, Grant Currency (USD/EUR), and Total Envelope.
+4. Define approved line-item budget categories (Personnel, Medical Equipment, Consumables, Training).
+5. **Tagging Expenses to Projects:**
+   - When capturing purchase vouchers in Journal `ACH`, enter the Project Code in the **Project** field on each relevant line.
+6. **Monitoring Project Execution:**
+   - In the project overview, inspect the real-time **Budget vs. Actuals** comparison and burn rate percentage.
+   - Click **Export Donor Report** to generate the formatted financial summary required by the granting agency.
 
 ---
 
 ## 11. Module 9: Healthcare Payroll & Social Declarations (DIPE)
 
-### Salary Grid, Allowances & On-Call Primes
-- Configured for medical salary structures: Base salary, technical medical allowance, on-call night duty (*gardes et astreintes*), and hazard allowances (*primes de risque*).
-
-### CNPS Social Security & IRPP Tax Computations
-- Automated deduction of **CNPS** employee and employer social contributions according to statutory ceilings.
-- **IRPP (*Impôt sur le Revenu des Personnes Physiques*)** and local municipal taxes (*Centimes Additionnels Communaux - CAC*).
-
-### DIPE (Document d'Information sur le Personnel Employé)
-- Generates the monthly electronic DIPE file required for submission to the National Social Insurance Fund and Tax Directorate.
+### Step-by-Step Procedure: Monthly Payroll Processing & DIPE Generation
+1. Navigate to **Accounting -> Payroll & DIPE** (`/payroll`).
+2. Select the payroll month (e.g., `September 2026`).
+3. Click **Compute Payroll**.
+4. Review the salary components:
+   - Base Salaries (*Salaires de base*)
+   - Technical Medical Allowances (*Primes de technicité*)
+   - On-Call Night Duty Primes (*Primes d'astreintes et de garde*)
+   - Hazard Allowances (*Primes de risque*)
+5. Review statutory social and tax withholdings:
+   - **CNPS:** Employee share (4.2%) and employer share (family allowances, occupational risks, pension).
+   - **IRPP & CAC:** Personal income tax and local council surcharges.
+6. Click **Generate DIPE File**. The system compiles the statutory electronic format required for tax and social security electronic submission.
+7. Click **Post Wage Journal Entry**. LedgerCore automatically creates the balanced double-entry in Journal `PAI` (Debit Class 66 / Credit Class 42 & 43).
 
 ---
 
 ## 12. Module 10: Patient Billing, DFE & Inter-Branch Transfers
 
-### Direction des Forfaits et Évacuations (DFE) Invoicing
-- Standardized billing for inpatient packages, surgeries, cardiology procedures, and outpatient clinics.
-- Multi-payer splitting: Automatically calculates the share payable by the patient vs. insurance companies vs. employer mutual funds.
-
-### Inter-Branch Reconciliations (Account 181 / 185)
-- For hospital networks operating secondary clinics, health centres, or pharmacies:
-- Tracks reciprocal cross-branch transfers (e.g., pharmaceuticals transferred from Central Pharmacy to Outpatient Dispensary).
+### Step-by-Step Procedure: Raising a Patient Billing Package
+1. Navigate to **Accounting -> DFE & Branches** (`/dfe-invoicing`).
+2. Click **+ New Patient Invoice**.
+3. Select Patient Name, Hospital File Number, and Ward.
+4. Add billed services from the standardized medical fee schedule (e.g., Surgery Package, Anesthesia, Hospitalization Bed Nights, Laboratory Tests).
+5. **Configure Multi-Payer Split:**
+   - In the **Payer Allocation** section:
+     - Enter Patient Share (e.g., 20% copay).
+     - Enter Insurer / Employer Mutual Fund Share (e.g., 80% coverage).
+     - Select Third-Party Insurer account (e.g., `[CLI] Activa Assurances Santé`).
+6. Click **Issue Invoice**. The system prints the receipt and automatically creates the receivable entries in Journal `VTE`.
 
 ---
 
-## 13. Module 11: Enterprise Fixed Asset Register
+## 13. Module 11: Enterprise Fixed Asset Register & Lifecycle Management
 
-### Asset Classification
-LedgerCore tracks physical assets across five distinct domains:
-1. **Biomedical Equipment:** Anaesthesia machines, ultrasound, dialysis units, laboratory analysers.
-2. **Facility & Infrastructure:** Generators, solar power installations, water purification plants, HVAC.
-3. **IT & Telecommunications:** Hospital servers, network switches, clinical workstations.
-4. **Fleet & Transport:** Ambulances, patient transport vans, utility vehicles.
-5. **Furniture & Fixtures:** Hospital beds, surgical tables, administrative furniture.
+### Step-by-Step Procedure: Registering New Medical Equipment
+1. Navigate to **Assets -> Asset register** (`/assets`).
+2. Click **+ Register Asset**.
+3. **Fill General Attributes:**
+   - **Asset Name:** Official equipment description (e.g., `Ventilateur de Réanimation Hamilton-C3`).
+   - **Domain:** Select `Biomedical`.
+   - **Category:** Choose category (e.g., `Matériel Médical & Chirurgical`).
+   - **Serial Number & Model:** Manufacturer serial number and model designation.
+4. **Valuation & Accounting Parameters:**
+   - **Acquisition Cost:** Invoice gross cost in XAF.
+   - **Commissioning Date:** Date equipment entered clinical service.
+   - **Depreciation Method:** Straight-line (*Linéaire*) or Degressive (*Dégressif*).
+   - **Useful Lifetime:** Set operational life (e.g., 5 years / 60 months).
+5. **Location & Custody Assignment:**
+   - **Department / Ward:** Assign to clinical unit (e.g., `Intensive Care Unit`).
+   - **Room:** Room/bed location (e.g., `ICU Bay 2`).
+   - **Custodian:** Assign supervising ward head.
+6. **Save & Print QR Tag:**
+   - Click **Save Asset**.
+   - Click **Print QR Tag** to generate the barcode sticker to affix to the machine chassis.
 
-### Capitalisation & WIP Transfers (Account 23 -> 21)
-When construction works or complex installations are completed:
-1. Navigate to **Assets -> Register -> Capitalise WIP**.
-2. Select accumulated costs in Account `231` (Immobilisations en cours).
-3. Post the capitalisation voucher transferring balances to Account `215` (Installations techniques) and create the asset register card.
-
-### Asset Tagging, QR Code Generation & Custody Tracking
-- Every registered asset receives a unique system tag (e.g., `AST-BIO-2026-0042`).
-- Clicking **Print QR Tag** generates a waterproof label containing the asset tag, serial number, and quick-scan URL.
-- Record internal asset movements across departments, wards, and individual custodians with digital signature logging.
+### Step-by-Step Procedure: Capitalizing Work-in-Progress (WIP Transfer 23 -> 21)
+1. In the Asset Register, click the **Capitalise WIP** button.
+2. Select the accumulated WIP cost lines sitting in Account `231` (Immobilisations en cours).
+3. Specify the final destination asset account (e.g., `2151 — Installations complexes`).
+4. Click **Execute Capitalisation**. The system registers the completed physical asset and posts the balancing journal entry in Journal `IMM` (`Debit 2151 / Credit 231`).
 
 ---
 
 ## 14. Module 12: Asset Depreciation & Leases (IFRS 16)
 
-### Automated Monthly & Annual Depreciation Runs
-1. Navigate to **Assets -> Depreciation**.
-2. Click **Run Depreciation**. Choose the fiscal period.
-3. LedgerCore computes statutory straight-line or degressive depreciation line-by-line across all active assets.
-4. Click **Simulate** to review calculations; click **Post Run** to generate the automated entry in Journal `AMO`.
-
-### Donated Asset Subsidy Amortisation (Accounts 14 -> 799)
-For equipment acquired through grants or donor gifts:
-- The initial equipment cost is balanced in Account `14` (Subventions d'investissement).
-- Each depreciation run simultaneously generates the subsidy write-back entry (`Debit 14 / Credit 799`), ensuring that donor-funded assets have a neutral impact on the hospital's net operating result.
-
-### IFRS 16 Lease Accounting
-- Leased medical imaging systems or buildings are recorded as **Right-of-Use (ROU) Assets** with corresponding lease liabilities.
-- Automatically generates the monthly split between principal liability repayment and interest expense.
+### Step-by-Step Procedure: Executing a Monthly Depreciation Run
+1. Navigate to **Assets -> Depreciation** (`/depreciation`).
+2. Click **Run Depreciation**.
+3. Select the period (e.g., `September 2026`).
+4. Click **Simulate**. The engine computes depreciation charges line-by-line across all active assets under both OHADA and IFRS rules.
+5. Review the simulation table:
+   - *Statutory OHADA Dotation:* Debits Account `681` / Credits Account `28x`.
+   - *IFRS Depreciation:* Evaluated on economic useful life.
+   - *IFRS Delta:* Variance between statutory and international depreciation.
+   - *Subsidy Amortization:* Write-back of donor subsidies (Debit Account `14` / Credit Account `799`).
+6. Click **Post Run**. LedgerCore generates and commits the automated entry in Journal `AMO`.
 
 ---
 
-## 15. Module 13: Physical Inventory & Barcode Reconciliation
+## 15. Module 13: Physical Asset Inventory & Barcode Verification
 
-### Launching an Asset Audit
-1. Navigate to **Assets -> Physical Inventory**.
-2. Create an **Inventory Campaign** targeting a specific building, ward, or asset class.
-3. Technicians and auditors scan asset QR tags on mobile tablets.
-4. Real-time status flags: **Verified**, **Missing**, **Displaced (Found in Wrong Location)**, or **Unregistered**.
-
-### Discrepancy Resolution
-- Displaced assets are re-assigned to the verified ward with one click.
-- Unfound assets are flagged for scrap or insurance write-off.
+### Step-by-Step Procedure: Conducting a Physical Asset Audit
+1. Navigate to **Assets -> Physical inventory** (`/asset-inventory`).
+2. Click **+ New Campaign** (e.g., `Annual Inventory 2026 - Surgery & ICU`).
+3. Set the target building and asset domain.
+4. **Conduct Field Auditing:**
+   - Open the web application on a mobile tablet equipped with a camera or barcode scanner.
+   - Scan the QR code on each physical machine.
+   - The system checks off the asset as **Verified** and records the audit timestamp and GPS/room coordinates.
+5. **Review Variance Analysis:**
+   - **Verified:** Machine present in its assigned location.
+   - **Displaced:** Machine found in a different ward than registered. Click **Reassign Location** to update custody.
+   - **Missing:** Equipment not scanned during the sweep. Flag for clinical investigation or write-off.
+6. Click **Finalize Campaign** to publish the audit report.
 
 ---
 
-## 16. Module 14: Hospital CMMS, Work Orders & Calibration
+## 16. Module 14: Hospital CMMS, Work Orders & Calibration (IEC 60601)
 
-### Preventive & Corrective Maintenance Workflows
-1. **Breakdown Request:** Ward nurse or doctor logs an issue (e.g., "Surgical autoclave door seal leaking").
-2. **Triaging & Approval:** Biomedical manager reviews, sets priority (Urgent / High / Medium), and assigns a technician.
-3. **Execution:** Technician performs maintenance, logs parts used from inventory, and records labor hours.
-4. **Verification & Closeout:** Biomedical manager signs off after testing functionality.
+### Step-by-Step Procedure: Raising, Executing & Closing a Work Order
+1. **Raising a Breakdown Request (Ward Staff):**
+   - Click **Maintenance -> Work orders** (`/maintenance`). Click **+ Raise Work Order**.
+   - Select the affected Asset Tag (e.g., `AST-BIO-2026-0042`).
+   - Describe the clinical fault (e.g., `Infusion pump alarming error E04 - occlusion sensor failure`).
+   - Set urgency: *Critical*, *High*, *Medium*, *Low*. Click **Submit Request**.
+2. **Triaging & Assignment (Biomedical Manager):**
+   - In the work order queue, open the ticket under `Awaiting Approval`.
+   - Assign to a Biomedical Technician (e.g., `samuel.eyenga@hgy.cm`). Click **Approve & Dispatch**.
+3. **Execution & Parts Consumption (Technician):**
+   - Technician opens ticket on mobile device and clicks **Start Job**.
+   - Under **Parts Used**, click **+ Add Part**. Select parts consumed from warehouse stock (e.g., `Pressure Sensor Membrane`).
+   - Enter technician diagnostic notes.
+4. **Clinical Verification & Closeout:**
+   - Ward nurse or doctor tests functionality and signs on screen.
+   - Biomedical manager verifies electrical safety and clicks **Verify & Close**.
 
-### Electrical Safety (IEC 60601) & Metrological Calibration
-To ensure clinical safety:
-- Record protective earth resistance, chassis leakage current, and patient lead isolation tests.
-- Upload third-party calibration certificates for incubators, centrifuges, and radiation equipment.
-- **Automatic Quarantine:** If calibration expires or safety testing fails, the asset is automatically marked **Restricted / Quarantined** on the dashboard and cannot be scheduled for patient procedures.
+### Step-by-Step Procedure: Logging IEC 60601 Safety & Calibration Tests
+1. In the asset card, select the **Compliance & Safety** tab.
+2. Under **IEC 60601-1 Electrical Safety Test**, enter measured readings:
+   - Protective Earth Resistance ($\le 0.2\ \Omega$)
+   - Chassis Leakage Current ($\le 500\ \mu\text{A}$)
+   - Patient Lead Leakage ($\le 10\ \mu\text{A}$)
+3. Under **Calibration**, enter the test date, issuing laboratory, certificate number, and expiry date. Attach the PDF certificate.
+4. **Automatic Quarantine Behavior:**
+   - If an electrical safety reading fails, or if the calibration expiry date passes, LedgerCore instantly sets the asset's status to **Quarantined**.
+   - A prominent red warning appears on the clinical dashboard prohibiting the machine from patient use until re-tested and passed.
 
 ---
 
 ## 17. Module 15: General Services, Errands & Procurement Logistics
 
-### Errands & Shopping Lists Execution
-Facility drivers and logistics officers:
-- View assigned purchase runs (e.g., "Collect oxygen cylinders from depot", "Purchase diesel for emergency generator").
-- Check off items purchased with unit prices and attach digital receipt photos.
+### Step-by-Step Procedure: Executing Errand Runs & Shopping Lists
+1. Navigate to **General Services -> Shopping list** (`/shopping`) or **Errands** (`/errands`).
+2. General Services supervisor creates an errand run (e.g., `Procurement of Diesel for Standby Generator`).
+3. Driver / Logistics officer opens the task on their mobile phone.
+4. At the supply depot, check off each acquired item and enter the unit purchase price.
+5. Tap **Attach Receipt** to snap a photo of the cash receipt or delivery note using the device camera.
+6. Tap **Complete Errand**. The system routes the expense voucher to accounting for petty cash reimbursement.
 
 ---
 
 ## 18. Module 16: Mobile Technician Worklist
 
-Designed specifically for smartphone and rugged warehouse tablets:
-- Touch-friendly interface displaying **My Work Orders Today**.
-- Start timer, pause job, scan asset QR code to pull up service history, and sign off with customer signature.
+### Step-by-Step Procedure: Using the Touch-Friendly Mobile Interface
+1. Log into LedgerCore on a mobile device as a technician (e.g., `samuel.eyenga@hgy.cm`).
+2. Navigate to **Maintenance -> My worklist** (`/worklist`).
+3. The screen displays prioritized tasks scheduled for today.
+4. Tap **Scan Asset** to activate the camera; scan the equipment QR tag to immediately view service manual PDFs and historical repair logs.
+5. Tap **Start Timer** to track active wrench time.
+6. When work is completed, tap **Sign & Complete** to capture digital clinical sign-off.
 
 ---
 
 ## 19. Module 17: Financial Statements, DSF & Tax Packet
 
-### OHADA Statutory Statements
-- **Bilan (Balance Sheet):** Full comparative display of Actif Immobilisé, Actif Circulant, Trésorerie-Actif, Capitaux Propres, Dettes Financières, Passif Circulant, and Trésorerie-Passif.
-- **Compte de Résultat (Profit and Loss):** Segmented into Marge Brute, Valeur Ajoutée, EBE, Résultat d'Exploitation, Résultat Financier, Résultat HAO, and Résultat Net.
-- **TAFIRE:** Cash flow and financial resources/applications statement.
-
-### IFRS Financial Statements
-- Instant toggle to IFRS presentation: Statement of Financial Position, Statement of Comprehensive Income, Statement of Cash Flows, and Statement of Changes in Equity.
-
-### FEC (Fichier des Écritures Comptables)
-- Export dematerialized electronic tax audit file strictly adhering to regional CEMAC tax inspection specifications (18 standard columns).
+### Step-by-Step Procedure: Generating Statutory Financial Statements
+1. Navigate to **Reporting -> Financial statements** (`/reports`).
+2. Select the target fiscal period and standard (**OHADA** or **IFRS**).
+3. **OHADA Presentation:**
+   - **Bilan (Balance Sheet):** Actif Immobilisé, Actif Circulant, Trésorerie-Actif, Capitaux Propres, Dettes, Trésorerie-Passif.
+   - **Compte de Résultat:** Production, Chiffre d'affaires, Valeur Ajoutée, EBE, Résultat d'Exploitation, Résultat Financier, Résultat HAO, Résultat Net.
+   - **TAFIRE:** Cash flow and financing statement.
+4. **IFRS Presentation:**
+   - Statement of Financial Position, Statement of Profit or Loss, Statement of Cash Flows, Statement of Changes in Equity (SOCE).
+5. **Inspecting the Dual-Standard Bridge:**
+   - Click the **Dual-Standard Bridge** tab.
+   - The table displays: $\text{OHADA Net Result} + \sum \text{IFRS Adjustments} = \text{IFRS Net Profit}$.
+6. **Exporting the FEC (Fichier des Écritures Comptables):**
+   - Click **Export FEC**. The system downloads the 18-column dematerialized journal file compliant with CEMAC tax inspection standards.
 
 ---
 
 ## 20. Module 18: Security, Governance & Administration
 
-### User Management & Role Assignment
-- System administrators can create users, assign multiple granular roles, and enforce strong password policies.
-- Temporary permission delegation (e.g., Acting CFO while principal is on medical leave).
-
-### Immutable Audit Trail Inspection
-- Accessible under **Reporting -> Action History**.
-- Every single creation, update, reversal, login, and export is recorded with user identity, client IP address, timestamp, and before/after JSON payloads.
+### Step-by-Step Procedure: Provisioning Users and Inspecting Audit Logs
+1. Navigate to **Administration -> Admin console** (`/admin`).
+2. **User Creation:**
+   - Click **+ Add User**. Enter user details, email, and assign role permissions (`admin`, `cfo`, `accountant`, `asset_manager`, `biomed_tech`, `services_tech`, `ward_head`).
+3. **Audit Trail Inspection:**
+   - Click **Reporting -> Action history** (`/audit`).
+   - Every transaction creation, posting, modification, deletion, and reversal is logged with timestamp, user ID, client IP address, and before/after JSON payloads.
+4. **Verifying Cryptographic Seal:**
+   - Under **Audit Seal Verification**, run the automated scanner. The system re-computes SHA-256 hashes across all journal entries to confirm zero manual SQL tampering.
 
 ---
 
-## 21. Standard Operating Procedures (SOPs) & Cheat Sheets
+## 21. Standard Operating Procedures (SOPs) & Practical Workflows
 
-### SOP 1: Daily Cash Desk Balancing
-1. At shift close, the cashier accesses **Treasury -> Cash Registers**.
-2. Counts physical bills and coins; enters breakdown into the **Denomination Sheet**.
-3. Reconciles against receipt vouchers issued.
-4. Transfers excess cash to the hospital vault or bank deposit box.
+### SOP 1: Supplier Invoice Reception, 3-Way Match & Saisie
+1. Procurement receives supplier delivery note and vendor invoice.
+2. Verify delivery note against physical warehouse goods received note.
+3. Accounting clerk opens LedgerCore: **Accounting -> Journal Entries -> + New Entry**.
+4. Select Journal `ACH`. Enter supplier invoice number in **Reference \***.
+5. Impute expense account (Class 6), input cost centre, and credit auxiliary supplier subledger (Account `401100`, partner selected).
+6. Save as Draft for Chief Accountant verification.
 
-### SOP 2: Month-End General Ledger Close
-1. CFO verifies all clerks have completed their daily journal postings.
-2. Run automated bank reconciliation for all bank and mobile money accounts.
-3. Execute the monthly asset depreciation run (**Assets -> Depreciation**).
-4. Review the 12-Step Close Checklist under **Accounting -> Periods**.
-5. When all checklist items show green checkmarks, click **Close Period**.
+### SOP 2: Clinical Equipment Breakdown to Return-to-Service Protocol
+1. Nurse notices ventilator failure; navigates to **Maintenance -> Work orders -> + Raise Work Order**.
+2. Selects equipment tag and marks priority *Critical*.
+3. Biomedical manager receives instant dashboard notification; assigns ticket to technician.
+4. Technician arrives in ward, scans asset QR tag, replaces sensor, and executes IEC 60601 electrical leakage test.
+5. Technician logs safety test results: status updates from *Quarantined* to *Operational*.
+6. Clinical head inspects machine, signs on mobile screen, and technician marks ticket *Completed*.
 
 ---
 
