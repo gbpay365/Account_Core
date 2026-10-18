@@ -6,7 +6,7 @@ import { writeAudit } from '../services/auth.service.js';
 import { CLOSE_TASKS } from '../db/seed/reference.js';
 import { notFound, unprocessable, conflict } from '../utils/errors.js';
 import { suspenseBalance } from '../services/posting-level.service.js';
-import { ensureOrganizationData } from '../db/seed.js';
+import { ensureOrganizationData, ensureFiscalYearForOrg, ensureOpenPeriodForOrg } from '../db/seed.js';
 
 export const periodRoutes = Router();
 
@@ -27,7 +27,7 @@ periodRoutes.get(
       [req.orgId]
     );
     if (rows.length === 0) {
-      await ensureOrganizationData(req.orgId, { silent: false }).catch(() => {});
+      await ensureFiscalYearForOrg(req.orgId).catch(() => {});
       rows = await query(
         `SELECT f.*, COUNT(p.id) AS period_count,
                 SUM(p.status = 'open') AS open_periods,
@@ -60,7 +60,7 @@ periodRoutes.get(
     if (req.query.fiscalYearId) { filter += ' AND p.fiscal_year_id = ?'; params.push(req.query.fiscalYearId); }
     if (req.query.status) { filter += ' AND p.status = ?'; params.push(req.query.status); }
 
-    const rows = await query(
+    let rows = await query(
       `SELECT p.*, MAX(f.code) AS fiscal_year_code,
               COUNT(DISTINCT e.id) AS entry_count,
               COALESCE(SUM(CASE WHEN e.status = 'posted' THEN e.total_debit END), 0) AS posted_debit,
@@ -75,6 +75,24 @@ periodRoutes.get(
         ORDER BY p.start_date`,
       params
     );
+    if (rows.length === 0 && !req.query.fiscalYearId && !req.query.status) {
+      await ensureFiscalYearForOrg(req.orgId).catch(() => {});
+      rows = await query(
+        `SELECT p.*, MAX(f.code) AS fiscal_year_code,
+                COUNT(DISTINCT e.id) AS entry_count,
+                COALESCE(SUM(CASE WHEN e.status = 'posted' THEN e.total_debit END), 0) AS posted_debit,
+                COUNT(DISTINCT CASE WHEN e.status = 'draft' THEN e.id END) AS draft_count,
+                cl.id AS checklist_id, MAX(cl.status) AS checklist_status
+           FROM accounting_periods p
+           JOIN fiscal_years f ON f.id = p.fiscal_year_id
+           LEFT JOIN journal_entries e ON e.period_id = p.id
+           LEFT JOIN close_checklists cl ON cl.period_id = p.id
+          WHERE p.org_id = ?${filter}
+          GROUP BY p.id, cl.id
+          ORDER BY p.start_date`,
+        params
+      );
+    }
     res.json({ rows, total: rows.length });
   })
 );

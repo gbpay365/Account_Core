@@ -81,8 +81,95 @@ export async function ensureDemoUsers() {
   }
 }
 
+export async function ensureFiscalYearForOrg(orgId) {
+  let year = await queryOne(
+    "SELECT * FROM fiscal_years WHERE org_id = ? AND status <> 'closed' ORDER BY start_date DESC LIMIT 1",
+    [orgId]
+  );
+  if (year) return year;
+
+  // Check if any fiscal year exists
+  const existing = await queryOne(
+    "SELECT * FROM fiscal_years WHERE org_id = ? ORDER BY start_date DESC LIMIT 1",
+    [orgId]
+  );
+  if (existing) {
+    await query("UPDATE fiscal_years SET status = 'open' WHERE id = ?", [existing.id]);
+    return await queryOne("SELECT * FROM fiscal_years WHERE id = ?", [existing.id]);
+  }
+
+  // Insert FY2026
+  await query(
+    `INSERT INTO fiscal_years (org_id, code, name, start_date, end_date, status)
+     VALUES (?, 'FY2026', 'Fiscal year 2026', '2026-01-01', '2026-12-31', 'open')
+     ON DUPLICATE KEY UPDATE status = 'open'`,
+    [orgId]
+  );
+  const fy = await queryOne("SELECT * FROM fiscal_years WHERE org_id = ? AND code = 'FY2026'", [orgId]);
+
+  // Insert FY2025 (locked) for comparative reporting
+  await query(
+    `INSERT INTO fiscal_years (org_id, code, name, start_date, end_date, status)
+     VALUES (?, 'FY2025', 'Fiscal year 2025', '2025-01-01', '2025-12-31', 'locked')
+     ON DUPLICATE KEY UPDATE status = VALUES(status)`,
+    [orgId]
+  );
+
+  // Seed periods for 2026
+  const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  for (let m = 1; m <= 12; m++) {
+    const mm = String(m).padStart(2, '0');
+    const pCode = `2026-${mm}`;
+    const pStatus = (m === 9) ? 'open' : (m < 9 ? 'closed' : 'locked');
+    await query(
+      `INSERT INTO accounting_periods (org_id, fiscal_year_id, period_no, code, name, start_date, end_date, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE fiscal_year_id = VALUES(fiscal_year_id), status = VALUES(status)`,
+      [orgId, fy.id, m, pCode, `${names[m - 1]} 2026`, `2026-${mm}-01`, `2026-${mm}-28`, pStatus]
+    );
+  }
+
+  return fy;
+}
+
+export async function ensureOpenPeriodForOrg(orgId) {
+  let period = await queryOne(
+    `SELECT p.*, y.code AS fiscal_year FROM accounting_periods p
+       JOIN fiscal_years y ON y.id = p.fiscal_year_id
+      WHERE p.org_id = ? AND p.status = 'open' AND p.is_adjustment = 0
+      ORDER BY p.start_date LIMIT 1`,
+    [orgId]
+  );
+  if (period) return period;
+
+  const year = await ensureFiscalYearForOrg(orgId);
+  await query("UPDATE accounting_periods SET status = 'open' WHERE org_id = ? AND code = '2026-09'", [orgId]);
+  period = await queryOne(
+    `SELECT p.*, y.code AS fiscal_year FROM accounting_periods p
+       JOIN fiscal_years y ON y.id = p.fiscal_year_id
+      WHERE p.org_id = ? AND p.status = 'open'
+      ORDER BY p.start_date LIMIT 1`,
+    [orgId]
+  );
+  if (!period) {
+    await query("UPDATE accounting_periods SET status = 'open' WHERE org_id = ? AND fiscal_year_id = ? LIMIT 1", [orgId, year.id]);
+    period = await queryOne(
+      `SELECT p.*, y.code AS fiscal_year FROM accounting_periods p
+         JOIN fiscal_years y ON y.id = p.fiscal_year_id
+        WHERE p.org_id = ? AND p.status = 'open'
+        ORDER BY p.start_date LIMIT 1`,
+      [orgId]
+    );
+  }
+  return period;
+}
+
 export async function ensureOrganizationData(orgId, { skipDemo = false, silent = false } = {}) {
   const step = (label) => { if (!silent) console.log(`  - ${label}`); };
+
+  // Always ensure fiscal calendar first (independent of demo data)
+  await ensureFiscalYearForOrg(orgId);
+  await ensureOpenPeriodForOrg(orgId);
 
   return transaction(async (tx) => {
     // 1. Roles & permissions

@@ -8,6 +8,7 @@ import { boolish, optionalId, where } from './helpers.js';
 import {
   getPostingLength, requireExistingParents, validateNewAccountCode,
 } from '../services/posting-level.service.js';
+import { ensureOrganizationData } from '../db/seed.js';
 
 export const accountRoutes = Router();
 
@@ -47,7 +48,7 @@ accountRoutes.get(
       params.push(like, like, like);
     }
 
-    const rows = await query(
+    let rows = await query(
       `SELECT a.id, a.code, a.name, a.name_en, a.account_class, a.account_type, a.normal_side,
               a.parent_id, a.level, a.is_postable, a.is_active, a.requires_cost_center,
               a.requires_asset, a.requires_third_party, a.is_reconcilable, a.is_fixed_asset, a.currency,
@@ -63,6 +64,25 @@ accountRoutes.get(
         ORDER BY a.code`,
       params
     );
+    if (rows.length === 0 && !search && !accountClass) {
+      await ensureOrganizationData(req.orgId, { skipDemo: true, silent: true }).catch(() => {});
+      rows = await query(
+        `SELECT a.id, a.code, a.name, a.name_en, a.account_class, a.account_type, a.normal_side,
+                a.parent_id, a.level, a.is_postable, a.is_active, a.requires_cost_center,
+                a.requires_asset, a.requires_third_party, a.is_reconcilable, a.is_fixed_asset, a.currency,
+                a.in_tier_normal, a.in_tier_allege, a.in_tier_smt, a.is_system,
+                MAX(p.code) AS parent_code,
+                MAX(i.code) AS ifrs_code, MAX(i.name) AS ifrs_name
+           FROM accounts a
+           LEFT JOIN accounts p ON p.id = a.parent_id
+           LEFT JOIN account_mappings m ON m.account_id = a.id AND m.org_id = a.org_id
+           LEFT JOIN ifrs_accounts i ON i.id = m.ifrs_account_id AND i.statement IN ('sofp','pl')
+          WHERE a.org_id = ?${filter}
+          GROUP BY a.id
+          ORDER BY a.code`,
+        params
+      );
+    }
 
     if (!tree) return res.json({ rows, total: rows.length });
 

@@ -41,20 +41,32 @@ export async function seedDemo(tx, ctx, log) {
   const ccId = new Map();
   for (const [code, name, nameEn, type] of DEMO_COST_CENTERS) {
     const res = await tx.query(
-      'INSERT INTO cost_centers (org_id, code, name, name_en, cc_type) VALUES (?,?,?,?,?)',
+      `INSERT INTO cost_centers (org_id, code, name, name_en, cc_type) VALUES (?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), name_en=VALUES(name_en)`,
       [orgId, code, name, nameEn, type]
     );
-    ccId.set(code, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existing = await tx.queryOne('SELECT id FROM cost_centers WHERE org_id = ? AND code = ?', [orgId, code]);
+      id = existing?.id;
+    }
+    ccId.set(code, id);
   }
 
   // --- locations -------------------------------------------------------------
   const locId = new Map();
   for (const [code, name, type, parent, cc] of DEMO_LOCATIONS) {
     const res = await tx.query(
-      'INSERT INTO asset_locations (org_id, code, name, location_type, parent_id, cost_center_id) VALUES (?,?,?,?,?,?)',
+      `INSERT INTO asset_locations (org_id, code, name, location_type, parent_id, cost_center_id) VALUES (?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name)`,
       [orgId, code, name, type, parent ? locId.get(parent) : null, cc ? ccId.get(cc) : null]
     );
-    locId.set(code, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existing = await tx.queryOne('SELECT id FROM asset_locations WHERE org_id = ? AND code = ?', [orgId, code]);
+      id = existing?.id;
+    }
+    locId.set(code, id);
   }
 
   // --- users ---------------------------------------------------------------

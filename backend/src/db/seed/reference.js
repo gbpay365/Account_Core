@@ -198,7 +198,8 @@ export async function seedOrgReference(tx, orgId, log) {
          (org_id, code, name, name_en, account_class, parent_id, level, account_type,
           normal_side, is_postable, is_reconcilable, requires_cost_center, requires_asset,
           is_fixed_asset, in_tier_normal, in_tier_allege, in_tier_smt, is_system)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), is_postable=VALUES(is_postable)`,
       [
         orgId, a.code, a.name, a.name_en, a.account_class, parentId, level,
         a.account_type, a.normal_side, a.is_postable,
@@ -207,7 +208,12 @@ export async function seedOrgReference(tx, orgId, log) {
         tiers.includes('n') ? 1 : 0, tiers.includes('a') ? 1 : 0, tiers.includes('s') ? 1 : 0,
       ]
     );
-    accountId.set(a.code, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existingAcct = await tx.queryOne('SELECT id FROM accounts WHERE org_id = ? AND code = ?', [orgId, a.code]);
+      id = existingAcct?.id;
+    }
+    accountId.set(a.code, id);
   }
   log(`${rows.length} SYSCOHADA accounts (${rows.filter((r) => r.is_postable).length} postable)`);
 
@@ -216,10 +222,16 @@ export async function seedOrgReference(tx, orgId, log) {
   for (const [code, en, fr, statement, section, sub, sign, sort, note] of IFRS_ACCOUNTS) {
     const res = await tx.query(
       `INSERT INTO ifrs_accounts (org_id, code, name, name_fr, statement, section, sub_section, sign, sort_order, note_ref)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), name_fr=VALUES(name_fr)`,
       [orgId, code, en, fr, statement, section, sub, sign, sort, note]
     );
-    ifrsId.set(code, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existingIfrs = await tx.queryOne('SELECT id FROM ifrs_accounts WHERE org_id = ? AND code = ?', [orgId, code]);
+      id = existingIfrs?.id;
+    }
+    ifrsId.set(code, id);
   }
 
   // Expand the prefix rules into one explicit mapping row per postable account
@@ -244,7 +256,8 @@ export async function seedOrgReference(tx, orgId, log) {
       `INSERT INTO report_lines
          (org_id, framework, statement_code, line_code, label, label_en, side, line_type,
           sign, gross_formula, depr_formula, formula, is_bold, note_ref, sort_order)
-       VALUES (?, 'ohada', ?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       VALUES (?, 'ohada', ?,?,?,?,?,?,?,?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE label=VALUES(label), label_en=VALUES(label_en), formula=VALUES(formula)`,
       [
         orgId, line.statement_code, line.line_code, line.label, line.label_en,
         line.side, line.line_type, line.sign ?? 1,
@@ -258,7 +271,8 @@ export async function seedOrgReference(tx, orgId, log) {
   // --- journals --------------------------------------------------------------
   for (const [code, name, nameEn, type, manual] of JOURNALS) {
     await tx.query(
-      'INSERT INTO journals (org_id, code, name, name_en, journal_type, allow_manual) VALUES (?,?,?,?,?,?)',
+      `INSERT INTO journals (org_id, code, name, name_en, journal_type, allow_manual) VALUES (?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), name_en=VALUES(name_en), journal_type=VALUES(journal_type), allow_manual=VALUES(allow_manual)`,
       [orgId, code, name, nameEn, type, manual]
     );
   }
@@ -266,7 +280,8 @@ export async function seedOrgReference(tx, orgId, log) {
   // --- document sequences ----------------------------------------------------
   for (const [name, prefix, padding] of SEQUENCES) {
     await tx.query(
-      'INSERT INTO sequences (org_id, name, prefix, padding, include_year, reset_yearly) VALUES (?,?,?,?,?,?)',
+      `INSERT INTO sequences (org_id, name, prefix, padding, include_year, reset_yearly) VALUES (?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE prefix=VALUES(prefix), padding=VALUES(padding)`,
       [orgId, name, prefix, padding, name === 'asset_tag' ? 0 : 1, name === 'asset_tag' ? 0 : 1]
     );
   }
@@ -274,7 +289,8 @@ export async function seedOrgReference(tx, orgId, log) {
   // --- settings --------------------------------------------------------------
   for (const [key, value, type, category, description] of SETTINGS) {
     await tx.query(
-      'INSERT INTO settings (org_id, setting_key, value_text, data_type, category, description) VALUES (?,?,?,?,?,?)',
+      `INSERT INTO settings (org_id, setting_key, value_text, data_type, category, description) VALUES (?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE value_text=VALUES(value_text), data_type=VALUES(data_type), category=VALUES(category), description=VALUES(description)`,
       [orgId, key, value, type, category, description]
     );
   }
@@ -302,7 +318,8 @@ export async function seedOrgReference(tx, orgId, log) {
     await tx.query(
       `INSERT INTO tax_codes (org_id, code, name, tax_type, rate, is_recoverable,
          input_account_id, output_account_id, applies_to, exemption_reason, declaration_box)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), rate=VALUES(rate)`,
       [orgId, code, name, type, rate, recoverable, input, output, appliesTo, exemption, box]
     );
   }
@@ -331,7 +348,8 @@ export async function seedAssetCategories(tx, orgId, accountId, log) {
          requires_safety_test, safety_test_standard, safety_interval_months,
          pm_interval_months, pm_interval_hours, pm_interval_km,
          capitalization_threshold, default_criticality)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE name=VALUES(name), name_en=VALUES(name_en)`,
       [
         orgId, c.code, c.name, c.name_en, c.domain, parentId,
         c.taxonomy_system || 'internal', c.taxonomy_code || null,
@@ -349,9 +367,14 @@ export async function seedAssetCategories(tx, orgId, accountId, log) {
         c.capitalization_threshold ?? 0, c.default_criticality || 'medium',
       ]
     );
-    catId.set(c.code, res.insertId);
+    let id = res.insertId;
+    if (!id) {
+      const existingCat = await tx.queryOne('SELECT id FROM asset_categories WHERE org_id = ? AND code = ?', [orgId, c.code]);
+      id = existingCat?.id;
+    }
+    catId.set(c.code, id);
     count += 1;
-    return res.insertId;
+    return id;
   };
 
   for (const c of ASSET_CATEGORIES) {

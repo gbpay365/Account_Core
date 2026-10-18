@@ -1,4 +1,4 @@
-import { pool } from './pool.js';
+import { pool, query, queryOne } from './pool.js';
 import * as payrollService from '../services/payroll.service.js';
 import * as dfeService from '../services/dfe.service.js';
 import * as interbranchService from '../services/interbranch.service.js';
@@ -128,23 +128,23 @@ export async function seedPhase4() {
   ];
 
   for (const emp of employees) {
-    const existing = await pool.query(
+    const existing = await query(
       `SELECT id FROM employees WHERE org_id = ? AND registration_number = ?`,
       [orgId, emp.registration_number]
     );
-    if (!existing[0].length) {
+    if (!existing.length) {
       await payrollService.createEmployee(orgId, emp);
       console.log(`[seed_phase4] Created employee: ${emp.registration_number} - ${emp.last_name} ${emp.first_name}`);
     }
   }
 
   // 2. Generate and Post January 2026 Payroll Run
-  const existingRun = await pool.query(
+  const existingRun = await query(
     `SELECT id, status FROM payroll_runs WHERE org_id = ? AND period_code = '2026-01'`,
     [orgId]
   );
   let runId;
-  if (!existingRun[0].length) {
+  if (!existingRun.length) {
     const gen = await payrollService.generatePayrollRun(orgId, {
       periodCode: '2026-01',
       periodName: 'Paie Mensuelle Janvier 2026',
@@ -158,7 +158,7 @@ export async function seedPhase4() {
     const postRes = await payrollService.postPayrollRunToLedger(orgId, runId, 'Kenneth Che (Comptable)');
     console.log(`[seed_phase4] Posted payroll run to ledger: Entry ${postRes.entryNumber}, Balanced: ${postRes.totalDebits} XAF`);
   } else {
-    runId = existingRun[0][0].id;
+    runId = existingRun[0].id;
   }
 
   // 3. Seed Hospital Network Establishments
@@ -170,15 +170,15 @@ export async function seedPhase4() {
   ];
 
   for (const b of branches) {
-    const ex = await pool.query(`SELECT id FROM branch_establishments WHERE org_id = ? AND code = ?`, [orgId, b.code]);
-    if (!ex[0].length) {
+    const ex = await query(`SELECT id FROM branch_establishments WHERE org_id = ? AND code = ?`, [orgId, b.code]);
+    if (!ex.length) {
       await interbranchService.createBranch(orgId, b);
       console.log(`[seed_phase4] Created branch establishment: ${b.code} - ${b.name}`);
     }
   }
 
   // 4. Seed Initial Inter-Branch Transfers
-  const [bRows] = await pool.query(`SELECT id, code FROM branch_establishments WHERE org_id = ?`, [orgId]);
+  const bRows = await query(`SELECT id, code FROM branch_establishments WHERE org_id = ?`, [orgId]);
   const bMap = Object.fromEntries(bRows.map(r => [r.code, r.id]));
 
   const transfers = [
@@ -201,8 +201,8 @@ export async function seedPhase4() {
   ];
 
   for (const tr of transfers) {
-    const exTr = await pool.query(`SELECT id FROM interbranch_transfers WHERE org_id = ? AND transfer_number = ?`, [orgId, tr.transfer_number]);
-    if (!exTr[0].length) {
+    const exTr = await query(`SELECT id FROM interbranch_transfers WHERE org_id = ? AND transfer_number = ?`, [orgId, tr.transfer_number]);
+    if (!exTr.length) {
       await interbranchService.createInterbranchTransfer(orgId, tr, 'Trésorier Central');
       console.log(`[seed_phase4] Created inter-branch transfer: ${tr.transfer_number} - ${tr.amount} XAF`);
     }
@@ -235,8 +235,8 @@ export async function seedPhase4() {
   ];
 
   for (const inv of dfeInvoices) {
-    const exInv = await pool.query(`SELECT id FROM dfe_invoices WHERE org_id = ? AND invoice_number = ?`, [orgId, inv.invoice_number]);
-    if (!exInv[0].length) {
+    const exInv = await query(`SELECT id FROM dfe_invoices WHERE org_id = ? AND invoice_number = ?`, [orgId, inv.invoice_number]);
+    if (!exInv.length) {
       const created = await dfeService.issueDfeInvoice(orgId, inv, 'Service Facturation');
       console.log(`[seed_phase4] Issued DFE Electronic Invoice: ${created.invoice_number} - TTC: ${created.total_ttc} XAF`);
     }

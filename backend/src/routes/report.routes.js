@@ -11,7 +11,7 @@ import { notFound, badRequest } from '../utils/errors.js';
 import { money } from '../utils/money.js';
 import { today, compare } from '../utils/dates.js';
 import { isoDate, optionalId, boolish } from './helpers.js';
-import { ensureOrganizationData } from '../db/seed.js';
+import { ensureOrganizationData, ensureFiscalYearForOrg, ensureOpenPeriodForOrg } from '../db/seed.js';
 
 export const reportRoutes = Router();
 
@@ -64,7 +64,7 @@ reportRoutes.get(
       [req.orgId]
     );
     if (years.length === 0) {
-      await ensureOrganizationData(req.orgId, { silent: false }).catch(() => {});
+      await ensureFiscalYearForOrg(req.orgId).catch(() => {});
       years = await query(
         `SELECT y.id, y.code, y.start_date, y.end_date, y.status,
                 COUNT(p.id) AS period_count,
@@ -563,30 +563,14 @@ reportRoutes.get(
       [req.orgId]
     );
     if (!year) {
-      await ensureOrganizationData(req.orgId, { silent: false }).catch(() => {});
-      year = await queryOne(
-        "SELECT * FROM fiscal_years WHERE org_id = ? AND status <> 'closed' ORDER BY start_date DESC LIMIT 1",
-        [req.orgId]
-      );
-      period = await queryOne(
-        `SELECT p.*, y.code AS fiscal_year FROM accounting_periods p
-           JOIN fiscal_years y ON y.id = p.fiscal_year_id
-          WHERE p.org_id = ? AND p.status = 'open' AND p.is_adjustment = 0
-          ORDER BY p.start_date LIMIT 1`,
-        [req.orgId]
-      );
+      year = await ensureFiscalYearForOrg(req.orgId);
+    }
+    if (!period) {
+      period = await ensureOpenPeriodForOrg(req.orgId);
     }
     if (!year) {
       await query("UPDATE fiscal_years SET status = 'open' WHERE org_id = ? ORDER BY start_date DESC LIMIT 1", [req.orgId]);
-      await query("UPDATE accounting_periods SET status = 'open' WHERE org_id = ? ORDER BY start_date DESC LIMIT 1", [req.orgId]);
       year = await queryOne("SELECT * FROM fiscal_years WHERE org_id = ? ORDER BY start_date DESC LIMIT 1", [req.orgId]);
-      period = await queryOne(
-        `SELECT p.*, y.code AS fiscal_year FROM accounting_periods p
-           JOIN fiscal_years y ON y.id = p.fiscal_year_id
-          WHERE p.org_id = ? AND p.status = 'open'
-          ORDER BY p.start_date LIMIT 1`,
-        [req.orgId]
-      );
     }
     if (!year) throw badRequest('No fiscal year is open.');
 
