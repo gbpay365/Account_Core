@@ -603,7 +603,7 @@ async function seedOperations(tx, orgId, { accountId, ccId, custId, assets, admi
     ['6245', 'LOG', 'Vehicle-fleet maintenance', 32000000],
     ['6247', 'BIOM', 'Calibration and metrological verification', 24000000],
     ['6255', 'ADM', 'Medical professional-liability insurance', 36000000],
-    ['628', 'IT', 'Telecommunications and internet charges', 27000000],
+    ['6281', 'IT', 'Telecommunications and internet charges', 27000000],
   ];
 
   const monthsToSeed = 9; // January through September 2026
@@ -728,15 +728,15 @@ async function seedOperations(tx, orgId, { accountId, ccId, custId, assets, admi
     payrollByCc.forEach(([cc, pct], i) => {
       const amount = i === payrollByCc.length - 1 ? money(gross - allocatedPay) : money(gross * pct);
       allocatedPay = money(allocatedPay + amount);
-      payLines.push({ accountCode: '661', costCenterId: ccId.get(cc), description: `Staff remuneration — ${cc}`, debit: amount, credit: 0 });
+      payLines.push({ accountCode: '6611', costCenterId: ccId.get(cc), description: `Staff remuneration — ${cc}`, debit: amount, credit: 0 });
     });
-    payLines.push({ accountCode: '664', description: 'Employer social-security charges', debit: social, credit: 0 });
+    payLines.push({ accountCode: '6641', costCenterId: ccId.get('ADM'), description: 'Employer social-security charges', debit: social, credit: 0 });
     const netPay = money(gross * 0.86);
     const payrollTax = money(gross * 0.05);
     payLines.push({ accountCode: '422', description: `Net remuneration payable — ${year}-${mm}`, debit: 0, credit: netPay });
-    payLines.push({ accountCode: '447', description: 'Payroll tax withheld at source', debit: 0, credit: payrollTax });
+    payLines.push({ accountCode: '4471', description: 'Payroll tax withheld at source', debit: 0, credit: payrollTax });
     payLines.push({
-      accountCode: '431',
+      accountCode: '4311',
       description: 'Social-security contributions payable (employer and employee shares, CNPS)',
       debit: 0,
       credit: money(gross + social - netPay - payrollTax),
@@ -744,7 +744,7 @@ async function seedOperations(tx, orgId, { accountId, ccId, custId, assets, admi
     await createJournalEntry(tx, {
       orgId, journalCode: 'PAI', date: `${year}-${mm}-${last}`,
       description: `Staff payroll — ${year}-${mm}`,
-      reference: `PAIE-${year}-${mm}`, source: 'manual', framework: 'both',
+      reference: `PAIE-${year}-${mm}`, source: 'system', framework: 'both',
       autoPost: true, actor: admin, overrideReason: override, lines: payLines,
     });
     entries += 1;
@@ -772,12 +772,12 @@ async function seedOperations(tx, orgId, { accountId, ccId, custId, assets, admi
     entries += 1;
 
     const disbursements = [
-      ['401', money(expTotal * (0.76 + rand() * 0.14)), 'Payment of trade suppliers', 'supplier'],
-      ['422', netPay, 'Transfer of net salaries', 'none'],
-      ['431', money(social * 0.9), 'Payment of social-security contributions', 'none'],
-      ['671', 2100000, 'Interest on the equipment loan', 'none'],
-      ['631', 640000, 'Bank charges and commissions', 'none'],
-      ['162', 5800000, 'Repayment of loan principal', 'none'],
+      ['4011', money(expTotal * (0.76 + rand() * 0.14)), 'Payment of trade suppliers', 'supplier', null],
+      ['422', netPay, 'Transfer of net salaries', 'none', null],
+      ['4311', money(social * 0.9), 'Payment of social-security contributions', 'none', null],
+      ['6712', 2100000, 'Interest on the equipment loan', 'none', ccId.get('FIN')],
+      ['631', 640000, 'Bank charges and commissions', 'none', ccId.get('FIN')],
+      ['162', 5800000, 'Repayment of loan principal', 'none', null],
     ];
     const disbursed = money(disbursements.reduce((s, [, amount]) => money(s + amount), 0));
     await createJournalEntry(tx, {
@@ -786,8 +786,8 @@ async function seedOperations(tx, orgId, { accountId, ccId, custId, assets, admi
       reference: `DEC-${year}-${mm}`, source: 'ap_payment', framework: 'both',
       autoPost: true, actor: admin, overrideReason: override,
       lines: [
-        ...disbursements.map(([code, amount, label, partner]) => ({
-          accountCode: code, description: label, debit: amount, credit: 0, partnerType: partner,
+        ...disbursements.map(([code, amount, label, partner, cc]) => ({
+          accountCode: code, costCenterId: cc ?? null, description: label, debit: amount, credit: 0, partnerType: partner,
         })),
         { accountCode: '521', description: `Debits on the main bank account — ${year}-${mm}`, debit: 0, credit: disbursed },
       ],
@@ -798,7 +798,7 @@ async function seedOperations(tx, orgId, { accountId, ccId, custId, assets, admi
     await createJournalEntry(tx, {
       orgId, journalCode: 'OD', date: `${year}-${mm}-${last}`,
       description: `VAT determination for the period — ${year}-${mm}`,
-      reference: `TVA-${year}-${mm}`, source: 'manual', framework: 'both',
+      reference: `TVA-${year}-${mm}`, source: 'system', framework: 'both',
       autoPost: true, actor: admin, overrideReason: override,
       lines: [
         { accountCode: '4441', description: 'VAT payable for the period', debit: money(recoverableVat * 0.35), credit: 0 },
@@ -812,7 +812,7 @@ async function seedOperations(tx, orgId, { accountId, ccId, custId, assets, admi
   await createJournalEntry(tx, {
     orgId, journalCode: 'OD', date: '2026-08-31',
     description: 'Share of capital grants released to income (January to August 2026)',
-    reference: 'SUBV-2026-08', source: 'manual', framework: 'both',
+    reference: 'SUBV-2026-08', source: 'system', framework: 'both',
     autoPost: true, actor: admin,
     overrideReason: 'Grant regularisation posted to closed periods during go-live.',
     lines: [
@@ -1267,7 +1267,7 @@ async function seedBudget(tx, orgId, { accountId, ccId, periodId, userId, log })
     ['7065', 'IMG', 'revenue', 142000000], ['7068', 'DIAL', 'revenue', 106000000],
     ['6042', 'PHAR', 'opex', 130000000], ['6042', 'LAB', 'opex', 48000000],
     ['6052', 'TECH', 'opex', 40000000], ['6051', 'TECH', 'opex', 10000000],
-    ['6053', 'LOG', 'opex', 12000000], ['661', null, 'opex', 3216000000],
+    ['6053', 'LOG', 'opex', 12000000], ['6611', null, 'opex', 3216000000],
     ['6243', 'BIOM', 'maintenance', 26000000], ['6244', 'TECH', 'maintenance', 18000000],
     ['6245', 'LOG', 'maintenance', 7000000], ['6247', 'BIOM', 'maintenance', 6000000],
     ['6241', 'TECH', 'maintenance', 14000000],
