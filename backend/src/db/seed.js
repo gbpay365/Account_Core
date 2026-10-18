@@ -1,22 +1,21 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { pool, transaction } from './pool.js';
 import { seedReference, seedOrgReference, seedAssetCategories, seedFiscalCalendar, seedCloseChecklist } from './seed/reference.js';
 import { seedDemo } from './seed/demo.js';
 import { applyPostingLevel } from '../../scripts/apply-posting-level.js';
 
-const skipDemo = process.argv.includes('--no-demo');
-
-const step = (label) => console.log(`  - ${label}`);
-
-async function main() {
+export async function runSeed({ skipDemo = false, silent = false } = {}) {
+  const step = (label) => { if (!silent) console.log(`  - ${label}`); };
   const t0 = Date.now();
-  console.log('[seed] LedgerCore reference data + demo hospital');
+  if (!silent) console.log('[seed] LedgerCore reference data + demo hospital');
 
   const existing = await transaction(async (tx) => tx.queryOne('SELECT COUNT(*) AS n FROM organizations'));
   if (Number(existing.n) > 0) {
-    console.error('[seed] Database already contains an organisation. Run `npm run reset` to rebuild from scratch.');
-    await pool.end();
-    process.exit(1);
+    if (!silent) console.log('[seed] Database already contains an organisation.');
+    return false;
   }
+
 
   await transaction(async (tx) => {
     await seedReference(tx, step);
@@ -95,17 +94,27 @@ async function main() {
       UNION ALL SELECT 'users', COUNT(*) FROM users
     `)
   );
-  console.log('\n[seed] row counts');
-  for (const r of counts) console.log(`  ${String(r.n).padStart(7)}  ${r.entity}`);
-  console.log(`\n[seed] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-  console.log('[seed] sign in with  admin@ledgercore.health  /  Ledger@2026');
-
-  await pool.end();
+  if (!silent) {
+    console.log('\n[seed] row counts');
+    for (const r of counts) console.log(`  ${String(r.n).padStart(7)}  ${r.entity}`);
+    console.log(`\n[seed] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    console.log('[seed] sign in with  admin@ledgercore.health  /  Ledger@2026');
+  }
+  return true;
 }
 
-main().catch(async (err) => {
-  console.error('\n[seed] FAILED:', err.message);
-  if (err.stack) console.error(err.stack.split('\n').slice(1, 6).join('\n'));
-  await pool.end().catch(() => {});
-  process.exit(1);
-});
+const isDirectCli = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isDirectCli) {
+  const skipDemo = process.argv.includes('--no-demo');
+  runSeed({ skipDemo })
+    .then(async () => {
+      await pool.end();
+    })
+    .catch(async (err) => {
+      console.error('\n[seed] FAILED:', err.message);
+      if (err.stack) console.error(err.stack.split('\n').slice(1, 6).join('\n'));
+      await pool.end().catch(() => {});
+      process.exit(1);
+    });
+}

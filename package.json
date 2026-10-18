@@ -1,0 +1,17 @@
+{
+  "name": "ledgercore-health",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LedgerCore Health - Hospital Core Accounting & Asset Management (SYSCOHADA + IFRS)",
+  "workspaces": [
+    "backend"
+  ],
+  "scripts": {
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev",
+    "migrate": "npm --prefix backend run migrate",
+    "seed": "npm --prefix backend run seed",
+    "verify": "npm --prefix backend run verify",
+    "smoke": "npm --prefix backend run smoke"
+  }
+}
