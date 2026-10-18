@@ -433,6 +433,7 @@ export async function seedDemo(tx, ctx, log) {
       // Medical equipment is VAT-exempt in Cameroon, so no recoverable VAT.
       recoverableVat: 0,
       actor: admin,
+      overrideReason: 'Demonstration asset capitalized during initial system setup.',
     });
   }
   log(`${post2026.length} asset(s) capitalised in FY2026 through the acquisition workflow`);
