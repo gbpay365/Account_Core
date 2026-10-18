@@ -116,8 +116,8 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
 
     // 4. Fiscal calendar & periods
     let periodId = new Map();
-    const fyCount = await tx.queryOne("SELECT COUNT(*) AS n FROM fiscal_years WHERE org_id = ? AND status <> 'closed'", [orgId]);
-    if (Number(fyCount?.n || 0) === 0) {
+    const existingP = await tx.query('SELECT code, id FROM accounting_periods WHERE org_id = ?', [orgId]);
+    if (existingP.length === 0) {
       step(`Seeding fiscal calendar & periods for org ${orgId}...`);
       periodId = await seedFiscalCalendar(
         tx,
@@ -125,13 +125,26 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
         [{ year: 2025, status: 'locked' }, { year: 2026, status: 'open' }],
         step
       );
-
-      for (let m = 1; m <= 8; m += 1) {
-        await tx.query("UPDATE accounting_periods SET status = 'open' WHERE id = ?", [periodId.get(`2026-${String(m).padStart(2, '0')}`)]);
-      }
     } else {
-      const rows = await tx.query('SELECT code, id FROM accounting_periods WHERE org_id = ?', [orgId]);
-      periodId = new Map(rows.map((r) => [r.code, r.id]));
+      periodId = new Map(existingP.map((r) => [r.code, r.id]));
+    }
+
+    // Always ensure FY2026 is open and active
+    await tx.query("UPDATE fiscal_years SET status = 'open' WHERE org_id = ? AND code = 'FY2026'", [orgId]);
+    // Ensure Jan-Aug 2026 open initially if not set, and ensure at least one period is open
+    const openPeriod = await tx.queryOne("SELECT id FROM accounting_periods WHERE org_id = ? AND status = 'open' LIMIT 1", [orgId]);
+    if (!openPeriod) {
+      await tx.query(
+        "UPDATE accounting_periods SET status = 'open' WHERE org_id = ? AND code = '2026-09'",
+        [orgId]
+      );
+      const stillNone = await tx.queryOne("SELECT id FROM accounting_periods WHERE org_id = ? AND status = 'open' LIMIT 1", [orgId]);
+      if (!stillNone) {
+        await tx.query(
+          "UPDATE accounting_periods SET status = 'open' WHERE org_id = ? AND code LIKE '2026-%' LIMIT 1",
+          [orgId]
+        );
+      }
     }
 
     // 5. Demo assets & operations

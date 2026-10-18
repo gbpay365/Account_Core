@@ -576,6 +576,18 @@ reportRoutes.get(
         [req.orgId]
       );
     }
+    if (!year) {
+      await query("UPDATE fiscal_years SET status = 'open' WHERE org_id = ? ORDER BY start_date DESC LIMIT 1", [req.orgId]);
+      await query("UPDATE accounting_periods SET status = 'open' WHERE org_id = ? ORDER BY start_date DESC LIMIT 1", [req.orgId]);
+      year = await queryOne("SELECT * FROM fiscal_years WHERE org_id = ? ORDER BY start_date DESC LIMIT 1", [req.orgId]);
+      period = await queryOne(
+        `SELECT p.*, y.code AS fiscal_year FROM accounting_periods p
+           JOIN fiscal_years y ON y.id = p.fiscal_year_id
+          WHERE p.org_id = ? AND p.status = 'open'
+          ORDER BY p.start_date LIMIT 1`,
+        [req.orgId]
+      );
+    }
     if (!year) throw badRequest('No fiscal year is open.');
 
     const range = { from: year.start_date, to: period?.end_date || year.end_date };

@@ -371,23 +371,37 @@ export async function seedFiscalCalendar(tx, orgId, years, log) {
   const periodId = new Map();
   for (const { year, status } of years) {
     const fy = await tx.query(
-      'INSERT INTO fiscal_years (org_id, code, name, start_date, end_date, status) VALUES (?,?,?,?,?,?)',
+      `INSERT INTO fiscal_years (org_id, code, name, start_date, end_date, status)
+       VALUES (?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE status = VALUES(status), name = VALUES(name)`,
       [orgId, `FY${year}`, `Fiscal year ${year}`, `${year}-01-01`, `${year}-12-31`, status]
     );
+    let fyId = fy.insertId;
+    if (!fyId) {
+      const existing = await tx.queryOne('SELECT id FROM fiscal_years WHERE org_id = ? AND code = ?', [orgId, `FY${year}`]);
+      fyId = existing?.id;
+    }
     const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     for (let m = 1; m <= 12; m += 1) {
       const mm = String(m).padStart(2, '0');
+      const periodCode = `${year}-${mm}`;
       const res = await tx.query(
         `INSERT INTO accounting_periods
            (org_id, fiscal_year_id, period_no, code, name, start_date, end_date, status)
-         VALUES (?,?,?,?,?,?,?,?)`,
+         VALUES (?,?,?,?,?,?,?,?)
+         ON DUPLICATE KEY UPDATE fiscal_year_id = VALUES(fiscal_year_id), status = VALUES(status)`,
         [
-          orgId, fy.insertId, m, `${year}-${mm}`, `${names[m - 1]} ${year}`,
+          orgId, fyId, m, periodCode, `${names[m - 1]} ${year}`,
           `${year}-${mm}-01`, `${year}-${mm}-${String(daysInMonth(year, m)).padStart(2, '0')}`,
           status === 'open' ? 'open' : 'locked',
         ]
       );
-      periodId.set(`${year}-${mm}`, res.insertId);
+      let pId = res.insertId;
+      if (!pId) {
+        const existingP = await tx.queryOne('SELECT id FROM accounting_periods WHERE org_id = ? AND code = ?', [orgId, periodCode]);
+        pId = existingP?.id;
+      }
+      periodId.set(periodCode, pId);
     }
   }
   log(`${years.length} fiscal years / ${periodId.size} accounting periods`);
