@@ -1,14 +1,29 @@
-"""Sign-in. The only page outside the application shell."""
+﻿"""Sign-in. The only page outside the application shell."""
 
 from __future__ import annotations
+
+import html
 
 from nicegui import app, ui
 
 from .. import api
-from ..i18n import lang, set_lang, t
+from ..i18n import STRINGS, lang as _app_lang, set_lang
 from ..theme import ACCENT, NAVY, apply as apply_theme
 from ..ui import chrome
 from ..ui.shell import first_allowed_route
+
+
+def lang() -> str:
+    """Language picked on this screen. Unlike the in-app helper it is not forced to
+    English by an IFRS framework left over from an earlier session."""
+    stored = app.storage.user.get('lang')
+    return stored if stored in ('en', 'fr') else _app_lang()
+
+
+def t(key: str, **kwargs) -> str:
+    pack = STRINGS.get(lang()) or STRINGS['en']
+    text = pack.get(key) or STRINGS['en'].get(key) or key
+    return text.format(**kwargs) if kwargs else text
 
 #: The seeded roles, so an evaluator can see the permission model at work
 #: without being handed a list of credentials separately.
@@ -186,13 +201,14 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
 
                 with ui.row().classes('gap-2 lc-rise lc-d2'):
                     for icon, text in [('verified', 'SYSCOHADA'), ('public', 'IFRS'),
-                                       ('biotech', 'IEC 60601'), ('lock', 'Audit trail')]:
+                                       ('biotech', 'IEC 60601'), ('lock', t('auth.chip_audit'))]:
                         with ui.element('span').classes('lc-chip'):
                             ui.icon(icon).classes('text-[13px] text-teal-300')
                             ui.label(text)
 
-                ui.label(t('auth.headline')).classes(
-                    'lc-gradient-text text-[38px] font-bold leading-[1.12] lc-rise lc-d3')
+                with ui.element('div').classes('lc-rise lc-d3'):
+                    ui.html(f'<span class="lc-gradient-text text-[38px] font-bold leading-[1.12]" '
+                            f'style="display:inline-block">{html.escape(t("auth.headline"))}</span>')
                 ui.label(t('auth.pitch')).classes(
                     'text-slate-300 text-[15px] leading-relaxed lc-rise lc-d3')
 
@@ -214,10 +230,10 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
                     with ui.row().classes('items-center justify-between w-full no-wrap'):
                         with ui.row().classes('items-center gap-2 no-wrap'):
                             ui.element('div').classes('lc-live')
-                            ui.label('Live ledger').classes('text-slate-200 text-xs font-semibold')
+                            ui.label(t('auth.live_ledger')).classes('text-slate-200 text-xs font-semibold')
                         with ui.row().classes('items-center gap-1 no-wrap'):
                             ui.icon('check_circle').classes('text-emerald-400 text-[15px]')
-                            ui.label('Balanced · 0 variance').classes('text-emerald-300 text-[11px]')
+                            ui.label(t('auth.balanced')).classes('text-emerald-300 text-[11px]')
                     with ui.row().classes('items-end justify-between w-full no-wrap'):
                         with ui.column().classes('gap-2 flex-1 pr-4'):
                             with ui.column().classes('gap-1 w-full'):
@@ -227,7 +243,7 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
                                 ui.html('<div class="lc-bar"><i style="width:100%"></i></div>')
                             with ui.column().classes('gap-1 w-full'):
                                 with ui.row().classes('justify-between w-full'):
-                                    ui.label('IFRS bridge').classes('text-slate-400 text-[11px]')
+                                    ui.label(t('auth.bridge')).classes('text-slate-400 text-[11px]')
                                     ui.label('100%').classes('text-slate-300 text-[11px]')
                                 ui.html('<div class="lc-bar b"><i style="width:100%"></i></div>')
                         heights = [38, 55, 44, 70, 52, 86, 64, 96]
@@ -322,7 +338,7 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
 
                 with ui.row().classes('items-center justify-center gap-1.5 w-full pt-1'):
                     ui.icon('verified_user').classes('text-teal-600 text-[14px]')
-                    ui.label('Encrypted session · Role-based access · Full audit trail') \
+                    ui.label(t('auth.secure_note')) \
                         .classes('text-[11px] text-slate-400')
 
 

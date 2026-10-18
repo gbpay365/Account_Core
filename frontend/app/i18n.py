@@ -72,7 +72,7 @@ STRINGS: dict[str, dict[str, str]] = {
         ),
         'auth.feat1_t': 'OHADA and IFRS side by side',
         'auth.feat1_b': (
-            'Bilan, Compte de résultat and TAFIRE alongside IAS 1, IAS 7 and IAS 16 — '
+            'Balance sheet, income statement and cash flow (TAFIRE) alongside IAS 1, IAS 7 and IAS 16 — '
             'reconciled by a dual-standard bridge rather than a second set of books.'
         ),
         'auth.feat2_t': 'Biomedical equipment, properly governed',
@@ -86,6 +86,11 @@ STRINGS: dict[str, dict[str, str]] = {
             'divergence is posted as an IFRS-only entry.'
         ),
         'auth.demo': 'Demonstration accounts',
+        'auth.chip_audit': 'Audit trail',
+        'auth.live_ledger': 'Live ledger',
+        'auth.balanced': 'Balanced · 0 variance',
+        'auth.bridge': 'IFRS bridge',
+        'auth.secure_note': 'Encrypted session · Role-based access · Full audit trail',
         'auth.demo_hint': 'Every account uses the password Ledger@2026. Each role sees only what it is entitled to.',
         'auth.filled': 'Filled in {email}. Press Sign in.',
         'auth.need_both': 'Enter your email address and password.',
@@ -1229,6 +1234,11 @@ STRINGS: dict[str, dict[str, str]] = {
             'passé en écriture IFRS seule.'
         ),
         'auth.demo': 'Comptes de démonstration',
+        'auth.chip_audit': 'Piste d’audit',
+        'auth.live_ledger': 'Grand livre en direct',
+        'auth.balanced': 'Équilibré · écart nul',
+        'auth.bridge': 'Pont IFRS',
+        'auth.secure_note': 'Session chiffrée · Accès par rôle · Piste d’audit complète',
         'auth.demo_hint': 'Tous les comptes utilisent le mot de passe Ledger@2026. Chaque rôle ne voit que ce qu’il a le droit de faire.',
         'auth.filled': '{email} est renseigné. Cliquez sur Se connecter.',
         'auth.need_both': 'Saisissez l’adresse e-mail et le mot de passe.',
