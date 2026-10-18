@@ -112,14 +112,15 @@ journalRoutes.get(
       const { n: allOrgEntries } = await queryOne('SELECT COUNT(*) AS n FROM journal_entries WHERE org_id = ?', [req.orgId]);
       if (Number(allOrgEntries || 0) === 0) {
         try {
-          await ensureOrganizationData(req.orgId, { skipDemo: false, silent: true });
+          await ensureOrganizationData(req.orgId, { skipDemo: false, silent: false });
           const re = await queryOne(
             `SELECT COUNT(*) AS n FROM journal_entries e WHERE e.org_id = ?${filter}`,
             params
           );
           total = re?.n || 0;
         } catch (err) {
-          console.warn('[journal] ensureOrganizationData error:', err.message);
+          console.error('[journal] ensureOrganizationData error:', err);
+          return res.status(500).json({ error: { message: err.message, stack: err.stack } });
         }
       }
     }

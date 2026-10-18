@@ -412,7 +412,7 @@ export async function seedFiscalCalendar(tx, orgId, years, log) {
         `INSERT INTO accounting_periods
            (org_id, fiscal_year_id, period_no, code, name, start_date, end_date, status)
          VALUES (?,?,?,?,?,?,?,?)
-         ON DUPLICATE KEY UPDATE fiscal_year_id = VALUES(fiscal_year_id), status = VALUES(status)`,
+         ON DUPLICATE KEY UPDATE fiscal_year_id = VALUES(fiscal_year_id), end_date = VALUES(end_date), status = VALUES(status)`,
         [
           orgId, fyId, m, periodCode, `${names[m - 1]} ${year}`,
           `${year}-${mm}-01`, `${year}-${mm}-${String(daysInMonth(year, m)).padStart(2, '0')}`,
