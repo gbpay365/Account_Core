@@ -159,10 +159,13 @@ CREATE TABLE IF NOT EXISTS daily_cash_closes (
 
 -- 3. Ensure postable subaccounts for mobile money, caisse, and bank transfers
 INSERT INTO accounts (org_id, code, name, name_en, account_class, parent_id, level, account_type, normal_side, is_postable, is_active, in_tier_normal)
-VALUES
-  (1, '5713', 'Caisse Mobile Money — Orange Money', 'Mobile Money Cash Register — Orange Money', 5, 204, 3, 'asset', 'debit', 1, 1, 1),
-  (1, '5851', 'Virements internes de caisse en banque', 'Internal Cash-to-Bank Transfer Transit', 5, 207, 3, 'asset', 'debit', 1, 1, 1),
-  (1, '6312', 'Frais et commissions sur paiements mobiles', 'Telecom & Mobile Money Transaction Fees', 6, 229, 3, 'expense', 'debit', 1, 1, 1),
-  (1, '6581', 'Déficits et pertes sur écarts de caisse', 'Cash Count Discrepancies — Shortages', 6, 255, 3, 'expense', 'debit', 1, 1, 1),
-  (1, '7581', 'Excédents constatés sur écarts de caisse', 'Cash Count Discrepancies — Overage', 7, 275, 3, 'revenue', 'credit', 1, 1, 1)
+SELECT o.id, '5713', 'Caisse Mobile Money — Orange Money', 'Mobile Money Cash Register — Orange Money', 5, NULL, 3, 'asset', 'debit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '5851', 'Virements internes de caisse en banque', 'Internal Cash-to-Bank Transfer Transit', 5, NULL, 3, 'asset', 'debit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '6312', 'Frais et commissions sur paiements mobiles', 'Telecom & Mobile Money Transaction Fees', 6, NULL, 3, 'expense', 'debit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '6581', 'Déficits et pertes sur écarts de caisse', 'Cash Count Discrepancies — Shortages', 6, NULL, 3, 'expense', 'debit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '7581', 'Excédents constatés sur écarts de caisse', 'Cash Count Discrepancies — Overage', 7, NULL, 3, 'revenue', 'credit', 1, 1, 1 FROM organizations o
 ON DUPLICATE KEY UPDATE is_postable = 1;

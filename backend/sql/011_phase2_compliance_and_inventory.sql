@@ -84,8 +84,9 @@ CREATE TABLE IF NOT EXISTS dsf_tax_adjustments (
 
 -- 5. Standard SYSCOHADA Postable Accounts for Fiscal Depreciation
 INSERT INTO accounts (org_id, code, name, name_en, account_class, parent_id, level, account_type, normal_side, is_postable, is_active, in_tier_normal)
-VALUES
-  (1, '1511', 'Amortissements dérogatoires', 'Exceptional depreciation', 1, 94, 3, 'equity', 'credit', 1, 1, 1),
-  (1, '8511', 'Dotations aux amortissements dérogatoires', 'Additions to exceptional depreciation', 8, 294, 3, 'expense', 'debit', 1, 1, 1),
-  (1, '8611', 'Reprises sur amortissements dérogatoires', 'Reversals of exceptional depreciation', 8, 297, 3, 'revenue', 'credit', 1, 1, 1)
+SELECT o.id, '1511', 'Amortissements dérogatoires', 'Exceptional depreciation', 1, NULL, 3, 'equity', 'credit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '8511', 'Dotations aux amortissements dérogatoires', 'Additions to exceptional depreciation', 8, NULL, 3, 'expense', 'debit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '8611', 'Reprises sur amortissements dérogatoires', 'Reversals of exceptional depreciation', 8, NULL, 3, 'revenue', 'credit', 1, 1, 1 FROM organizations o
 ON DUPLICATE KEY UPDATE is_postable = 1;

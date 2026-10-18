@@ -5,11 +5,13 @@
 
 -- 1. Ensure Required SYSCOHADA Postable Accounts Exist
 INSERT INTO accounts (org_id, code, name, name_en, account_class, parent_id, level, account_type, normal_side, is_postable, is_active, in_tier_normal)
-VALUES 
-  (1, '1851', 'Comptes de liaison Siège / Hôpital Central', 'Headquarters / Central Hospital Reciprocal Liaison', 1, 106, 3, 'liability', 'credit', 1, 1, 1),
-  (1, '1852', 'Comptes de liaison Succursales et Dispensaires', 'Branch Clinics & Satellite Dispensaries Liaison', 1, 106, 3, 'liability', 'credit', 1, 1, 1),
-  (1, '4421', 'État, autres organismes (FNE et CFC)', 'State & Other Agencies (FNE / CFC Social Contributions)', 4, 174, 3, 'liability', 'credit', 1, 1, 1),
-  (1, '6461', 'Droits de timbres fiscaux sur factures', 'Statutory Fiscal Stamp Duties on Commercial Invoices', 6, 238, 3, 'expense', 'debit', 1, 1, 1)
+SELECT o.id, '1851', 'Comptes de liaison Siège / Hôpital Central', 'Headquarters / Central Hospital Reciprocal Liaison', 1, NULL, 3, 'liability', 'credit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '1852', 'Comptes de liaison Succursales et Dispensaires', 'Branch Clinics & Satellite Dispensaries Liaison', 1, NULL, 3, 'liability', 'credit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '4421', 'État, autres organismes (FNE et CFC)', 'State & Other Agencies (FNE / CFC Social Contributions)', 4, NULL, 3, 'liability', 'credit', 1, 1, 1 FROM organizations o
+UNION ALL
+SELECT o.id, '6461', 'Droits de timbres fiscaux sur factures', 'Statutory Fiscal Stamp Duties on Commercial Invoices', 6, NULL, 3, 'expense', 'debit', 1, 1, 1 FROM organizations o
 ON DUPLICATE KEY UPDATE is_postable = 1, is_active = 1;
 
 -- 2. Employees Table
