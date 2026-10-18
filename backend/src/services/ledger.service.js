@@ -132,13 +132,13 @@ export async function createJournalEntry(tx, input) {
     if (debit > 0 && credit > 0) throw new ApiError(422, `Line ${n}: a line must be either debit or credit.`);
     if (debit === 0 && credit === 0) throw new ApiError(422, `Line ${n}: amount must be greater than zero.`);
 
-    if (account.requires_cost_center && !raw.costCenterId) {
+    if (account.requires_cost_center && !raw.costCenterId && source !== 'import' && journalCode !== 'AN') {
       throw new ApiError(422, `Line ${n}: account ${account.code} requires a cost centre (department / ward).`);
     }
-    if (account.requires_asset && !raw.assetId) {
+    if (account.requires_asset && !raw.assetId && source !== 'import' && journalCode !== 'AN') {
       throw new ApiError(422, `Line ${n}: account ${account.code} requires an asset reference.`);
     }
-    if (account.requires_third_party && (!raw.partnerId || raw.partnerType === 'none')) {
+    if (account.requires_third_party && (!raw.partnerId || raw.partnerType === 'none') && source !== 'import' && journalCode !== 'AN') {
       throw new ApiError(422, `Line ${n}: select the supplier / client for account ${account.code}.`);
     }
 
