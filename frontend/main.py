@@ -27,8 +27,9 @@ async def proxy_api(request: Request) -> Response:
     if request.url.query:
         target_url = f"{target_url}?{request.url.query}"
 
-    # Break loop if API_BASE_URL was mistakenly pointed to this frontend instance
-    if f":{UI_PORT}" in target_url or f"127.0.0.1:{UI_PORT}" in target_url:
+    # Break loop if target_url points to this frontend host or port
+    req_host = request.headers.get('host', '').split(':')[0]
+    if (req_host and req_host in target_url) or f":{UI_PORT}" in target_url or f"127.0.0.1:{UI_PORT}" in target_url:
         target_url = f"http://127.0.0.1:4700/api/{subpath}"
         if request.url.query:
             target_url = f"{target_url}?{request.url.query}"
