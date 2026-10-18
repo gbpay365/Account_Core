@@ -171,13 +171,29 @@ postingRoutes.get(
 postingRoutes.get(
   '/partners',
   requirePermission('journal.view', 'coa.view', 'supplier.view'),
-  validate({ query: z.object({ type: z.enum(['supplier', 'customer']).default('supplier') }) }),
+  validate({ query: z.object({ type: z.enum(['supplier', 'customer', 'all']).default('supplier') }) }),
   handler(async (req, res) => {
+    if (req.query.type === 'all') {
+      const [suppliers, customers] = await Promise.all([
+        query(
+          `SELECT id, code, name, account_id, default_account_id, vat_code, 'supplier' AS partner_type
+             FROM suppliers WHERE org_id = ? AND is_active = 1 ORDER BY name`,
+          [req.orgId]
+        ),
+        query(
+          `SELECT id, code, name, account_id, default_account_id, vat_code, 'customer' AS partner_type
+             FROM customers WHERE org_id = ? AND is_active = 1 ORDER BY name`,
+          [req.orgId]
+        ),
+      ]);
+      const rows = [...suppliers, ...customers].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      return res.json({ rows, total: rows.length, type: 'all' });
+    }
     const table = req.query.type === 'customer' ? 'customers' : 'suppliers';
     const rows = await query(
-      `SELECT id, code, name, account_id, default_account_id, vat_code
+      `SELECT id, code, name, account_id, default_account_id, vat_code, ? AS partner_type
          FROM ${table} WHERE org_id = ? AND is_active = 1 ORDER BY name`,
-      [req.orgId]
+      [req.query.type, req.orgId]
     );
     res.json({ rows, total: rows.length, type: req.query.type });
   })

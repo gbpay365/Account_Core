@@ -89,6 +89,11 @@ export async function createJournalEntry(tx, input) {
     throw new ApiError(422, 'A double-entry journal needs at least two lines.');
   }
 
+  // AUDCIF Art. 17 al. 1 & 2: Toute écriture s'appuie sur une pièce justificative dont la référence est obligatoire
+  if (source === 'manual' && (!reference || !String(reference).trim())) {
+    throw new ApiError(422, 'AUDCIF Art. 17: La référence de la pièce justificative est obligatoire pour toute saisie manuelle.');
+  }
+
   const period = await resolvePeriod(tx, orgId, date);
   const isClosed = period.status !== 'open';
   if (isClosed) {
@@ -276,6 +281,21 @@ export async function postJournalEntry(tx, orgId, entryId, actor = null, overrid
   );
   if (heading) {
     throw new ApiError(422, `${heading.code} is a heading account. Post to a 4-character account.`);
+  }
+
+  // AUDCIF Art. 17 al. 1 & 2: Pièce justificative obligatoire
+  if (!entry.reference || !String(entry.reference).trim()) {
+    throw new ApiError(422, 'AUDCIF Art. 17: La référence de la pièce justificative est obligatoire pour comptabiliser une écriture.');
+  }
+
+  // AUDCIF Art. 19 al. 2: Comptabilité auxiliaire obligatoire pour les comptes de tiers collectifs
+  const missingThirdParty = await tx.queryOne(
+    `SELECT a.code, l.line_no FROM journal_lines l JOIN accounts a ON a.id = l.account_id
+      WHERE l.entry_id = ? AND a.requires_third_party = 1 AND (l.partner_id IS NULL OR l.partner_type = 'none') LIMIT 1`,
+    [entryId]
+  );
+  if (missingThirdParty) {
+    throw new ApiError(422, `Line ${missingThirdParty.line_no}: account ${missingThirdParty.code} requires an auxiliary third-party (supplier / customer) under AUDCIF Art. 19.`);
   }
 
   await tx.query(

@@ -388,6 +388,7 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
     account_meta: dict[int, dict] = {}
     cost_centers: dict[int | None, str] = {None: '—'}
     partners: dict[int | None, str] = {None: '—'}
+    partner_meta: dict[int, dict] = {}
 
     # Automatically populate framework as per settings in the admin section
     user_info = api.user()
@@ -579,8 +580,8 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
 
                 date = ui.input('Entry date', value=w.today_iso()).props('outlined dense type=date') \
                     .classes('w-44')
-                reference = ui.input('Reference').props('outlined dense') \
-                    .classes('w-52').tooltip('Invoice number, voucher, bank statement line')
+                reference = ui.input('Reference *').props('outlined dense') \
+                    .classes('w-52').tooltip('Mandatory supporting document / Pièce justificative (AUDCIF Art. 17)')
 
                 with ui.row().classes('items-center gap-1 flex-1 min-w-[300px]'):
                     txn = ui.select(build_template_options(), value=None, label='Transaction type') \
@@ -722,11 +723,13 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
 
                             party = ui.select(partners, value=line.get('partner_id')) \
                                 .props('outlined dense options-dense').classes('w-40 shrink-0') \
-                                .tooltip('Supplier / client when the account is collective')
+                                .tooltip('Supplier / client auxiliary under AUDCIF Art. 19')
                             def _on_party_change(e, i=index):
                                 lines[i]['partner_id'] = e.value
-                                if e.value:
-                                    lines[i]['partner_type'] = 'supplier'
+                                if e.value and e.value in partner_meta:
+                                    lines[i]['partner_type'] = partner_meta[e.value].get('partner_type') or 'supplier'
+                                elif not e.value:
+                                    lines[i]['partner_type'] = 'none'
                                 if i > 0 and lines[i].get('origin') == 'proposed':
                                     lines[i]['origin'] = 'edited'
                             party.on_value_change(_on_party_change)
@@ -876,21 +879,45 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
                 save_post.set_visibility(False)
 
         async def save(auto_post: bool) -> None:
+            ref_val = (reference.value or '').strip()
+            if not ref_val:
+                ui.notify(t('je.err_reference_required'), type='warning', position='top')
+                return
             if not description.value or not journal.value:
                 ui.notify('A journal and a description are needed.', type='warning', position='top')
                 return
+
             payload_lines = []
             for line in lines:
                 if not line['account'] or (not line['debit'] and not line['credit']):
                     continue
+                acct = account_meta.get(line['account'])
+                if acct:
+                    if acct.get('requires_third_party') and not line.get('partner_id'):
+                        ui.notify(t('je.err_partner_required', account=acct.get('code')), type='warning', position='top')
+                        return
+                    if acct.get('requires_cost_center') and not line.get('cost_center'):
+                        ui.notify(t('je.err_cost_center_required', account=acct.get('code')), type='warning', position='top')
+                        return
+
+                pid = line.get('partner_id')
+                ptype = 'none'
+                if pid:
+                    if pid in partner_meta:
+                        ptype = partner_meta[pid].get('partner_type') or 'supplier'
+                    elif acct and str(acct.get('code', '')).startswith('41'):
+                        ptype = 'customer'
+                    else:
+                        ptype = 'supplier'
+
                 payload_lines.append({
                     'accountId': line['account'],
                     'description': line['description'] or None,
                     'costCenterId': line['cost_center'],
                     'debit': float(line['debit'] or 0),
                     'credit': float(line['credit'] or 0),
-                    'partnerType': 'supplier' if line.get('partner_id') else (line.get('partner_type') or 'none'),
-                    'partnerId': line.get('partner_id'),
+                    'partnerType': ptype,
+                    'partnerId': pid,
                     'origin': line.get('origin') or 'manual',
                     'proposalSource': line.get('proposal_source'),
                     'proposalRuleCode': line.get('proposal_rule_code'),
@@ -902,7 +929,7 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
             result = await api.safe(api.post('/entries', {
                 'journalCode': journal.value, 'date': date.value,
                 'description': description.value, 'narration': narration.value or None,
-                'reference': reference.value or None, 'framework': auto_framework,
+                'reference': ref_val, 'framework': auto_framework,
                 'autoPost': auto_post, 'lines': payload_lines,
             }))
             if result:
@@ -927,9 +954,16 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
         centres = await api.safe(api.get('/cost-centers'), notify=False)
         if centres:
             cost_centers.update({c['id']: f"{c['code']} — {account_label(c)}" for c in centres['rows']})
-        parties = await api.safe(api.get('/partners', type='supplier'), notify=False)
-        if parties:
-            partners.update({p['id']: f"{p['code']} — {p['name']}" for p in parties['rows']})
+        parties = await api.safe(api.get('/partners', type='all'), notify=False)
+        if parties and 'rows' in parties:
+            partner_meta.clear()
+            partners.clear()
+            partners[None] = '—'
+            for p in parties['rows']:
+                ptype = p.get('partner_type') or 'supplier'
+                prefix = '[CLI]' if ptype == 'customer' else '[FRN]'
+                partners[p['id']] = f"{prefix} {p['code']} — {p['name']}"
+                partner_meta[p['id']] = p
         tpls = await api.safe(api.get('/posting/templates'), notify=False)
         if tpls and 'rows' in tpls:
             templates.clear()

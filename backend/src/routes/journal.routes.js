@@ -224,7 +224,7 @@ journalRoutes.post(
       date: isoDate,
       description: z.string().trim().min(1).max(300),
       narration: z.string().trim().max(2000).optional().nullable(),
-      reference: z.string().trim().max(80).optional().nullable(),
+      reference: z.string().trim().min(1, 'AUDCIF Art. 17: Pièce justificative obligatoire (référence requise).').max(80),
       framework: z.enum(['both', 'ohada', 'ifrs']).default('both'),
       currency: z.string().trim().length(3).optional(),
       fxRate: z.coerce.number().positive().default(1),

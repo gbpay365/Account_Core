@@ -319,6 +319,9 @@ STRINGS: dict[str, dict[str, str]] = {
         'je.add_line': 'Add line',
         'je.balance_btn': 'Auto balance',
         'je.propose_btn': 'Propose counterpart',
+        'je.err_reference_required': 'AUDCIF Art. 17: Reference / Supporting document is mandatory.',
+        'je.err_partner_required': 'AUDCIF Art. 19: Third-party (Supplier / Customer) is required for collective account {account}.',
+        'je.err_cost_center_required': 'Account {account} requires a cost centre (department / ward).',
 
         'gl.title': 'General ledger',
         'gl.sub': 'Trial balance and account movements for the selected window.',
@@ -1467,6 +1470,9 @@ STRINGS: dict[str, dict[str, str]] = {
         'je.add_line': 'Ajouter une ligne',
         'je.balance_btn': 'Équilibrer',
         'je.propose_btn': 'Proposer contrepartie',
+        'je.err_reference_required': 'AUDCIF Art. 17 : La référence de la pièce justificative est obligatoire.',
+        'je.err_partner_required': 'AUDCIF Art. 19 : Le tiers (Fournisseur / Client) est obligatoire pour le compte collectif {account}.',
+        'je.err_cost_center_required': 'Le compte {account} exige un centre de coût analytique.',
 
         'gl.title': 'Grand livre',
         'gl.sub': 'Balance de vérification et mouvements de compte sur la fenêtre choisie.',
