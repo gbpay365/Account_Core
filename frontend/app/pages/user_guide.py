@@ -49,8 +49,12 @@ def user_guide_page() -> None:
             doc_sel = ui.select(doc_options, value=state['selected_doc'], label='Select Handbook / Guide') \
                 .props('outlined dense options-dense').classes('w-80 max-w-full')
 
-        with ui.row().classes('items-center gap-2'):
-            ui.button('Print Guide', icon='print', on_click=lambda: ui.run_javascript('window.print()')) \
+        with ui.row().classes('items-center gap-2 flex-wrap'):
+            ui.button('Download PDF', icon='picture_as_pdf', on_click=lambda: ui.download('/docs-static/USER_GUIDE.pdf')) \
+                .props('unelevated color=teal no-caps size=sm')
+            ui.button('Open HTML Manual', icon='open_in_new', on_click=lambda: ui.open('/docs-static/USER_GUIDE.html', new_tab=True)) \
+                .props('outline color=teal-8 no-caps size=sm')
+            ui.button('Print', icon='print', on_click=lambda: ui.run_javascript('window.print()')) \
                 .props('outline color=slate-7 no-caps size=sm')
 
     content_area = ui.column().classes('w-full mt-4 bg-white p-8 rounded-xl border border-slate-200 shadow-sm')

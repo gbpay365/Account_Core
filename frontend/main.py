@@ -11,7 +11,11 @@ from nicegui import app, ui
 from app.config import API_BASE_URL, STORAGE_SECRET, UI_HOST, UI_PORT, UI_TITLE
 from app import pages  # noqa: F401 - importing registers the routes
 from app.theme import CANVAS
+from pathlib import Path
 
+DOCS_DIR = Path(__file__).resolve().parent.parent / 'docs'
+if DOCS_DIR.exists():
+    app.add_static_files('/docs-static', str(DOCS_DIR))
 
 import httpx
 from starlette.requests import Request
