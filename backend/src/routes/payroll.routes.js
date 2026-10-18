@@ -2,13 +2,18 @@ import { Router } from 'express';
 import { handler } from '../middleware/index.js';
 import { actorOf } from './helpers.js';
 import * as payrollService from '../services/payroll.service.js';
+import { seedPhase4 } from '../db/seed_phase4.js';
 
 export const payrollRoutes = Router();
 
 payrollRoutes.get(
   '/payroll/employees',
   handler(async (req, res) => {
-    const rows = await payrollService.listEmployees(req.orgId);
+    let rows = await payrollService.listEmployees(req.orgId);
+    if (!rows || rows.length === 0) {
+      await seedPhase4(req.orgId).catch(console.error);
+      rows = await payrollService.listEmployees(req.orgId);
+    }
     res.json({ rows, total: rows.length });
   })
 );
@@ -24,7 +29,11 @@ payrollRoutes.post(
 payrollRoutes.get(
   '/payroll/runs',
   handler(async (req, res) => {
-    const rows = await payrollService.listPayrollRuns(req.orgId);
+    let rows = await payrollService.listPayrollRuns(req.orgId);
+    if (!rows || rows.length === 0) {
+      await seedPhase4(req.orgId).catch(console.error);
+      rows = await payrollService.listPayrollRuns(req.orgId);
+    }
     res.json({ rows, total: rows.length });
   })
 );

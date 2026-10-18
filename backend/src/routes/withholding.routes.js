@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { handler } from '../middleware/index.js';
 import * as withholdingService from '../services/withholding-tax.service.js';
+import { seedPhase1 } from '../db/seed_phase1.js';
 
 export const withholdingRoutes = Router();
 
@@ -15,7 +16,11 @@ withholdingRoutes.get('/withholding/suppliers', handler(async (req, res) => {
 }));
 
 withholdingRoutes.get('/withholding/certificates', handler(async (req, res) => {
-  const certs = await withholdingService.listCertificates(req.orgId, req.query);
+  let certs = await withholdingService.listCertificates(req.orgId, req.query);
+  if (!certs || certs.length === 0) {
+    await seedPhase1(req.orgId).catch(console.error);
+    certs = await withholdingService.listCertificates(req.orgId, req.query);
+  }
   res.json({ rows: certs });
 }));
 

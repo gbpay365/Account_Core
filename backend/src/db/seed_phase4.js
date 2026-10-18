@@ -3,9 +3,31 @@ import * as payrollService from '../services/payroll.service.js';
 import * as dfeService from '../services/dfe.service.js';
 import * as interbranchService from '../services/interbranch.service.js';
 
-export async function seedPhase4() {
-  console.log('[seed_phase4] Seeding CEMAC Payroll, DFE Invoices, and Inter-Branch Establishments...');
-  const orgId = 1;
+export async function seedPhase4(orgId = 1) {
+  console.log(`[seed_phase4] Seeding CEMAC Payroll, DFE Invoices, and Inter-Branch Establishments for org ${orgId}...`);
+
+  // 0. Ensure Required SYSCOHADA Accounts Exist
+  const parent18 = await queryOne("SELECT id FROM accounts WHERE org_id = ? AND code = '18'", [orgId]);
+  const parent44 = await queryOne("SELECT id FROM accounts WHERE org_id = ? AND code = '44'", [orgId]);
+  const parent64 = await queryOne("SELECT id FROM accounts WHERE org_id = ? AND code = '64'", [orgId]);
+  const parent422 = await queryOne("SELECT id FROM accounts WHERE org_id = ? AND code = '422'", [orgId]);
+
+  const specialAccounts = [
+    { code: '1851', name: 'Comptes de liaison Siège / Hôpital Central', name_en: 'Headquarters / Central Hospital Reciprocal Liaison', class: 1, parent_id: parent18?.id ?? null, type: 'liability', side: 'credit' },
+    { code: '1852', name: 'Comptes de liaison Succursales et Dispensaires', name_en: 'Branch Clinics & Satellite Dispensaries Liaison', class: 1, parent_id: parent18?.id ?? null, type: 'liability', side: 'credit' },
+    { code: '4421', name: 'État, autres organismes (FNE et CFC)', name_en: 'State & Other Agencies (FNE / CFC Social Contributions)', class: 4, parent_id: parent44?.id ?? null, type: 'liability', side: 'credit' },
+    { code: '6461', name: 'Droits de timbres fiscaux sur factures', name_en: 'Statutory Fiscal Stamp Duties on Commercial Invoices', class: 6, parent_id: parent64?.id ?? null, type: 'expense', side: 'debit' },
+    { code: '4221', name: 'Personnel, rémunérations dues — général', name_en: 'Employees, remuneration payable — general', class: 4, parent_id: parent422?.id ?? null, type: 'liability', side: 'credit' },
+  ];
+
+  for (const a of specialAccounts) {
+    await query(
+      `INSERT INTO accounts (org_id, code, name, name_en, account_class, parent_id, level, account_type, normal_side, is_postable, in_tier_normal, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, 3, ?, ?, 1, 1, 1)
+       ON DUPLICATE KEY UPDATE is_postable = 1, is_active = 1`,
+      [orgId, a.code, a.name, a.name_en, a.class, a.parent_id, a.type, a.side]
+    );
+  }
 
   // 1. Seed Hospital Employees
   const employees = [
@@ -134,7 +156,7 @@ export async function seedPhase4() {
     );
     if (!existing.length) {
       await payrollService.createEmployee(orgId, emp);
-      console.log(`[seed_phase4] Created employee: ${emp.registration_number} - ${emp.last_name} ${emp.first_name}`);
+      console.log(`[seed_phase4] Created employee for org ${orgId}: ${emp.registration_number} - ${emp.last_name} ${emp.first_name}`);
     }
   }
 
@@ -152,11 +174,15 @@ export async function seedPhase4() {
       createdBy: 'Sr. Appolonia (Directrice Administrative)',
     });
     runId = gen.runId;
-    console.log(`[seed_phase4] Generated payroll run 2026-01: Run ID ${runId}, Total Gross: ${gen.totalGross} XAF`);
+    console.log(`[seed_phase4] Generated payroll run 2026-01 for org ${orgId}: Run ID ${runId}, Total Gross: ${gen.totalGross} XAF`);
 
     // Post to ledger
-    const postRes = await payrollService.postPayrollRunToLedger(orgId, runId, 'Kenneth Che (Comptable)');
-    console.log(`[seed_phase4] Posted payroll run to ledger: Entry ${postRes.entryNumber}, Balanced: ${postRes.totalDebits} XAF`);
+    try {
+      const postRes = await payrollService.postPayrollRunToLedger(orgId, runId, 'Kenneth Che (Comptable)');
+      console.log(`[seed_phase4] Posted payroll run to ledger for org ${orgId}: Entry ${postRes.entryNumber}, Balanced: ${postRes.totalDebits} XAF`);
+    } catch (err) {
+      console.warn(`[seed_phase4] Payroll post notice for org ${orgId}:`, err.message);
+    }
   } else {
     runId = existingRun[0].id;
   }
@@ -173,38 +199,40 @@ export async function seedPhase4() {
     const ex = await query(`SELECT id FROM branch_establishments WHERE org_id = ? AND code = ?`, [orgId, b.code]);
     if (!ex.length) {
       await interbranchService.createBranch(orgId, b);
-      console.log(`[seed_phase4] Created branch establishment: ${b.code} - ${b.name}`);
+      console.log(`[seed_phase4] Created branch establishment for org ${orgId}: ${b.code} - ${b.name}`);
     }
   }
 
   // 4. Seed Initial Inter-Branch Transfers
   const bRows = await query(`SELECT id, code FROM branch_establishments WHERE org_id = ?`, [orgId]);
-  const bMap = Object.fromEntries(bRows.map(r => [r.code, r.id]));
+  const bMap = Object.fromEntries(bRows.map((r) => [r.code, r.id]));
 
-  const transfers = [
-    {
-      transfer_number: 'TR-2026-001',
-      source_branch_id: bMap['SHISONG-HQ'],
-      dest_branch_id: bMap['KUMBO-TOWN'],
-      transfer_date: '2026-01-15',
-      amount: 1500000,
-      description: 'Dotation initiale pharmacie et fonds de roulement Kumbo Town',
-    },
-    {
-      transfer_number: 'TR-2026-002',
-      source_branch_id: bMap['SHISONG-HQ'],
-      dest_branch_id: bMap['BAMENDA-SAT'],
-      transfer_date: '2026-01-20',
-      amount: 2500000,
-      description: 'Avance trésorerie opérationnelle et consommables laboratoire Bamenda',
-    },
-  ];
+  if (bMap['SHISONG-HQ'] && bMap['KUMBO-TOWN'] && bMap['BAMENDA-SAT']) {
+    const transfers = [
+      {
+        transfer_number: 'TR-2026-001',
+        source_branch_id: bMap['SHISONG-HQ'],
+        dest_branch_id: bMap['KUMBO-TOWN'],
+        transfer_date: '2026-01-15',
+        amount: 1500000,
+        description: 'Dotation initiale pharmacie et fonds de roulement Kumbo Town',
+      },
+      {
+        transfer_number: 'TR-2026-002',
+        source_branch_id: bMap['SHISONG-HQ'],
+        dest_branch_id: bMap['BAMENDA-SAT'],
+        transfer_date: '2026-01-20',
+        amount: 2500000,
+        description: 'Avance trésorerie opérationnelle et consommables laboratoire Bamenda',
+      },
+    ];
 
-  for (const tr of transfers) {
-    const exTr = await query(`SELECT id FROM interbranch_transfers WHERE org_id = ? AND transfer_number = ?`, [orgId, tr.transfer_number]);
-    if (!exTr.length) {
-      await interbranchService.createInterbranchTransfer(orgId, tr, 'Trésorier Central');
-      console.log(`[seed_phase4] Created inter-branch transfer: ${tr.transfer_number} - ${tr.amount} XAF`);
+    for (const tr of transfers) {
+      const exTr = await query(`SELECT id FROM interbranch_transfers WHERE org_id = ? AND transfer_number = ?`, [orgId, tr.transfer_number]);
+      if (!exTr.length) {
+        await interbranchService.createInterbranchTransfer(orgId, tr, 'Trésorier Central');
+        console.log(`[seed_phase4] Created inter-branch transfer for org ${orgId}: ${tr.transfer_number} - ${tr.amount} XAF`);
+      }
     }
   }
 
@@ -238,16 +266,16 @@ export async function seedPhase4() {
     const exInv = await query(`SELECT id FROM dfe_invoices WHERE org_id = ? AND invoice_number = ?`, [orgId, inv.invoice_number]);
     if (!exInv.length) {
       const created = await dfeService.issueDfeInvoice(orgId, inv, 'Service Facturation');
-      console.log(`[seed_phase4] Issued DFE Electronic Invoice: ${created.invoice_number} - TTC: ${created.total_ttc} XAF`);
+      console.log(`[seed_phase4] Issued DFE Electronic Invoice for org ${orgId}: ${created.invoice_number} - TTC: ${created.total_ttc} XAF`);
     }
   }
 
-  console.log('[seed_phase4] Finished seeding Phase 4 successfully.');
+  console.log(`[seed_phase4] Finished seeding Phase 4 successfully for org ${orgId}.`);
 }
 
 // Standalone runner
 if (process.argv[1]?.endsWith('seed_phase4.js')) {
-  seedPhase4()
+  seedPhase4(1)
     .then(() => pool.end())
     .catch((err) => {
       console.error('[seed_phase4] Error:', err);

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { handler } from '../middleware/index.js';
 import * as bankService from '../services/bank-reconciliation.service.js';
+import { seedPhase1 } from '../db/seed_phase1.js';
 
 export const bankRoutes = Router();
 
@@ -15,7 +16,11 @@ bankRoutes.get('/bank/accounts/:id', handler(async (req, res) => {
 }));
 
 bankRoutes.get('/bank/accounts/:id/statements', handler(async (req, res) => {
-  const statements = await bankService.listStatements(req.orgId, Number(req.params.id));
+  let statements = await bankService.listStatements(req.orgId, Number(req.params.id));
+  if (!statements || statements.length === 0) {
+    await seedPhase1(req.orgId).catch(console.error);
+    statements = await bankService.listStatements(req.orgId, Number(req.params.id));
+  }
   res.json({ rows: statements });
 }));
 

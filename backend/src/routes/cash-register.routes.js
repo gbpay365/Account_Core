@@ -8,6 +8,7 @@ import {
   recordMobileMoneyTransaction,
   performDailyCashClose,
 } from '../services/cash-register.service.js';
+import { seedPhase3 } from '../db/seed_phase3.js';
 
 export const cashRegisterRoutes = Router();
 
@@ -15,7 +16,11 @@ cashRegisterRoutes.get(
   '/cash-registers',
   requirePermission('journal.view', 'coa.view'),
   handler(async (req, res) => {
-    const rows = await listCashRegisters(req.orgId);
+    let rows = await listCashRegisters(req.orgId);
+    if (!rows || rows.length === 0) {
+      await seedPhase3(req.orgId).catch(console.error);
+      rows = await listCashRegisters(req.orgId);
+    }
     res.json({ rows, total: rows.length });
   })
 );

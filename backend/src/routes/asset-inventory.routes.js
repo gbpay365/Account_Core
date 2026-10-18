@@ -1,11 +1,16 @@
 import { Router } from 'express';
 import { handler } from '../middleware/index.js';
 import * as inventoryService from '../services/asset-inventory.service.js';
+import { seedPhase2 } from '../db/seed_phase2.js';
 
 export const assetInventoryRoutes = Router();
 
 assetInventoryRoutes.get('/asset-inventory/campaigns', handler(async (req, res) => {
-  const campaigns = await inventoryService.listCampaigns(req.orgId);
+  let campaigns = await inventoryService.listCampaigns(req.orgId);
+  if (!campaigns || campaigns.length === 0) {
+    await seedPhase2(req.orgId).catch(console.error);
+    campaigns = await inventoryService.listCampaigns(req.orgId);
+  }
   res.json({ rows: campaigns });
 }));
 

@@ -9,6 +9,7 @@ import {
   getDRFDetails,
   createDRF,
 } from '../services/donor-project.service.js';
+import { seedPhase3 } from '../db/seed_phase3.js';
 
 export const donorProjectRoutes = Router();
 
@@ -16,7 +17,11 @@ donorProjectRoutes.get(
   '/donor-projects',
   requirePermission('journal.view', 'budget.view'),
   handler(async (req, res) => {
-    const rows = await listProjects(req.orgId);
+    let rows = await listProjects(req.orgId);
+    if (!rows || rows.length === 0) {
+      await seedPhase3(req.orgId).catch(console.error);
+      rows = await listProjects(req.orgId);
+    }
     res.json({ rows, total: rows.length });
   })
 );

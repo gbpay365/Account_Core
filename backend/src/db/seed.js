@@ -4,6 +4,11 @@ import { pool, query, queryOne, transaction } from './pool.js';
 import { seedReference, seedOrgReference, seedAssetCategories, seedFiscalCalendar, seedCloseChecklist } from './seed/reference.js';
 import { seedDemo } from './seed/demo.js';
 import { applyPostingLevel } from '../../scripts/apply-posting-level.js';
+import { seedPhase1 } from './seed_phase1.js';
+import { seedPhase2 } from './seed_phase2.js';
+import { seedPhase3 } from './seed_phase3.js';
+import { seedPhase4 } from './seed_phase4.js';
+import { seedGovernance } from './seed_governance.js';
 
 import bcrypt from 'bcryptjs';
 import { DEMO_USERS } from './seed/data/demo-assets.js';
@@ -267,6 +272,45 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
 
     return { accountId, catId, periodId };
   });
+
+  if (!skipDemo) {
+    try {
+      step(`Seeding Phase 1 (Withholding & Bank Reconciliations) for org ${orgId}...`);
+      await seedPhase1(orgId);
+    } catch (e) {
+      console.error(`[seed] seedPhase1 failed for org ${orgId}:`, e.message);
+    }
+
+    try {
+      step(`Seeding Phase 2 (Asset Inventory & Fiscal Schedules) for org ${orgId}...`);
+      await seedPhase2(orgId);
+    } catch (e) {
+      console.error(`[seed] seedPhase2 failed for org ${orgId}:`, e.message);
+    }
+
+    try {
+      step(`Seeding Phase 3 (Donor Projects & Cash Registers) for org ${orgId}...`);
+      await seedPhase3(orgId);
+    } catch (e) {
+      console.error(`[seed] seedPhase3 failed for org ${orgId}:`, e.message);
+    }
+
+    try {
+      step(`Seeding Phase 4 (Payroll, DFE & Branches) for org ${orgId}...`);
+      await seedPhase4(orgId);
+    } catch (e) {
+      console.error(`[seed] seedPhase4 failed for org ${orgId}:`, e.message);
+    }
+
+    try {
+      step(`Seeding Governance (Funding Programs & Analytical Activities) for org ${orgId}...`);
+      await seedGovernance(orgId);
+    } catch (e) {
+      console.error(`[seed] seedGovernance failed for org ${orgId}:`, e.message);
+    }
+  }
+
+  return res;
 }
 
 export async function runSeed({ skipDemo = false, silent = false } = {}) {

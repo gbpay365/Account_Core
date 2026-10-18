@@ -408,10 +408,14 @@ export async function postPayrollRunToLedger(orgId, runId, actor = 'Comptable Pa
     const totalFiscalWithholding = money(Number(run.total_irpp) + Number(run.total_cac) + Number(run.total_tdl));
     const totalFneCfcGlobal = money(Number(run.total_cfc_employee) + Number(run.total_cfc_employer) + Number(run.total_fne));
 
+    const admCc = await queryOne(`SELECT id FROM cost_centers WHERE org_id = ? AND code = 'ADM'`, [orgId])
+      || await queryOne(`SELECT id FROM cost_centers WHERE org_id = ? LIMIT 1`, [orgId]);
+
     const lines = [
       // 1. Debit Gross Salaries
       {
         accountId: acctSalaires.id,
+        costCenterId: admCc?.id ?? null,
         description: `Salaires bruts du personnel médical et administratif - ${run.period_name}`,
         debit: totalGross,
         credit: 0,
@@ -419,6 +423,7 @@ export async function postPayrollRunToLedger(orgId, runId, actor = 'Comptable Pa
       // 2. Debit Employer Social Contributions
       {
         accountId: acctChargesSoc.id,
+        costCenterId: admCc?.id ?? null,
         description: `Charges sociales patronales (CNPS, FNE, CFC) - ${run.period_name}`,
         debit: totalEmployerSocial,
         credit: 0,
@@ -458,6 +463,7 @@ export async function postPayrollRunToLedger(orgId, runId, actor = 'Comptable Pa
       journalCode: 'PAI',
       date: run.run_date,
       description: `Comptabilisation centralisée des salaires et charges - ${run.period_name}`,
+      source: 'system',
       sourceRef: `PAIE-${run.period_code}`,
       framework: 'both',
       autoPost: true,

@@ -3,31 +3,42 @@ import * as inventoryService from '../services/asset-inventory.service.js';
 import * as fiscalDeprService from '../services/fiscal-depreciation.service.js';
 import * as dsfService from '../services/dsf.service.js';
 
-async function seedPhase2() {
-  console.log('Seeding Phase 2 Demo Data...');
+export async function seedPhase2(orgId = 1) {
+  console.log(`[seed_phase2] Seeding Phase 2 Demo Data for org ${orgId}...`);
 
-  const orgId = 1;
+  const adminUser = await queryOne(
+    `SELECT id FROM users WHERE org_id = ? AND is_active = 1 ORDER BY id ASC LIMIT 1`,
+    [orgId]
+  ) || { id: 1 };
 
   // 1. Fiscal Year
-  const fy = await queryOne(`SELECT id, code FROM fiscal_years WHERE org_id = ? AND status != 'closed' LIMIT 1`, [orgId]);
+  const fy = await queryOne(
+    `SELECT id, code FROM fiscal_years WHERE org_id = ? AND (status != 'closed' OR code = 'FY2026') ORDER BY code DESC LIMIT 1`,
+    [orgId]
+  );
   if (!fy) {
-    console.error('No open fiscal year found.');
-    process.exit(1);
+    console.warn(`[seed_phase2] No fiscal year found for org ${orgId}. Skipping Phase 2.`);
+    return;
   }
 
   // 2. Physical Inventory Campaign
-  const existingCamp = await queryOne(`SELECT id FROM asset_inventory_campaigns WHERE org_id = ? AND name LIKE 'Campagne d%Inventaire Physique 2026%' LIMIT 1`, [orgId]);
+  const existingCamp = await queryOne(
+    `SELECT id FROM asset_inventory_campaigns WHERE org_id = ? AND name LIKE 'Campagne d%Inventaire Physique 2026%' LIMIT 1`,
+    [orgId]
+  );
 
   if (!existingCamp) {
-    const campaign = await inventoryService.createCampaign(orgId, {
-      name: 'Campagne d’Inventaire Physique 2026 - Audit Annuel du Patrimoine',
-      fiscal_year_id: fy.id,
-      start_date: '2026-10-01',
-      end_date: '2026-10-31',
-      notes: 'Inventaire physique annuel contradictoire des équipements biomédicaux et installations techniques.',
-    }, 1);
-
-    console.log('Created inventory campaign:', campaign);
+    const campaign = await inventoryService.createCampaign(
+      orgId,
+      {
+        name: 'Campagne d’Inventaire Physique 2026 - Audit Annuel du Patrimoine',
+        fiscal_year_id: fy.id,
+        start_date: '2026-10-01',
+        end_date: '2026-10-31',
+        notes: 'Inventaire physique annuel contradictoire des équipements biomédicaux et installations techniques.',
+      },
+      adminUser.id
+    );
 
     // Fetch sample assets and locations
     const assets = await query(`SELECT * FROM assets WHERE org_id = ? LIMIT 20`, [orgId]);
@@ -37,53 +48,77 @@ async function seedPhase2() {
       // 1. Scans: Verified
       for (let i = 0; i < Math.min(12, assets.length); i++) {
         const a = assets[i];
-        await inventoryService.recordScan(orgId, campaign.id, {
-          scanned_tag: a.asset_tag,
-          location_id: a.location_id || locations[0].id,
-          scanned_condition: a.asset_condition || 'good',
-          scanned_operational_status: a.status || 'in_service',
-          notes: 'Vérifié conforme lors du passage de l’équipe d’audit.',
-        }, 1);
+        await inventoryService.recordScan(
+          orgId,
+          campaign.id,
+          {
+            scanned_tag: a.asset_tag,
+            location_id: a.location_id || locations[0].id,
+            scanned_condition: a.asset_condition || 'good',
+            scanned_operational_status: a.status || 'in_service',
+            notes: 'Vérifié conforme lors du passage de l’équipe d’audit.',
+          },
+          adminUser.id
+        );
       }
 
       // 2. Scan: Relocated
       if (assets.length > 13 && locations.length > 1) {
         const aRelocated = assets[13];
-        const newLoc = locations.find(l => l.id !== aRelocated.location_id) || locations[1];
-        await inventoryService.recordScan(orgId, campaign.id, {
-          scanned_tag: aRelocated.asset_tag,
-          location_id: newLoc.id,
-          scanned_condition: 'good',
-          scanned_operational_status: 'in_service',
-          notes: 'Matériel déplacé sans fiche de mouvement préalable.',
-        }, 1);
+        const newLoc = locations.find((l) => l.id !== aRelocated.location_id) || locations[1];
+        await inventoryService.recordScan(
+          orgId,
+          campaign.id,
+          {
+            scanned_tag: aRelocated.asset_tag,
+            location_id: newLoc.id,
+            scanned_condition: 'good',
+            scanned_operational_status: 'in_service',
+            notes: 'Matériel déplacé sans fiche de mouvement préalable.',
+          },
+          adminUser.id
+        );
       }
 
       // 3. Scan: Damaged
       if (assets.length > 14) {
         const aDamaged = assets[14];
-        await inventoryService.recordScan(orgId, campaign.id, {
-          scanned_tag: aDamaged.asset_tag,
-          location_id: aDamaged.location_id,
-          scanned_condition: 'poor',
-          scanned_operational_status: 'under_maintenance',
-          notes: 'Équipement hors service présentant une usure anormale.',
-        }, 1);
+        await inventoryService.recordScan(
+          orgId,
+          campaign.id,
+          {
+            scanned_tag: aDamaged.asset_tag,
+            location_id: aDamaged.location_id,
+            scanned_condition: 'poor',
+            scanned_operational_status: 'under_maintenance',
+            notes: 'Équipement hors service présentant une usure anormale.',
+          },
+          adminUser.id
+        );
       }
 
       // 4. Scan: Unregistered item found on site
-      await inventoryService.recordScan(orgId, campaign.id, {
-        scanned_tag: 'TAG-UNKNOWN-99120',
-        location_id: locations[0].id,
-        scanned_condition: 'good',
-        scanned_operational_status: 'in_service',
-        notes: 'Moniteur patient multiparamétrique trouvé en Réanimation, sans étiquette d’inventaire.',
-      }, 1);
+      await inventoryService.recordScan(
+        orgId,
+        campaign.id,
+        {
+          scanned_tag: 'TAG-UNKNOWN-99120',
+          location_id: locations[0].id,
+          scanned_condition: 'good',
+          scanned_operational_status: 'in_service',
+          notes: 'Moniteur patient multiparamétrique trouvé en Réanimation, sans étiquette d’inventaire.',
+        },
+        adminUser.id
+      );
     }
+    console.log(`[seed_phase2] Seeded physical inventory campaign for org ${orgId}`);
   }
 
   // 3. DSF Tax Adjustments (Tableau 28/29)
-  const existingAdj = await query(`SELECT id FROM dsf_tax_adjustments WHERE org_id = ? AND fiscal_year_id = ?`, [orgId, fy.id]);
+  const existingAdj = await query(
+    `SELECT id FROM dsf_tax_adjustments WHERE org_id = ? AND fiscal_year_id = ?`,
+    [orgId, fy.id]
+  );
   if (existingAdj.length === 0) {
     const adjustments = [
       {
@@ -123,18 +158,36 @@ async function seedPhase2() {
     for (const adj of adjustments) {
       await dsfService.addTaxAdjustment(orgId, adj);
     }
-    console.log('Seeded 4 statutory DSF tax adjustments for Tableau 28/29.');
+    console.log(`[seed_phase2] Seeded 4 statutory DSF tax adjustments for org ${orgId}`);
   }
 
-  // 4. Fiscal Depreciation Simulation / Check
-  const fiscalSim = await fiscalDeprService.simulateFiscalDepreciation(orgId, 2026);
-  console.log(`Fiscal Depreciation for 2026: Economic=${fiscalSim.total_economic_depreciation}, Fiscal=${fiscalSim.total_fiscal_depreciation}, Net Derogatory=${fiscalSim.net_derogatory}`);
+  // 4. Fiscal Depreciation Schedule Check & Post
+  const existingSchedules = await query(
+    `SELECT id FROM fiscal_depreciation_schedules WHERE org_id = ? LIMIT 1`,
+    [orgId]
+  );
+  if (existingSchedules.length === 0) {
+    try {
+      await fiscalDeprService.postFiscalDepreciation(
+        orgId,
+        2026,
+        { id: adminUser.id, permissions: new Set(['journal.post']) }
+      );
+      console.log(`[seed_phase2] Posted fiscal depreciation schedule for org ${orgId}`);
+    } catch (err) {
+      console.warn(`[seed_phase2] Fiscal depreciation post notice for org ${orgId}:`, err.message);
+    }
+  }
 
-  console.log('Phase 2 seed completed successfully.');
-  process.exit(0);
+  console.log(`[seed_phase2] Phase 2 seed completed for org ${orgId}`);
 }
 
-seedPhase2().catch(err => {
-  console.error('Seed Phase 2 error:', err);
-  process.exit(1);
-});
+if (process.argv[1]?.endsWith('seed_phase2.js')) {
+  seedPhase2(1)
+    .then(() => pool.end())
+    .catch((err) => {
+      console.error('Seed Phase 2 error:', err);
+      pool.end();
+      process.exit(1);
+    });
+}

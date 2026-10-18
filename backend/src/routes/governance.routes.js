@@ -19,6 +19,7 @@ import {
   exportFecString,
 } from '../services/fec.service.js';
 import { actorOf, isoDate, optionalId } from './helpers.js';
+import { seedGovernance } from '../db/seed_governance.js';
 
 export const governanceRoutes = Router();
 
@@ -28,7 +29,11 @@ governanceRoutes.get(
   '/analytical/programs',
   requirePermission('budget.view', 'coa.view'),
   handler(async (req, res) => {
-    const rows = await listFundingPrograms({ query }, req.orgId);
+    let rows = await listFundingPrograms({ query }, req.orgId);
+    if (!rows || rows.length === 0) {
+      await seedGovernance(req.orgId).catch(console.error);
+      rows = await listFundingPrograms({ query }, req.orgId);
+    }
     res.json({ rows, total: rows.length });
   })
 );

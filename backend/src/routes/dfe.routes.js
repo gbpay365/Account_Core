@@ -2,13 +2,18 @@ import { Router } from 'express';
 import { handler } from '../middleware/index.js';
 import { actorOf } from './helpers.js';
 import * as dfeService from '../services/dfe.service.js';
+import { seedPhase4 } from '../db/seed_phase4.js';
 
 export const dfeRoutes = Router();
 
 dfeRoutes.get(
   '/dfe/invoices',
   handler(async (req, res) => {
-    const rows = await dfeService.listDfeInvoices(req.orgId);
+    let rows = await dfeService.listDfeInvoices(req.orgId);
+    if (!rows || rows.length === 0) {
+      await seedPhase4(req.orgId).catch(console.error);
+      rows = await dfeService.listDfeInvoices(req.orgId);
+    }
     res.json({ rows, total: rows.length });
   })
 );
