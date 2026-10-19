@@ -36,7 +36,7 @@ Unlike legacy enterprise systems that require maintaining parallel databases or 
    - In the top right corner of the authentication card, click **English** or **Français**.
    - *Result:* All labels, prompts, account classifications, and statutory terms instantly switch to the chosen language.
 3. 🔑 **Enter User Credentials:**
-   - In the **Email address** field, enter your assigned hospital email (e.g., `grace.ntamack@hgy.cm`).
+   - In the **Email address** field, enter your assigned hospital email address.
    - In the **Password** field, enter your password.
    - Click the **Sign in** button.
 4. 🛡️ **Role-Based Access Enforcement:**
@@ -403,7 +403,7 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
    - Set urgency: *Critical*, *High*, *Medium*, *Low*. Click **Submit Request**.
 2. 👨‍💼 **Triaging & Assignment (Biomedical Manager):**
    - In the work order queue, open the ticket under `Awaiting Approval`.
-   - Assign to a Biomedical Technician (e.g., `samuel.eyenga@hgy.cm`). Click **Approve & Dispatch**.
+   - Assign to an active Biomedical Technician from the personnel dropdown. Click **Approve & Dispatch**.
 3. 🛠️ **Execution & Parts Consumption (Technician):**
    - Technician opens ticket on mobile device and clicks **Start Job**.
    - Under **Parts Used**, click **+ Add Part**. Select parts consumed from warehouse stock (e.g., `Pressure Sensor Membrane`).
@@ -436,7 +436,7 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 ## 18. Module 16: Mobile Technician Worklist
 
 ### 18.1 Step-by-Step Procedure: Using the Touch-Friendly Mobile Interface
-1. 📱 Log into LedgerCore on a mobile device as a technician (e.g., `samuel.eyenga@hgy.cm`).
+1. 📱 Log into LedgerCore on a mobile device with your assigned technician account.
 2. 📋 Navigate to **Maintenance -> My worklist** (`/worklist`).
 3. 🎯 The screen displays prioritized tasks scheduled for today.
 4. 📷 Tap **Scan Asset** to activate the camera; scan the equipment QR tag to immediately view service manual PDFs and historical repair logs.

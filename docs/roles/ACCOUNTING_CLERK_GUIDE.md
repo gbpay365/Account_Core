@@ -25,7 +25,7 @@ As an **Accounting Clerk / Data Entry Specialist**, you are responsible for day-
 *Figure 2: LedgerCore Authentication Screen — Choose English or French and Sign in with Assigned Clerk Credentials.*
 
 ### Step 2.1: Sign In & Open the Entry Form
-1. 🔑 **Sign In:** Use your clerk credentials (Demo: `amina.bakari@hgy.cm` / `Ledger@2026`).
+1. 🔑 **Sign In:** Enter your assigned username/email and password.
 2. 📝 **Navigate to Journal:** Go to **Accounting -> Journal Entries** (`/journal`).
 3. ➕ **Open Form:** Click the **+ New Entry** button.
 

@@ -32,7 +32,7 @@ As the **Chief Financial Officer (CFO)** or **Chief Accountant**, you hold overa
 *Figure 4: Journal Entries Workspace — Reviewing Drafts, Validating Supporting Vouchers, and Committing Entries to the General Ledger.*
 
 ### Step-by-Step Procedure:
-1. 🔑 **Sign In:** Use your CFO credentials (Demo: `grace.ntamack@hgy.cm` / `Ledger@2026`).
+1. 🔑 **Sign In:** Sign in with your authorized CFO / Chief Accountant credentials.
 2. 📊 **Review Executive Dashboard:**
    - Check the **Year-to-Date Net Surplus** (Surplus/Deficit).
    - In the **Ledger Activity** card, observe the **Still in draft** counter. Click directly on it to view uncommitted vouchers.

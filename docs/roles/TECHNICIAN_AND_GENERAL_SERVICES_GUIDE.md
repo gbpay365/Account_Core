@@ -24,7 +24,7 @@ This guide serves both **Biomedical Engineering Technicians** and **General Serv
 
 When working in clinical wards, surgical theatres, workshops, or utility plant rooms, use the mobile-optimized interface:
 
-1. 📱 **Sign In on Mobile Device:** Log in on your smartphone or tablet (Demo: `samuel.eyenga@hgy.cm` for biomedical or `derick.nji@hgy.cm` for general services).
+1. 📱 **Sign In on Mobile Device:** Log in on your smartphone or tablet using your assigned technician or logistics credentials.
 2. 📋 **Open Today's Worklist:** The home screen immediately displays **My Worklist Today**.
 3. ▶️ **Starting a Task:**
    - Tap on the assigned work order (e.g., `WO-2026-0042: Repair operating light in Theatre 2`).
@@ -61,7 +61,7 @@ When servicing or commissioning electromedical equipment:
 
 For facility technicians, drivers, and procurement officers:
 
-1. 🔑 **Log In:** Log in with your logistics account (Demo: `derick.nji@hgy.cm` / `Ledger@2026`).
+1. 🔑 **Log In:** Log in with your assigned logistics or facility account.
 2. 🛒 **Navigate to Errands:** Go to **General Services -> Shopping Lists** or **Errands** (`/shopping-lists`).
 3. 🛍️ **Executing a Purchase Run:**
    - Open the assigned shopping run (e.g., `City Central Pharmacy & Regional Depot Run`).

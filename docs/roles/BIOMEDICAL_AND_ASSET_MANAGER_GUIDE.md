@@ -26,7 +26,7 @@ As the **Biomedical Engineer & Asset Manager**, you bridge clinical technology a
 ![Fixed Asset Register Interface](../images/screenshot_assets.png)
 *Figure 2: Fixed Asset Register — Detailed Inventory with Serial Numbers, Acquisition Costs, Carrying Amounts, and Calibration Indicators.*
 
-1. 🔑 **Sign In:** Log in with your asset manager credentials (Demo: `fatou.diallo@hgy.cm` / `Ledger@2026`).
+1. 🔑 **Sign In:** Log in with your authorized asset manager credentials.
 2. 🏷️ **Navigate to Register:** Go to **Assets -> Register** (`/assets`) and click **+ Register Asset**.
 3. 📝 **Enter General Information:**
    - **Asset Name:** Official equipment description (e.g., `Hamilton-C3 Intensive Care Ventilator`).
@@ -68,7 +68,7 @@ graph LR
    - 🔴 **Critical / Emergency:** Direct patient life support (ventilators, defibrillators, surgical anaesthesia units).
    - 🟠 **High:** Diagnostic imaging or lab analysers.
    - 🟡 **Medium / Low:** Administrative IT or non-critical furniture.
-4. 👷 **Assign Technician:** Assign to a Biomedical Technician (e.g., `samuel.eyenga@hgy.cm`).
+4. 👷 **Assign Technician:** Assign to an active Biomedical Technician from the personnel list.
 
 ---
 
