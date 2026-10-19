@@ -22,8 +22,14 @@ As the **Chief Financial Officer (CFO)** or **Chief Accountant (*Chef Comptable*
 
 ## 2. Daily Workflow: Reviewing & Posting Journal Vouchers
 
+![Executive Dashboard](../images/screenshot_dashboard.png)
+*Figure 2: Executive Financial Dashboard — Monitoring Surplus/Deficit, Asset Net Book Value, and Uncommitted Draft Vouchers in Real Time.*
+
 ![Journal Entry Lifecycle](../images/02_journal_lifecycle.jpg)
-*Figure 2: Journal Entry & Audit Lifecycle under OHADA AUDCIF Standards.*
+*Figure 3: Journal Entry & Audit Lifecycle under OHADA AUDCIF Standards.*
+
+![Journal Entries Ledger Screen](../images/screenshot_journal.png)
+*Figure 4: Journal Entries Workspace — Reviewing Drafts, Validating Supporting Vouchers, and Committing Entries to the General Ledger.*
 
 ### Step-by-Step Procedure:
 1. 🔑 **Sign In:** Use your CFO credentials (Demo: `grace.ntamack@hgy.cm` / `Ledger@2026`).
@@ -49,6 +55,9 @@ As the **Chief Financial Officer (CFO)** or **Chief Accountant (*Chef Comptable*
 
 Follow this strict chronological sequence to ensure full compliance with **AUDCIF Articles 13 & 20**:
 
+![Period Close Workspace](../images/screenshot_periods_close.png)
+*Figure 5: Accounting Periods & Month-End Close Screen — Checking Off Verifications and Locking the Ledger.*
+
 ### Detailed Step-by-Step Instructions:
 
 #### Step 3.1: Execute Monthly Asset Depreciation Run
@@ -58,6 +67,9 @@ Follow this strict chronological sequence to ensure full compliance with **AUDCI
    - Verify straight-line and degressive dotations.
    - Confirm investment subsidy write-backs (Account `14` $\to$ `799`).
 4. 🚀 Click **Post Run**. The system commits the balanced entry to Journal `AMO`.
+
+![Asset Depreciation Workspace](../images/screenshot_depreciation.png)
+*Figure 6: Asset Depreciation Workspace — Dual-Method Calculation and Subsidy Write-Back Simulation.*
 
 #### Step 3.2: Verify Bank & Mobile Money Reconciliations
 1. 🏦 Navigate to **Accounting -> Bank reconciliation** (`/bank-reconciliation`).
@@ -99,28 +111,11 @@ If an extraordinary post-closing adjustment is legally required by external audi
 
 ## 5. Handling Error Corrections & Reversals (*Extourne*)
 
-In strict compliance with **AUDCIF Article 20**, posted journal entries cannot be edited or deleted:
-1. 🔍 Locate the erroneous entry under **Accounting -> Journal Entries**.
-2. ↩️ Click **Reverse Entry** (`undo` icon).
-3. 📝 Select the reversal date and enter a comprehensive justification (minimum 5 characters).
-4. 🚀 Click **Confirm Reversal**.
-5. 🔗 LedgerCore generates a contra-entry, linking both transactions for external auditors.
+In strict compliance with **AUDCIF Article 20**, deleting or altering a posted journal entry is illegal.
 
----
-
-## 6. Generating Statutory & Tax Reports
-
-### Step-by-Step Procedure:
-1. 📊 Navigate to **Reporting -> Financial statements** (`/reports`).
-2. 📅 Select the fiscal period and desired standard (**OHADA** or **IFRS**).
-3. 📒 **OHADA Presentation:**
-   - **Bilan (Balance Sheet):** Review Actif and Passif equilibrium.
-   - **Compte de Résultat:** Verify operating, financial, and HAO results.
-   - **TAFIRE:** Cash flow and financing statement.
-4. 🌐 **IFRS Presentation:**
-   - Review Statement of Financial Position, Profit or Loss, and SOCE.
-5. 🌉 **Inspect the Dual-Standard Bridge:**
-   - Click the **Dual-Standard Bridge** tab to verify that the OHADA net surplus plus IFRS adjustments mathematically equals the IFRS net profit.
-6. 📄 **Export Dematerialized FEC:**
-   - Go to **Reporting -> Action history -> Export FEC**.
-   - Download the statutory 18-column tax audit file formatted for CEMAC tax authorities.
+### Reversal Procedure:
+1. 🔍 Open the posted journal voucher in **Journal Entries** (`/journal`).
+2. ↩️ Click **Reverse (Extourner)** in the entry modal footer.
+3. 📅 Confirm the accounting reversal date (defaults to current date).
+4. 📝 Provide an audit explanation (minimum 5 characters, e.g., `Erreur imputation compte analytique`).
+5. 🚀 Click **Reverse entry**. The system commits the inverted double-entry and links both records in the audit trail.

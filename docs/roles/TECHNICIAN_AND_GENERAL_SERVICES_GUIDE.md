@@ -19,6 +19,9 @@ This guide serves both **Biomedical Engineering Technicians** and **General Serv
 
 ## 2. Step-by-Step Procedure: Using the Mobile Technician Worklist
 
+![Work Orders Queue Screen](../images/screenshot_work_orders.png)
+*Figure 2: Clinical Work Orders Queue — Reviewing Tasks by Urgency, Target Location, and Equipment Model.*
+
 When working in clinical wards, surgical theatres, workshops, or utility plant rooms, use the mobile-optimized interface:
 
 1. 📱 **Sign In on Mobile Device:** Log in on your smartphone or tablet (Demo: `samuel.eyenga@hgy.cm` for biomedical or `derick.nji@hgy.cm` for general services).
@@ -40,7 +43,21 @@ When working in clinical wards, surgical theatres, workshops, or utility plant r
 
 ---
 
-## 3. Step-by-Step Procedure: General Services, Errands & Shopping Lists
+## 3. Step-by-Step Procedure: Electrical Safety Testing & Calibration Tracking
+
+![Biomedical Electrical Safety & Calibration Dashboard](../images/screenshot_compliance.png)
+*Figure 3: Electrical Safety (IEC 60601-1) Testing Workspace — Recording Protective Earth Resistance and Earth Leakage Values.*
+
+When servicing or commissioning electromedical equipment:
+1. 🔌 Connect the equipment to an electrical safety analyzer (e.g., Fluke ESA612 or Rigel 288+).
+2. ⚡ Record the measured values into the safety record:
+   - Protective Earth Resistance ($\le 0.2\ \Omega$).
+   - Chassis & Earth Leakage Current ($\le 500\ \mu\text{A}$).
+3. 🛑 If values exceed regulatory tolerances, the device is automatically marked **Quarantined** and cannot be assigned to clinical wards.
+
+---
+
+## 4. Step-by-Step Procedure: General Services, Errands & Shopping Lists
 
 For facility technicians, drivers, and procurement officers:
 
@@ -58,7 +75,7 @@ For facility technicians, drivers, and procurement officers:
 
 ---
 
-## 4. Key Rules for Field Staff
+## 5. Key Rules for Field Staff
 > [!TIP]
 > - 📷 Always scan the QR code before touching equipment to ensure you are servicing the correct machine.
 > - 🛑 Never return quarantined equipment to patient service until the Biomedical Manager has cleared the safety certificate.

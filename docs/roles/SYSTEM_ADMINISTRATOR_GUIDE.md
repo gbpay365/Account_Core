@@ -10,6 +10,9 @@
 
 ## 1. System Deployment & Environment Setup
 
+![Authentication Screen](../images/screenshot_login.png)
+*Figure 2: Authentication Portal — Language Selection, Encrypted Session Handshake, and RBAC Profiles.*
+
 LedgerCore Health operates as a high-performance decoupled architecture:
 - ⚡ **Backend API:** Node.js (Express, ES Modules, MySQL2/MariaDB connection pool) on port `4700`.
 - 🌐 **Frontend UI:** Python 3.10+ (NiceGUI, Quasar/Vue3, TailwindCSS) on port `8700`.
@@ -63,7 +66,10 @@ Under **Administration -> Organization Settings** (`/settings`):
 ## 4. Cryptographic Seal Verification & Forensic Audit Trail
 
 ![Month-End Close and Hash Seal](../images/04_close_and_hash_seal.jpg)
-*Figure 2: 12-Step Month-End Closing Procedure & Cryptographic SHA-256 Hash Chaining in LedgerCore Health.*
+*Figure 3: 12-Step Month-End Closing Procedure & Cryptographic SHA-256 Hash Chaining in LedgerCore Health.*
+
+![Period Management Screen](../images/screenshot_periods_close.png)
+*Figure 4: Period Management Screen — Verifying Audit Seal Integrity and Permanent Chained Hashes.*
 
 LedgerCore incorporates an immutable **SHA-256 blockchain-style seal** on journal entries:
 - 🔗 Every posted entry hashes the previous entry's hash, timestamp, user ID, account lines, and monetary amounts.

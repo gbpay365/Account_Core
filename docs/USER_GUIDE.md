@@ -22,6 +22,9 @@ Unlike legacy enterprise systems that require maintaining parallel databases or 
 
 ## 2. Getting Started & Authentication
 
+![LedgerCore Authentication Interface](images/screenshot_login.png)
+*Figure 2: LedgerCore Authentication Interface — Dual-Language Selector (EN/FR), Encrypted Session Handshake, and One-Click Role Demonstration Access.*
+
 ### 2.1 Accessing the Application
 - 🌐 **Web URL:** `http://localhost:8700` (or your hospital's secure domain, e.g. `https://ledgercore.shisong.health`).
 - ⚡ **Backend API Endpoint:** `http://localhost:4700/api`.
@@ -54,6 +57,9 @@ Unlike legacy enterprise systems that require maintaining parallel databases or 
 
 ## 3. Module 1: Executive Dashboard & Operational KPIs
 
+![Executive Dashboard & Operational Pulse](images/screenshot_dashboard.png)
+*Figure 3: Executive Dashboard & Operational Pulse — Real-Time Net Result (Résultat Net), Asset Net Book Value (VNC), Work Order Pipeline, and Clinical Quarantine Restriction Alert.*
+
 ### 3.1 Purpose & Scope
 The Executive Dashboard provides hospital leadership, finance directors, and biomedical heads with an instant real-time operational pulse of revenue, asset values, work order pipelines, and clinical safety compliance.
 
@@ -75,6 +81,9 @@ The Executive Dashboard provides hospital leadership, finance directors, and bio
 ---
 
 ## 4. Module 2: Chart of Accounts & Analytical Structure
+
+![Chart of Accounts & Analytical Structure](images/screenshot_accounts.png)
+*Figure 4: SYSCOHADA Revised Chart of Accounts — Class 1 to 9 Hierarchical Tree with Statutory French Names, English Translations, and 1-to-1 IFRS Presentation Alignment.*
 
 ### 4.1 Purpose & Framework Rules
 The Chart of Accounts module provides the statutory backbone of the hospital, implementing the **SYSCOHADA Revised** 9-class chart of accounts with hierarchical parent-child relationships and 1-to-1 IFRS presentation mapping.
@@ -100,7 +109,10 @@ The Chart of Accounts module provides the statutory backbone of the hospital, im
 ## 5. Module 3: Journal Entries & AUDCIF Statutory Capture
 
 ![Journal Entry Lifecycle](images/02_journal_lifecycle.jpg)
-*Figure 2: LedgerCore Journal Entry & Audit Lifecycle under OHADA AUDCIF Standards — From Voucher Input and Double-Entry Balancing to Auxiliary Subledger Allocation, General Ledger Posting, and Tamper-Proof Cryptographic Hash Sealing.*
+*Figure 5: LedgerCore Journal Entry & Audit Lifecycle under OHADA AUDCIF Standards — From Voucher Input and Double-Entry Balancing to Auxiliary Subledger Allocation, General Ledger Posting, and Tamper-Proof Cryptographic Hash Sealing.*
+
+![Journal Entries Ledger Screen](images/screenshot_journal.png)
+*Figure 6: Journal Entries Ledger Screen — Chronological List of AUDCIF Vouchers with Reversal Links, Balanced Debits/Credits, and Real-Time Draft Count.*
 
 ### 5.1 Purpose & Legal Controls
 In strict compliance with **AUDCIF Articles 17, 19, and 20**:
@@ -176,7 +188,10 @@ The General Ledger provides complete chronological running balances, while auxil
 ## 7. Module 5: Accounting Periods, Fiscal Year & Year-End Close
 
 ![Month-End Close and Hash Seal](images/04_close_and_hash_seal.jpg)
-*Figure 3: 12-Step Month-End Closing Procedure & Cryptographic SHA-256 Hash Chaining in LedgerCore Health — Flowing from Verified Reconciliations into a Tamper-Proof Permanent Ledger.*
+*Figure 7: 12-Step Month-End Closing Procedure & Cryptographic SHA-256 Hash Chaining in LedgerCore Health — Flowing from Verified Reconciliations into a Tamper-Proof Permanent Ledger.*
+
+![Period Close and Locking Screen](images/screenshot_periods_close.png)
+*Figure 8: Accounting Period Management & 12-Step Close Interface — Showing Period Status (Open, Closed, Locked) and SHA-256 Hash Seal Integrity Verification.*
 
 ### 7.1 Purpose & Statutory Cycle
 Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore implements a strict 3-tier lifecycle:
@@ -207,6 +222,12 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 
 ## 8. Module 6: Treasury, Bank Reconciliation & Cash Registers
 
+![Bank Reconciliation Workspace](images/screenshot_bank_recon.png)
+*Figure 9: Treasury & Bank Reconciliation Workspace — Side-by-Side Electronic Statement Matching Against General Ledger Cash Books.*
+
+![Cash Desk & Mobile Money Management](images/screenshot_cash_registers.png)
+*Figure 10: Cash Desk & Mobile Money Desk Register — Real-Time Denomination Balancing and Vault Transfer Reconciliation.*
+
 ### 8.1 Step-by-Step Procedure: Reconciling a Bank Account
 1. 🏦 Navigate to **Accounting -> Bank reconciliation** (`/bank-reconciliation`).
 2. 💳 In the **Bank Account** selector, choose the commercial bank account (e.g., `5211 — BICEC Main Account`).
@@ -231,6 +252,9 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 
 ## 9. Module 7: Fiscal Compliance & Withholding Tax (WHT / TSR)
 
+![Withholding Tax & CEMAC Fiscal Certificates](images/screenshot_withholding_tax.png)
+*Figure 11: Withholding Tax (WHT / TSR) Register — Generating Statutory Certificates for CEMAC Tax Filings.*
+
 ### 9.1 Step-by-Step Procedure: Generating Withholding Tax Certificates
 1. 📜 Navigate to **Accounting -> Withholding tax (WHT)** (`/withholding-tax`).
 2. 📅 Select the fiscal tax period (e.g., `September 2026`).
@@ -246,6 +270,9 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 
 ## 10. Module 8: Donor-Funded Projects & Grant Accounting
 
+![Donor-Funded Projects & Grants Tracking](images/screenshot_donor_projects.png)
+*Figure 12: Donor Projects & Grants Management — Envelope Tracking, Real-Time Budget vs. Actuals, and Multi-Currency Burn Rates.*
+
 ### 10.1 Step-by-Step Procedure: Creating and Tracking a Grant Budget
 1. 🤝 Navigate to **Accounting -> Donor Projects** (`/donor-projects`).
 2. ➕ Click **+ New Project**.
@@ -257,6 +284,9 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 ---
 
 ## 11. Module 9: Healthcare Payroll & Social Declarations (DIPE)
+
+![Healthcare Payroll & Social Declarations](images/screenshot_payroll.png)
+*Figure 13: Healthcare Payroll Processing — Clinical Primes, Statutory CNPS Deductions, Personal Income Tax (IRPP/CAC), and DIPE Filing.*
 
 ### 11.1 Step-by-Step Procedure: Monthly Payroll Processing & DIPE Generation
 1. 👥 Navigate to **Accounting -> Payroll & DIPE** (`/payroll`).
@@ -293,7 +323,10 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 ## 13. Module 11: Enterprise Fixed Asset Register & Lifecycle Management
 
 ![Biomedical Asset Lifecycle](images/03_biomedical_asset_lifecycle.jpg)
-*Figure 4: Medical Equipment Lifecycle & Clinical Engineering Infographic — 6 integrated stages: Procurement & WIP Capitalisation, QR Tagging, Maintenance & Electrical Safety, Calibration & Quarantine Warning, Depreciation & Subsidy Amortisation, and Decommissioning.*
+*Figure 14: Medical Equipment Lifecycle & Clinical Engineering Infographic — 6 integrated stages: Procurement & WIP Capitalisation, QR Tagging, Maintenance & Electrical Safety, Calibration & Quarantine Warning, Depreciation & Subsidy Amortisation, and Decommissioning.*
+
+![Fixed Asset Register Interface](images/screenshot_assets.png)
+*Figure 15: Enterprise Fixed Asset Register — Detailed Listing with Gross Book Value, OHADA VNC, Ward Custodians, and Regulatory Calibration Indicators.*
 
 ### 13.1 Step-by-Step Procedure: Registering New Medical Equipment
 1. 🏷️ Navigate to **Assets -> Asset register** (`/assets`).
@@ -326,6 +359,9 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 
 ## 14. Module 12: Asset Depreciation & Leases (IFRS 16)
 
+![Asset Depreciation Simulation & Posting](images/screenshot_depreciation.png)
+*Figure 16: Asset Depreciation Workspace — Dual-Method Simulation (Straight-Line & Degressive) with Journal AMO Automated Dotations.*
+
 ### 14.1 Step-by-Step Procedure: Executing a Monthly Depreciation Run
 1. 📉 Navigate to **Assets -> Depreciation** (`/depreciation`).
 2. ⚙️ Click **Run Depreciation**.
@@ -342,6 +378,9 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 
 ## 15. Module 13: Physical Asset Inventory & Barcode Verification
 
+![QR Code Mobile Physical Inventory Sweep](images/screenshot_asset_inventory.png)
+*Figure 17: Physical Inventory & Barcode Sweep — Auditing Assets via Mobile Barcode Scanners with Variance Reconciliation.*
+
 ### 15.1 Step-by-Step Procedure: Conducting a Physical Asset Audit
 1. 📱 Navigate to **Assets -> Physical inventory** (`/asset-inventory`).
 2. ➕ Click **+ New Campaign** (e.g., `Annual Inventory 2026 - Surgery & ICU`).
@@ -356,6 +395,12 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 ---
 
 ## 16. Module 14: Hospital CMMS, Work Orders & Calibration (IEC 60601)
+
+![Clinical CMMS Work Orders Pipeline](images/screenshot_work_orders.png)
+*Figure 18: Clinical CMMS Work Orders Pipeline — Managing Corrective Repairs, Preventive Cycles, and Technician Field Assignments.*
+
+![Biomedical Calibration & Electrical Safety Dashboard](images/screenshot_compliance.png)
+*Figure 19: Biomedical Calibration & Electrical Safety Dashboard — Monitoring Certificate Validity, Test Results, and Patient Safety Quarantine Enforcement.*
 
 ### 16.1 Step-by-Step Procedure: Raising, Executing & Closing a Work Order
 1. 🚨 **Raising a Breakdown Request (Ward Staff):**
@@ -408,6 +453,9 @@ Under **AUDCIF Article 13**, books must be closed periodically. LedgerCore imple
 ---
 
 ## 19. Module 17: Financial Statements, DSF & Tax Packet
+
+![Financial Statements & Statutory Reporting](images/screenshot_reports.png)
+*Figure 20: Financial Statements & Statutory Reports — SYSCOHADA Bilan, Compte de Résultat, TAFIRE, and IFRS Dual-Standard Bridge.*
 
 ### 19.1 Step-by-Step Procedure: Generating Statutory Financial Statements
 1. 📊 Navigate to **Reporting -> Financial statements** (`/reports`).

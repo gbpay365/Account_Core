@@ -22,6 +22,10 @@ As the **Biomedical Engineer / Asset Manager (*Responsable Biomédical et Gestio
 ---
 
 ## 2. Step-by-Step Procedure: Registering New Medical Equipment
+
+![Fixed Asset Register Interface](../images/screenshot_assets.png)
+*Figure 2: Fixed Asset Register — Detailed Inventory with Serial Numbers, Acquisition Costs, Carrying Amounts, and Calibration Indicators.*
+
 1. 🔑 **Sign In:** Log in with your asset manager credentials (Demo: `fatou.diallo@hgy.cm` / `Ledger@2026`).
 2. 🏷️ **Navigate to Register:** Go to **Assets -> Register** (`/assets`) and click **+ Register Asset**.
 3. 📝 **Enter General Information:**
@@ -45,6 +49,9 @@ As the **Biomedical Engineer / Asset Manager (*Responsable Biomédical et Gestio
 
 ## 3. Maintenance Plans & Work Orders Workflow
 
+![Work Orders Pipeline](../images/screenshot_work_orders.png)
+*Figure 3: Work Orders Pipeline — Reviewing Queued Tickets, Technician Status, and Direct Clinical Costs.*
+
 ```mermaid
 graph LR
     A["🚨 Clinical Staff Reports Fault"] --> B["🔎 Asset Manager Reviews Ticket"]
@@ -55,7 +62,7 @@ graph LR
 ```
 
 ### Step-by-Step Procedure: Triaging Work Orders
-1. 🛠️ **Open Work Orders:** Navigate to **Maintenance -> Work Orders** (`/work-orders`).
+1. 🛠️ **Open Work Orders:** Navigate to **Maintenance -> Work Orders** (`/maintenance`).
 2. 🔍 **Review Queue:** Review newly reported issues under `Awaiting Approval`.
 3. 🎯 **Set Priority Level:**
    - 🔴 **Critical / Emergency:** Direct patient life support (ventilators, defibrillators, surgical anaesthesia units).
@@ -66,6 +73,10 @@ graph LR
 ---
 
 ## 4. Electrical Safety (IEC 60601) & Metrological Calibration
+
+![Calibration and Electrical Safety Dashboard](../images/screenshot_compliance.png)
+*Figure 4: Calibration and Electrical Safety Dashboard — Monitoring Equipment Certificates, Metrological Tests, and Enforcing Clinical Quarantine.*
+
 Patient safety demands strict adherence to international biomedical testing standards:
 
 1. 🩺 Open the asset card under **Assets -> Register** (`/assets`).
@@ -84,7 +95,11 @@ Patient safety demands strict adherence to international biomedical testing stan
 ---
 
 ## 5. Step-by-Step Procedure: Executing Physical Inventory Campaigns
-1. 📦 Navigate to **Assets -> Physical Inventory** (`/inventory-campaigns`).
+
+![Physical Inventory Sweep](../images/screenshot_asset_inventory.png)
+*Figure 5: Physical Asset Inventory Sweep — Scanning Barcodes and Reconciling Displaced or Missing Hospital Assets.*
+
+1. 📦 Navigate to **Assets -> Physical Inventory** (`/asset-inventory`).
 2. ➕ Click **+ New Inventory Campaign** (e.g., `Annual Inventory 2026 - West Wing`).
 3. 📱 Take a mobile tablet with a camera or barcode scanner through the wards.
 4. 🔍 Scan each asset's QR code. The app automatically marks it **Verified**.

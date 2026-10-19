@@ -21,10 +21,16 @@ As an **Accounting Clerk (*Aide-Comptable / Saisisseur*)**, you are responsible 
 
 ## 2. Step-by-Step Procedure: Capturing a Journal Voucher
 
+![Authentication Screen](../images/screenshot_login.png)
+*Figure 2: LedgerCore Authentication Screen — Choose English or French and Sign in with Assigned Clerk Credentials.*
+
 ### Step 2.1: Sign In & Open the Entry Form
 1. 🔑 **Sign In:** Use your clerk credentials (Demo: `amina.bakari@hgy.cm` / `Ledger@2026`).
 2. 📝 **Navigate to Journal:** Go to **Accounting -> Journal Entries** (`/journal`).
 3. ➕ **Open Form:** Click the **+ New Entry** button.
+
+![Journal Entries Screen](../images/screenshot_journal.png)
+*Figure 3: Journal Entries Screen — Viewing Draft Statuses, Transaction References, and Balancing Columns.*
 
 ### Step 2.2: Fill the Header Information
 - 📚 **Journal Code:** Choose the appropriate specialized journal:
@@ -52,6 +58,10 @@ As an **Accounting Clerk (*Aide-Comptable / Saisisseur*)**, you are responsible 
 ---
 
 ## 3. How to Use the Intelligent Counterpart Engine
+
+![Chart of Accounts Screen](../images/screenshot_accounts.png)
+*Figure 4: Chart of Accounts Screen — Searching Accounts, Classes, and Checking Analytical Requirements.*
+
 When capturing routine hospital transactions, you do not need to look up every credit account manually:
 1. ✍️ Enter the first line (e.g., Account `6051 — Électricité` for `250,000 XAF`).
 2. 💡 Click **Propose Counterpart** (or let auto-suggest trigger).
