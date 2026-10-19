@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LedgerCore Health — Role Guide: CFO & Chief Accountant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --primary: #0d9488;
+      --primary-dark: #0f766e;
+      --primary-light: #ccfbf1;
+      --navy: #0f172a;
+      --navy-light: #1e293b;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --rose: #e11d48;
+      --rose-light: #ffe4e6;
+      --sky: #0284c7;
+      --sky-light: #e0f2fe;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--slate-800);
+      background-color: var(--slate-50);
+      line-height: 1.65;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navigation Bar */
+    .top-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      color: white;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.2);
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      font-size: 1.5rem;
+    }
+
+    .logo-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .logo-subtitle {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.825rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+
+    /* Layout */
+    .app-container {
+      display: flex;
+      max-width: 1440px;
+      margin: 0 auto;
+      min-height: calc(100vh - 65px);
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 290px;
+      background: white;
+      border-right: 1px solid var(--slate-200);
+      padding: 1.5rem 1rem;
+      position: sticky;
+      top: 65px;
+      height: calc(100vh - 65px);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .search-box {
+      margin-bottom: 1.25rem;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--slate-200);
+      font-size: 0.85rem;
+      background: var(--slate-50);
+      color: var(--slate-800);
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .nav-section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      margin: 1rem 0 0.4rem 0.5rem;
+    }
+
+    .nav-list {
+      list-style: none;
+    }
+
+    .nav-item a {
+      display: block;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      color: var(--slate-600);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-item a:hover {
+      background: var(--slate-100);
+      color: var(--primary-dark);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+      padding: 3rem 4rem;
+      background: white;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Document Header Hero */
+    .doc-hero {
+      border-bottom: 2px solid var(--slate-100);
+      padding-bottom: 1.75rem;
+      margin-bottom: 2.25rem;
+    }
+
+    .doc-badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-teal {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .badge-navy {
+      background: #e2e8f0;
+      color: var(--navy);
+    }
+
+    .badge-amber {
+      background: var(--amber-light);
+      color: var(--amber);
+    }
+
+    /* Typography */
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.25;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.025em;
+    }
+
+    h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 2.75rem 0 1.15rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--slate-200);
+      letter-spacing: -0.015em;
+    }
+
+    h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--slate-800);
+      margin: 1.5rem 0 0.65rem;
+    }
+
+    h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    p {
+      margin-bottom: 1.15rem;
+      color: var(--slate-700);
+    }
+
+    ul, ol {
+      margin-bottom: 1.25rem;
+      padding-left: 1.6rem;
+      color: var(--slate-700);
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--slate-200);
+      margin: 2rem 0;
+    }
+
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--slate-200);
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background: var(--slate-50);
+      color: var(--slate-800);
+      font-weight: 700;
+      padding: 0.85rem 1rem;
+      border-bottom: 2px solid var(--slate-200);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--slate-200);
+      color: var(--slate-700);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(241, 245, 249, 0.5);
+    }
+
+    /* Code Blocks */
+    code {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85em;
+      background: var(--slate-100);
+      color: #b91c1c;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    pre {
+      background: var(--navy);
+      color: #f8fafc;
+      padding: 1.25rem;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin: 1.25rem 0;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* Callout Alerts */
+    .callout {
+      border-left: 4px solid;
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .callout-note {
+      background: var(--sky-light);
+      border-color: var(--sky);
+      color: #0369a1;
+    }
+
+    .callout-tip {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: #0f766e;
+    }
+
+    .callout-important {
+      background: var(--amber-light);
+      border-color: var(--amber);
+      color: #92400e;
+    }
+
+    .callout-warning {
+      background: var(--rose-light);
+      border-color: var(--rose);
+      color: #9f1239;
+    }
+
+    /* Images & Figures */
+    .doc-figure {
+      margin: 2rem auto;
+      text-align: center;
+      max-width: 900px;
+    }
+
+    .doc-figure img, img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--slate-200);
+      margin: 0.5rem auto;
+      display: block;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .doc-figure img:hover, img:hover {
+      box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.2);
+    }
+
+    .figure-caption {
+      font-size: 0.825rem;
+      color: var(--slate-600);
+      font-style: italic;
+      display: block;
+      text-align: center;
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    em {
+      font-style: italic;
+      color: inherit;
+    }
+
+    /* Print Styles for PDF Rendering */
+    @media print {
+      @page {
+        size: A4;
+        margin: 12mm 15mm 15mm 15mm;
+      }
+
+      body {
+        background: white !important;
+        font-size: 10pt !important;
+        line-height: 1.4 !important;
+        color: #0f172a !important;
+      }
+
+      .top-header, .sidebar, .header-actions {
+        display: none !important;
+      }
+
+      .app-container {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      .main-content {
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+
+      h1 {
+        font-size: 20pt !important;
+        margin-top: 0 !important;
+        page-break-before: avoid;
+        color: #0f172a !important;
+      }
+
+      h2 {
+        font-size: 14pt !important;
+        margin-top: 20pt !important;
+        page-break-before: auto;
+        page-break-after: avoid;
+        color: #0f172a !important;
+        border-bottom: 1.5pt solid #cbd5e1 !important;
+      }
+
+      h3 {
+        font-size: 11pt !important;
+        margin-top: 12pt !important;
+        page-break-after: avoid;
+        color: #1e293b !important;
+      }
+
+      h4 {
+        font-size: 10pt !important;
+        margin-top: 10pt !important;
+        page-break-after: avoid;
+        color: #334155 !important;
+      }
+
+      .doc-figure {
+        margin: 8pt auto 6pt !important;
+        text-align: center !important;
+        page-break-inside: avoid !important;
+      }
+
+      .doc-figure img, img {
+        max-width: 85% !important;
+        max-height: 220pt !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 4pt auto 2pt !important;
+        display: block !important;
+        page-break-inside: avoid !important;
+        box-shadow: none !important;
+        border: 1pt solid #cbd5e1 !important;
+        border-radius: 4pt !important;
+      }
+
+      .figure-caption {
+        font-size: 7.5pt !important;
+        color: #475569 !important;
+        font-style: italic !important;
+        display: block !important;
+        text-align: center !important;
+        margin-top: 2pt !important;
+        margin-bottom: 6pt !important;
+        page-break-before: avoid !important;
+      }
+
+      em {
+        font-style: italic !important;
+        color: inherit !important;
+        display: inline !important;
+        margin: 0 !important;
+        text-align: inherit !important;
+      }
+
+      table, pre, .callout {
+        page-break-inside: avoid;
+      }
+
+      .table-container {
+        box-shadow: none !important;
+        border: 1pt solid #cbd5e1 !important;
+      }
+
+      th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+      }
+
+      a {
+        text-decoration: none !important;
+        color: inherit !important;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <header class="top-header">
+    <div class="logo-group">
+      <span class="logo-icon">🏥</span>
+      <div>
+        <div class="logo-title">LedgerCore Health</div>
+        <div class="logo-subtitle">LedgerCore Health — Role Guide: CFO & Chief Accountant</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="../USER_GUIDE.html" class="btn btn-outline">🏠 Comprehensive Manual</a>
+      <button class="btn btn-outline" onclick="window.print()">🖨️ Print / PDF</button>
+      <a href="CFO_AND_CHIEF_ACCOUNTANT_GUIDE.pdf" class="btn btn-primary" download>📥 Download Role PDF</a>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="search-box">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search guide..." onkeyup="filterNav()">
+      </div>
+      <div id="navContainer">
+        <!-- Sidebar Navigation Links Generated Dynamically -->
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainArticle">
+      <div class="doc-hero">
+        <div class="doc-badges">
+          <span class="badge badge-teal">CFO & Chief Accountant Handbook</span>
+          <span class="badge badge-navy">SYSCOHADA Revised (AUDCIF)</span>
+          <span class="badge badge-teal">IFRS Standards</span>
+        </div>
+      </div>
+
+      <hr />
+
+<figure class="doc-figure"><img src="../images/04_close_and_hash_seal.jpg" alt="Month-End Close and Hash Seal" /><figcaption class="figure-caption">Figure 1: 12-Step Month-End Closing Procedure &amp; Cryptographic SHA-256 Hash Chaining in LedgerCore Health.</figcaption></figure>
+
+<hr />
+
+<h2 id="1-role-scope-primary-responsibilities">1. Role Scope &amp; Primary Responsibilities</h2>
+
+<p>As the <strong>Chief Financial Officer (CFO)</strong> or <strong>Chief Accountant</strong>, you hold overall authority over the hospital's financial spine:
+- ✍️ Reviewing and posting journal entries prepared by accounting clerks.
+- 📉 Executing monthly and annual asset depreciation runs.
+- 🏦 Monitoring real-time treasury positions across commercial banks and Mobile Money accounts.
+- 🔒 Overseeing the structured 12-step month-end closing procedure.
+- 📊 Reviewing and signing off on statutory financial statements (Balance Sheet, Income Statement, Statement of Cash Flows) and international IFRS presentations.
+- 📄 Generating the dematerialized electronic tax audit file (FEC - Accounting Entries Audit File).</p>
+
+<hr />
+
+<h2 id="2-daily-workflow-reviewing-posting-journal-vouchers">2. Daily Workflow: Reviewing &amp; Posting Journal Vouchers</h2>
+
+<figure class="doc-figure"><img src="../images/screenshot_dashboard.png" alt="Executive Dashboard" /><figcaption class="figure-caption">Figure 2: Executive Financial Dashboard — Monitoring Surplus/Deficit, Asset Net Book Value, and Uncommitted Draft Vouchers in Real Time.</figcaption></figure>
+
+<figure class="doc-figure"><img src="../images/02_journal_lifecycle.jpg" alt="Journal Entry Lifecycle" /><figcaption class="figure-caption">Figure 3: Journal Entry &amp; Audit Lifecycle under OHADA AUDCIF Standards.</figcaption></figure>
+
+<figure class="doc-figure"><img src="../images/screenshot_journal.png" alt="Journal Entries Ledger Screen" /><figcaption class="figure-caption">Figure 4: Journal Entries Workspace — Reviewing Drafts, Validating Supporting Vouchers, and Committing Entries to the General Ledger.</figcaption></figure>
+
+<h3 id="step-by-step-procedure">Step-by-Step Procedure:</h3>
+
+<ol>
+<li>🔑 <strong>Sign In:</strong> Use your CFO credentials (Demo: <code>grace.ntamack@hgy.cm</code> / <code>Ledger@2026</code>).</li>
+<li>📊 <strong>Review Executive Dashboard:</strong>
+<ul>
+<li>Check the <strong>Year-to-Date Net Surplus</strong> (Surplus/Deficit).</li>
+<li>In the <strong>Ledger Activity</strong> card, observe the <strong>Still in draft</strong> counter. Click directly on it to view uncommitted vouchers.</li>
+</ul></li>
+<li>🔎 <strong>Inspect Draft Vouchers:</strong>
+<ul>
+<li>Go to <strong>Accounting -> Journal Entries</strong> (<code>/journal</code>).</li>
+<li>Set the filter <code>Status: Draft</code>.</li>
+<li>Click on a draft voucher to open its detail view.</li>
+</ul></li>
+<li>⚖️ <strong>Audit Statutory Compliance:</strong>
+<ul>
+<li><strong>AUDCIF Art. 17 Check:</strong> Ensure the <strong>Reference *</strong> field contains an authentic supporting document identifier (e.g., <code>FAC-2026-9901</code>).</li>
+<li><strong>Equilibrium Check:</strong> Confirm Total Debits equal Total Credits.</li>
+<li><strong>Posting Level Check:</strong> Confirm that no lines are posted to 2-digit or 3-digit heading accounts.</li>
+<li><strong>Cost Centre &amp; Partner Check:</strong> Verify that expense lines carry an analytical cost centre and collective accounts (<code>401</code>, <code>411</code>) have an assigned third-party partner.</li>
+</ul></li>
+<li>🚀 <strong>Post to Ledger:</strong>
+<ul>
+<li>Click <strong>Post to ledger</strong> (<code>task_alt</code> icon).</li>
+<li>The entry status transitions from <code>draft</code> to <code>posted</code>, a sequential entry number is permanently sealed, and the General Ledger running balance updates immediately.</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h2 id="3-month-end-financial-close-procedure">3. Month-End Financial Close Procedure</h2>
+
+<p>Follow this strict chronological sequence to ensure full compliance with <strong>AUDCIF Articles 13 &amp; 20</strong>:</p>
+
+<figure class="doc-figure"><img src="../images/screenshot_periods_close.png" alt="Period Close Workspace" /><figcaption class="figure-caption">Figure 5: Accounting Periods &amp; Month-End Close Screen — Checking Off Verifications and Locking the Ledger.</figcaption></figure>
+
+<h3 id="detailed-step-by-step-instructions">Detailed Step-by-Step Instructions:</h3>
+
+<h4 id="step-31-execute-monthly-asset-depreciation-run">Step 3.1: Execute Monthly Asset Depreciation Run</h4>
+
+<ol>
+<li>📉 Navigate to <strong>Assets -> Depreciation</strong> (<code>/depreciation</code>).</li>
+<li>⚙️ Click <strong>Run Depreciation</strong>. Choose the fiscal period (e.g., <code>September 2026</code>).</li>
+<li>🔍 Click <strong>Simulate</strong>. Review the calculated lines:
+<ul>
+<li>Verify straight-line and degressive depreciation charges.</li>
+<li>Confirm investment subsidy write-backs (Account <code>14</code> $\to$ <code>799</code>).</li>
+</ul></li>
+<li>🚀 Click <strong>Post Run</strong>. The system commits the balanced entry to Journal <code>AMO</code>.</li>
+</ol>
+
+<figure class="doc-figure"><img src="../images/screenshot_depreciation.png" alt="Asset Depreciation Workspace" /><figcaption class="figure-caption">Figure 6: Asset Depreciation Workspace — Dual-Method Calculation and Subsidy Write-Back Simulation.</figcaption></figure>
+
+<h4 id="step-32-verify-bank-mobile-money-reconciliations">Step 3.2: Verify Bank &amp; Mobile Money Reconciliations</h4>
+
+<ol>
+<li>🏦 Navigate to <strong>Accounting -> Bank reconciliation</strong> (<code>/bank-reconciliation</code>).</li>
+<li>💳 For each bank account and Mobile Money desk:
+<ul>
+<li>Confirm that the electronic statement closing balance matches the cash book closing balance.</li>
+<li>Ensure the <strong>Unreconciled Variance</strong> displays <code>0.00 XAF</code>.</li>
+<li>Click <strong>Sign Off Reconciliation</strong>.</li>
+</ul></li>
+</ol>
+
+<h4 id="step-33-complete-the-12-step-period-close-checklist">Step 3.3: Complete the 12-Step Period Close Checklist</h4>
+
+<ol>
+<li>📅 Navigate to <strong>Accounting -> Periods and close</strong> (<code>/periods</code>).</li>
+<li>🔎 Click on the active period (e.g., <code>2026-09</code>).</li>
+<li>✅ Work through and check off each completed item:
+<ul>
+<li>[x] Step 1: All draft entries verified and posted or deleted.</li>
+<li>[x] Step 2: Bank and Mobile Money reconciliations completed with zero variance.</li>
+<li>[x] Step 3: Cash desk registers audited and vault transfers verified.</li>
+<li>[x] Step 4: Monthly asset depreciation run posted to Journal <code>AMO</code>.</li>
+<li>[x] Step 5: Monthly payroll wage entry posted and reconciled against social declarations (DIPE).</li>
+<li>[x] Step 6: Withholding taxes (WHT/TSR) reconciled and certificates generated.</li>
+<li>[x] Step 7: Patient billing reconciled against pharmacy/ward consumption.</li>
+<li>[x] Step 8: Foreign currency accounts revalued at month-end closing exchange rates.</li>
+<li>[x] Step 9: Inter-branch reciprocal accounts (<code>181</code>/<code>185</code>) reconciled.</li>
+<li>[x] Step 10: Physical inventory adjustments booked.</li>
+<li>[x] Step 11: Departmental cost allocations reviewed.</li>
+<li>[x] Step 12: Trial balance equilibrium confirmed.</li>
+</ul></li>
+<li>🔒 Click <strong>Close Period</strong>. General journal capture is now locked for all standard clerks.</li>
+<li>🔐 For year-end finalization, click <strong>Lock Period (Final Seal)</strong> to generate the permanent <strong>SHA-256 cryptographic seal</strong>.</li>
+</ol>
+
+<hr />
+
+<h2 id="4-closed-period-overrides-governance">4. Closed Period Overrides &amp; Governance</h2>
+
+<p>If an extraordinary post-closing adjustment is legally required by external auditors:
+1. 🛡️ Ensure your account holds the <code>journal.post_closed</code> permission.
+2. 📝 When capturing or posting the entry into a closed period, a mandatory <strong>Override Reason Dialog</strong> will prompt you.
+3. ✍️ Enter an audit justification of at least 10 characters (e.g., <code>Statutory Auditor Audit Adjustment - Litigation Provision</code>).
+4. 🔒 LedgerCore records the entry with <code>closed_period_override = 1</code>, logs your user ID as <code>override_by</code>, and generates an indelible entry in the forensic audit trail.</p>
+
+<hr />
+
+<h2 id="5-handling-error-corrections-reversals-contra-entry">5. Handling Error Corrections &amp; Reversals (Contra-Entry)</h2>
+
+<p>In strict compliance with <strong>AUDCIF Article 20</strong>, deleting or altering a posted journal entry is illegal.</p>
+
+<h3 id="reversal-procedure">Reversal Procedure:</h3>
+
+<ol>
+<li>🔍 Open the posted journal voucher in <strong>Journal Entries</strong> (<code>/journal</code>).</li>
+<li>↩️ Click <strong>Reverse Entry</strong> in the entry modal footer.</li>
+<li>📅 Confirm the accounting reversal date (defaults to current date).</li>
+<li>📝 Provide an audit explanation (minimum 5 characters, e.g., <code>Correction of analytical account allocation error</code>).</li>
+<li>🚀 Click <strong>Reverse entry</strong>. The system commits the inverted double-entry and links both records in the audit trail.</li>
+</ol>
+
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const main = document.getElementById("mainArticle");
+      const headings = main.querySelectorAll("h2, h3");
+      const nav = document.getElementById("navContainer");
+      let currentList = null;
+
+      headings.forEach((h, index) => {
+        if (!h.id) {
+          h.id = "sec-" + index + "-" + h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        }
+
+        if (h.tagName === "H2") {
+          const sectionTitle = document.createElement("div");
+          sectionTitle.className = "nav-section-title";
+          sectionTitle.textContent = h.textContent;
+          nav.appendChild(sectionTitle);
+
+          currentList = document.createElement("ul");
+          currentList.className = "nav-list";
+          nav.appendChild(currentList);
+        }
+
+        const li = document.createElement("li");
+        li.className = "nav-item";
+        const a = document.createElement("a");
+        a.href = "#" + h.id;
+        a.textContent = (h.tagName === "H3" ? "↳ " : "") + h.textContent;
+        li.appendChild(a);
+
+        if (currentList) {
+          currentList.appendChild(li);
+        } else {
+          const ul = document.createElement("ul");
+          ul.className = "nav-list";
+          ul.appendChild(li);
+          nav.appendChild(ul);
+        }
+      });
+    });
+
+    function filterNav() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const items = document.querySelectorAll(".nav-item");
+      items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(query) ? "block" : "none";
+      });
+    }
+  </script>
+</body>
+</html>
