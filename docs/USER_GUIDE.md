@@ -23,7 +23,7 @@ Unlike legacy enterprise systems that require maintaining parallel databases or 
 ## 2. Getting Started & Authentication
 
 ![LedgerCore Authentication Interface](images/screenshot_login.png)
-*Figure 2: LedgerCore Authentication Interface — Dual-Language Selector (English / French), Encrypted Session Handshake, and One-Click Role Demonstration Access.*
+*Figure 2: LedgerCore Authentication Interface — Dual-Language Selector (English / French), Encrypted Session Handshake, and Secure Sign-In Portal.*
 
 ### 2.1 Accessing the Application
 - 🌐 **Web URL:** `http://localhost:8700` (or your hospital's secure domain, e.g. `https://ledgercore.shisong.health`).
@@ -39,14 +39,8 @@ Unlike legacy enterprise systems that require maintaining parallel databases or 
    - In the **Email address** field, enter your assigned hospital email (e.g., `grace.ntamack@hgy.cm`).
    - In the **Password** field, enter your password.
    - Click the **Sign in** button.
-4. 🚀 **Using One-Click Demonstration Profiles:**
-   - On staging or evaluation environments, click any role badge to populate credentials automatically:
-     - 💼 **CFO / Chief Accountant:** `grace.ntamack@hgy.cm` / `Ledger@2026`
-     - 📝 **Accounting Clerk:** `amina.bakari@hgy.cm` / `Ledger@2026`
-     - 🔬 **Biomedical & Asset Manager:** `fatou.diallo@hgy.cm` / `Ledger@2026`
-     - 🛠️ **Biomedical Technician:** `samuel.eyenga@hgy.cm` / `Ledger@2026`
-     - 🚚 **General Services Technician:** `derick.nji@hgy.cm` / `Ledger@2026`
-     - ⚙️ **System Administrator:** `admin@ledgercore.health` / `Ledger@2026`
+4. 🛡️ **Role-Based Access Enforcement:**
+   - Upon successful credential verification, the system securely generates your session token and routes you directly to the workspace appropriate for your hospital role (Chief Financial Officer, Accounting Clerk, Biomedical & Asset Manager, Field Technician, or System Administrator).
 5. 🔍 **Inspect Top Header Bar Indicators:**
    - Verify that your organization profile displays at the top:
      - Entity Name: `🏥 TSSF Shisong SOA`

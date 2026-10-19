@@ -1,4 +1,4 @@
-﻿"""Sign-in. The only page outside the application shell."""
+"""Sign-in. The only page outside the application shell."""
 
 from __future__ import annotations
 
@@ -25,17 +25,6 @@ def t(key: str, **kwargs) -> str:
     text = pack.get(key) or STRINGS['en'].get(key) or key
     return text.format(**kwargs) if kwargs else text
 
-#: The seeded roles, so an evaluator can see the permission model at work
-#: without being handed a list of credentials separately.
-DEMO_ACCOUNTS = [
-    ('admin@ledgercore.health', 'role.admin'),
-    ('grace.ntamack@hgy.cm', 'role.cfo'),
-    ('amina.bakari@hgy.cm', 'role.clerk'),
-    ('fatou.diallo@hgy.cm', 'role.asset_mgr'),
-    ('samuel.eyenga@hgy.cm', 'role.tech'),
-    ('derick.nji@hgy.cm', 'role.gst'),
-    ('mensah.kouassi@hgy.cm', 'role.ward'),
-]
 
 LOGIN_CSS = """
 :root { --lc-teal: #14b8a6; --lc-teal-d: #0d9488; --lc-sky: #38bdf8; --lc-ink: #0b1220; }
@@ -322,27 +311,7 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
                 password.on('keyup.enter', submit)
                 email.on('keyup.enter', submit)
 
-                with ui.expansion(t('auth.demo'), icon='groups') \
-                        .props('dense').classes('w-full border border-slate-200 rounded-xl bg-white/70'):
-                    ui.label(t('auth.demo_hint')).classes('text-[11.5px] text-slate-500 pb-2 px-2')
-                    for address, role_key in DEMO_ACCOUNTS:
-                        row = ui.row().classes('lc-demo-row w-full items-center justify-between gap-2 py-1 px-2 '
-                                               'no-wrap rounded-lg hover:bg-teal-50 cursor-pointer')
-                        row.on('click', lambda a=address: _fill(email, password, a))
-                        with row:
-                            ui.label(chrome.ROLE_MARK.get(role_key, '')).classes('text-base leading-none shrink-0')
-                            with ui.column().classes('gap-0 min-w-0 flex-1'):
-                                ui.label(t(role_key)).classes('text-xs font-medium text-slate-700 truncate')
-                                ui.label(address).classes('text-[11px] text-slate-400 truncate')
-                            ui.icon('login').classes('text-slate-400 text-sm shrink-0')
-
-                with ui.row().classes('items-center justify-center gap-1.5 w-full pt-1'):
+                with ui.row().classes('items-center justify-center gap-1.5 w-full pt-3'):
                     ui.icon('verified_user').classes('text-teal-600 text-[14px]')
                     ui.label(t('auth.secure_note')) \
                         .classes('text-[11px] text-slate-400')
-
-
-def _fill(email, password, address: str) -> None:
-    email.value = address
-    password.value = 'Ledger@2026'
-    ui.notify(t('auth.filled', email=address), position='top')
