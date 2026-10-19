@@ -10,11 +10,11 @@
 ---
 
 ## 1. Role Scope & Primary Responsibilities
-As an **Accounting Clerk (*Aide-Comptable / Saisisseur*)**, you are responsible for day-to-day transaction processing:
+As an **Accounting Clerk / Data Entry Specialist**, you are responsible for day-to-day transaction processing:
 - 📝 Capturing supplier bills and service invoices in specialized journals.
 - 🩺 Processing patient consultation and hospital service billing.
 - 💵 Recording petty cash disbursements and Mobile Money collection receipts.
-- 🔤 Matching payments to invoices (*Lettrage*).
+- 🔤 Matching payments to invoices (Open-Item Matching).
 - ⚖️ Ensuring every captured voucher complies with **AUDCIF Article 17** (mandatory supporting document, balanced double-entry, no negative numbers).
 
 ---
@@ -41,17 +41,17 @@ As an **Accounting Clerk (*Aide-Comptable / Saisisseur*)**, you are responsible 
   - `OD` for Miscellaneous adjustments and accruals.
 - 📅 **Entry Date:** The date indicated on the paper receipt or supplier invoice (must fall in an open period).
 - 🏷️ **Reference \* (Mandatory under AUDCIF Art. 17):** Enter the exact invoice number (e.g., `FAC-2026-0819`) or receipt voucher reference. Leaving this field blank is prohibited by the validation engine.
-- 📄 **Description:** Clear, concise summary of the transaction (e.g., `Fourniture compresse et gants stériles - BioMed`).
+- 📄 **Description:** Clear, concise summary of the transaction (e.g., `Sterile gauze and surgical gloves - BioMed`).
 
 ### Step 2.3: Populate Journal Lines (Minimum 2 Balanced Lines)
 1. 📈 **Debit Line (Expense or Asset):**
-   - In the **Account** field, search by code or name (e.g., `6011 — Fournitures médicales`).
+   - In the **Account** field, search by code or name (e.g., `601100 — Medical Supplies`).
    - Enter the debit amount (e.g., `250,000.00`).
    - For all Class 6 expense accounts, select the relevant **Cost Centre** (e.g., `Surgery Ward`, `ICU`, `Central Pharmacy`).
 2. 📉 **Credit Line (Counterpart / Payable):**
-   - Search for the balancing account (e.g., `4011 — Fournisseurs`).
+   - Search for the balancing account (e.g., `401100 — Trade Payables / Suppliers`).
    - Enter the credit amount (e.g., `250,000.00`).
-   - **Auxiliary Third Party:** For collective accounts (`4011`, `4111`), select the individual supplier or client from the dropdown (e.g., `[FRN] Air Liquide Santé`).
+   - **Auxiliary Third Party:** For collective accounts (`4011`, `4111`), select the individual supplier or client from the dropdown (e.g., `[FRN] Air Liquide Healthcare`).
 3. ⚖️ **Verify Equilibrium:** Look at the bottom right. The **Out of balance** counter must read `0.00` in green.
 4. 💾 **Save:** Click **Save as Draft**. The entry is saved and queued for the Chief Accountant's review and posting.
 
@@ -63,21 +63,21 @@ As an **Accounting Clerk (*Aide-Comptable / Saisisseur*)**, you are responsible 
 *Figure 4: Chart of Accounts Screen — Searching Accounts, Classes, and Checking Analytical Requirements.*
 
 When capturing routine hospital transactions, you do not need to look up every credit account manually:
-1. ✍️ Enter the first line (e.g., Account `6051 — Électricité` for `250,000 XAF`).
+1. ✍️ Enter the first line (e.g., Account `6051 — Electricity & Power` for `250,000 XAF`).
 2. 💡 Click **Propose Counterpart** (or let auto-suggest trigger).
 3. 🤖 The engine suggests the standard counterpart (e.g., Account `4011` or `5211`) based on previous hospital entries.
 4. 🔍 Review, adjust the third party if needed, and click save.
 
 ---
 
-## 4. Step-by-Step Procedure: Open-Item Lettrage & Invoice-Payment Matching
+## 4. Step-by-Step Procedure: Open-Item Matching & Settlement
 When a supplier is paid or a patient bill is cleared:
 1. 📖 Navigate to **Accounting -> General Ledger** (`/ledger`).
-2. 👥 Select the third-party account (e.g., `401100 — Fournisseurs`).
-3. 🔍 Click the **Lettrage** tab and filter for **Unmatched (*Non-lettrées*)**.
+2. 👥 Select the third-party account (e.g., `401100 — Trade Payables / Suppliers`).
+3. 🔍 Click the **Matching** tab and filter for **Unmatched Items**.
 4. ☑️ Check the box on the original invoice credit line and the bank payment debit line.
 5. ⚖️ Confirm that total selected debits equal total selected credits ($\Delta = 0.00$).
-6. 🔤 Click **Match Selected Lines (Lettrer)**. The system assigns a matching letter (`AA`, `AB`...) confirming the item is fully settled and cleared.
+6. 🔤 Click **Match Selected Items**. The system assigns a matching letter (`AA`, `AB`...) confirming the item is fully settled and cleared.
 
 ---
 

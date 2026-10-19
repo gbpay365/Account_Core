@@ -44,7 +44,7 @@ Under **Administration -> Users & Permissions** (`/users`):
 4. 🛡️ Assign one or multiple role profiles:
    - `admin`: System configuration, organization settings, user management.
    - `cfo`: Full financial posting, period close, depreciation, and reporting.
-   - `accountant`: Voucher preparation, lettrage, bank reconciliation.
+   - `accountant`: Voucher preparation, open-item matching, bank reconciliation.
    - `asset_manager`: Asset register, maintenance scheduling, physical inventory.
    - `biomed_tech`: Work order execution, IEC 60601 testing, calibration logging.
    - `services_tech`: Errands, shopping lists, vehicle fleet logs.
@@ -58,8 +58,8 @@ Under **Administration -> Users & Permissions** (`/users`):
 Under **Administration -> Organization Settings** (`/settings`):
 - 💱 **Functional Currency:** Default `XAF` (Central African CFA franc) or `XOF`.
 - 📒 **Accounting Frameworks:** Select `OHADA`, `IFRS`, or `Both` (Dual-Standard Mode).
-- 🔢 **Posting Length (Longueur des Comptes):** Set statutory account digits (4, 6, or 8 digits). Note: Once transactions exist, posting length is permanently locked to preserve historical audit integrity.
-- ⏳ **Suspense Account (*Compte d'Attente*):** Default `471100` for unclassified banking receipts awaiting allocation.
+- 🔢 **Posting Length (Account Code Digits):** Set statutory account digits (4, 6, or 8 digits). Note: Once transactions exist, posting length is permanently locked to preserve historical audit integrity.
+- ⏳ **Suspense / Clearing Account:** Default `471100` for unclassified banking receipts awaiting allocation.
 
 ---
 

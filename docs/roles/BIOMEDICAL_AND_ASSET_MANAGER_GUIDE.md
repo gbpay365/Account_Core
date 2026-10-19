@@ -10,7 +10,7 @@
 ---
 
 ## 1. Role Scope & Primary Responsibilities
-As the **Biomedical Engineer / Asset Manager (*Responsable Biomédical et Gestionnaire des Immobilisations*)**, you bridge clinical technology and financial stewardship:
+As the **Biomedical Engineer & Asset Manager**, you bridge clinical technology and financial stewardship:
 - 🏷️ Registering new biomedical, facility, IT, and vehicle assets.
 - 📱 Generating and affixing durable waterproof QR code identification tags.
 - 📅 Scheduling and supervising preventive maintenance cycles.
@@ -29,13 +29,13 @@ As the **Biomedical Engineer / Asset Manager (*Responsable Biomédical et Gestio
 1. 🔑 **Sign In:** Log in with your asset manager credentials (Demo: `fatou.diallo@hgy.cm` / `Ledger@2026`).
 2. 🏷️ **Navigate to Register:** Go to **Assets -> Register** (`/assets`) and click **+ Register Asset**.
 3. 📝 **Enter General Information:**
-   - **Asset Name:** Official equipment description (e.g., `Ventilateur de Réanimation Hamilton-C3`).
+   - **Asset Name:** Official equipment description (e.g., `Hamilton-C3 Intensive Care Ventilator`).
    - **Domain:** Select `Biomedical`.
-   - **Category:** Select the appropriate category (e.g., `Matériel Médical & Chirurgical`).
+   - **Category:** Select the appropriate category (e.g., `Medical & Surgical Equipment`).
    - **Serial Number & Model:** Essential for regulatory traceability (e.g., `SN-HAM-2026-9041`).
    - **Manufacturer & Supplier:** Select from the vendor lookup (e.g., `Hamilton Medical`).
 4. 💰 **Configure Financial Valuation:**
-   - **Acquisition Cost (Valeur d'Acquisition):** Invoice amount in XAF (e.g., `18,500,000`).
+   - **Acquisition Cost:** Invoice gross amount in XAF (e.g., `18,500,000`).
    - **Acquisition Date:** Date of receipt and clinical commissioning.
    - **Depreciation Lifetime:** Default derived from category (e.g., 5 years = 60 months).
    - **Funding Source:** Select `Own Funds` or `Donor Grant / Investment Subsidy`.

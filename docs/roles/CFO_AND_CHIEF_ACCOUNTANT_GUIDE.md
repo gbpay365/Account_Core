@@ -10,13 +10,13 @@
 ---
 
 ## 1. Role Scope & Primary Responsibilities
-As the **Chief Financial Officer (CFO)** or **Chief Accountant (*Chef Comptable*)**, you hold overall authority over the hospital's financial spine:
+As the **Chief Financial Officer (CFO)** or **Chief Accountant**, you hold overall authority over the hospital's financial spine:
 - ✍️ Reviewing and posting journal entries prepared by accounting clerks.
 - 📉 Executing monthly and annual asset depreciation runs.
 - 🏦 Monitoring real-time treasury positions across commercial banks and Mobile Money accounts.
 - 🔒 Overseeing the structured 12-step month-end closing procedure.
-- 📊 Reviewing and signing off on OHADA statutory financial statements (Bilan, Compte de Résultat, TAFIRE) and international IFRS presentations.
-- 📄 Generating the dematerialized electronic tax audit file (*FEC - Fichier des Écritures Comptables*).
+- 📊 Reviewing and signing off on statutory financial statements (Balance Sheet, Income Statement, Statement of Cash Flows) and international IFRS presentations.
+- 📄 Generating the dematerialized electronic tax audit file (FEC - Accounting Entries Audit File).
 
 ---
 
@@ -34,7 +34,7 @@ As the **Chief Financial Officer (CFO)** or **Chief Accountant (*Chef Comptable*
 ### Step-by-Step Procedure:
 1. 🔑 **Sign In:** Use your CFO credentials (Demo: `grace.ntamack@hgy.cm` / `Ledger@2026`).
 2. 📊 **Review Executive Dashboard:**
-   - Check the **Year-to-Date Net Result** (Surplus/Deficit).
+   - Check the **Year-to-Date Net Surplus** (Surplus/Deficit).
    - In the **Ledger Activity** card, observe the **Still in draft** counter. Click directly on it to view uncommitted vouchers.
 3. 🔎 **Inspect Draft Vouchers:**
    - Go to **Accounting -> Journal Entries** (`/journal`).
@@ -64,7 +64,7 @@ Follow this strict chronological sequence to ensure full compliance with **AUDCI
 1. 📉 Navigate to **Assets -> Depreciation** (`/depreciation`).
 2. ⚙️ Click **Run Depreciation**. Choose the fiscal period (e.g., `September 2026`).
 3. 🔍 Click **Simulate**. Review the calculated lines:
-   - Verify straight-line and degressive dotations.
+   - Verify straight-line and degressive depreciation charges.
    - Confirm investment subsidy write-backs (Account `14` $\to$ `799`).
 4. 🚀 Click **Post Run**. The system commits the balanced entry to Journal `AMO`.
 
@@ -73,7 +73,7 @@ Follow this strict chronological sequence to ensure full compliance with **AUDCI
 
 #### Step 3.2: Verify Bank & Mobile Money Reconciliations
 1. 🏦 Navigate to **Accounting -> Bank reconciliation** (`/bank-reconciliation`).
-2. 💳 For each bank account (BICEC, SCB, Ecobank) and Mobile Money desk (MTN MoMo, Orange Money):
+2. 💳 For each bank account and Mobile Money desk:
    - Confirm that the electronic statement closing balance matches the cash book closing balance.
    - Ensure the **Unreconciled Variance** displays `0.00 XAF`.
    - Click **Sign Off Reconciliation**.
@@ -86,9 +86,9 @@ Follow this strict chronological sequence to ensure full compliance with **AUDCI
    - [x] Step 2: Bank and Mobile Money reconciliations completed with zero variance.
    - [x] Step 3: Cash desk registers audited and vault transfers verified.
    - [x] Step 4: Monthly asset depreciation run posted to Journal `AMO`.
-   - [x] Step 5: Monthly payroll wage entry posted and reconciled against DIPE.
+   - [x] Step 5: Monthly payroll wage entry posted and reconciled against social declarations (DIPE).
    - [x] Step 6: Withholding taxes (WHT/TSR) reconciled and certificates generated.
-   - [x] Step 7: Patient billing (DFE) reconciled against pharmacy/ward consumption.
+   - [x] Step 7: Patient billing reconciled against pharmacy/ward consumption.
    - [x] Step 8: Foreign currency accounts revalued at month-end closing exchange rates.
    - [x] Step 9: Inter-branch reciprocal accounts (`181`/`185`) reconciled.
    - [x] Step 10: Physical inventory adjustments booked.
@@ -104,18 +104,18 @@ Follow this strict chronological sequence to ensure full compliance with **AUDCI
 If an extraordinary post-closing adjustment is legally required by external auditors:
 1. 🛡️ Ensure your account holds the `journal.post_closed` permission.
 2. 📝 When capturing or posting the entry into a closed period, a mandatory **Override Reason Dialog** will prompt you.
-3. ✍️ Enter an audit justification of at least 10 characters (e.g., `Ajustement commissaire aux comptes - provision litige`).
+3. ✍️ Enter an audit justification of at least 10 characters (e.g., `Statutory Auditor Audit Adjustment - Litigation Provision`).
 4. 🔒 LedgerCore records the entry with `closed_period_override = 1`, logs your user ID as `override_by`, and generates an indelible entry in the forensic audit trail.
 
 ---
 
-## 5. Handling Error Corrections & Reversals (*Extourne*)
+## 5. Handling Error Corrections & Reversals (Contra-Entry)
 
 In strict compliance with **AUDCIF Article 20**, deleting or altering a posted journal entry is illegal.
 
 ### Reversal Procedure:
 1. 🔍 Open the posted journal voucher in **Journal Entries** (`/journal`).
-2. ↩️ Click **Reverse (Extourner)** in the entry modal footer.
+2. ↩️ Click **Reverse Entry** in the entry modal footer.
 3. 📅 Confirm the accounting reversal date (defaults to current date).
-4. 📝 Provide an audit explanation (minimum 5 characters, e.g., `Erreur imputation compte analytique`).
+4. 📝 Provide an audit explanation (minimum 5 characters, e.g., `Correction of analytical account allocation error`).
 5. 🚀 Click **Reverse entry**. The system commits the inverted double-entry and links both records in the audit trail.

@@ -46,6 +46,10 @@ def build():
     # Wrap tables in responsive divs
     html_body = re.sub(r'(<table>.*?</table>)', r'<div class="table-container">\1</div>', html_body, flags=re.DOTALL)
 
+    # Wrap images and captions into semantic <figure class="doc-figure">
+    fig_pattern = re.compile(r'<p>\s*(<img\s+[^>]*src="[^"]+"[^>]*>)\s*<em>(Figure\s+\d+:?[^<]*)</em>\s*</p>', re.DOTALL | re.IGNORECASE)
+    html_body = fig_pattern.sub(r'<figure class="doc-figure">\1<figcaption class="figure-caption">\2</figcaption></figure>', html_body)
+
     html_template = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -459,26 +463,40 @@ def build():
     }}
 
     /* Images & Figures */
-    img {{
+    .doc-figure {{
+      margin: 2rem auto;
+      text-align: center;
+      max-width: 900px;
+    }}
+
+    .doc-figure img, img {{
       max-width: 100%;
       height: auto;
       border-radius: 12px;
       box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
       border: 1px solid var(--slate-200);
-      margin: 1.5rem 0 0.5rem;
+      margin: 0.5rem auto;
       display: block;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }}
 
-    img:hover {{
+    .doc-figure img:hover, img:hover {{
       box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.2);
     }}
 
-    em {{
+    .figure-caption {{
+      font-size: 0.825rem;
       color: var(--slate-600);
-      font-size: 0.875rem;
-      display: inline-block;
-      margin-bottom: 1.25rem;
+      font-style: italic;
+      display: block;
+      text-align: center;
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+    }}
+
+    em {{
+      font-style: italic;
+      color: inherit;
     }}
 
     /* Print Styles for PDF Rendering */
@@ -533,23 +551,42 @@ def build():
         color: #1e293b !important;
       }}
 
-      img {{
-        max-width: 95% !important;
-        margin: 12pt auto 4pt !important;
+      .doc-figure {{
+        margin: 8pt auto 6pt !important;
+        text-align: center !important;
+        page-break-inside: avoid !important;
+      }}
+
+      .doc-figure img, img {{
+        max-width: 85% !important;
+        max-height: 220pt !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 4pt auto 2pt !important;
         display: block !important;
         page-break-inside: avoid !important;
         box-shadow: none !important;
         border: 1pt solid #cbd5e1 !important;
-        border-radius: 6pt !important;
+        border-radius: 4pt !important;
+      }}
+
+      .figure-caption {{
+        font-size: 7.5pt !important;
+        color: #475569 !important;
+        font-style: italic !important;
+        display: block !important;
+        text-align: center !important;
+        margin-top: 2pt !important;
+        margin-bottom: 6pt !important;
+        page-break-before: avoid !important;
       }}
 
       em {{
-        font-size: 8.5pt !important;
-        color: #475569 !important;
-        display: block !important;
-        text-align: center !important;
-        margin-bottom: 14pt !important;
-        page-break-before: avoid !important;
+        font-style: italic !important;
+        color: inherit !important;
+        display: inline !important;
+        margin: 0 !important;
+        text-align: inherit !important;
       }}
 
       table, pre, .callout {{
@@ -672,26 +709,39 @@ def build():
     HTML_PATH.write_text(html_template, encoding='utf-8')
     print("HTML Manual created successfully.")
 
-    browser = get_browser_path()
-    if not browser:
-        print("Neither Chrome nor Edge found for headless PDF generation.")
-        return
-
-    print(f"Found browser at {browser}. Generating PDF...")
-    cmd = [
-        browser,
-        "--headless=new",
-        "--disable-gpu",
-        "--run-all-compositor-stages-before-draw",
-        f"--print-to-pdf={PDF_PATH}",
-        "--no-pdf-header-footer",
-        str(HTML_PATH)
-    ]
+    # Generate publication-grade PDF with Puppeteer (includes exact Page X of Y footers)
+    pdf_mjs = DOCS_DIR / 'build_pdf.mjs'
+    print(f"Generating PDF with exact page numbers via {pdf_mjs}...")
+    pdf_success = False
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        res = subprocess.run(['node', str(pdf_mjs)], capture_output=True, text=True, check=True)
+        print(res.stdout)
         print(f"PDF Manual successfully created at {PDF_PATH} ({os.path.getsize(PDF_PATH)} bytes).")
+        pdf_success = True
     except Exception as e:
-        print(f"PDF generation failed: {e}")
+        print(f"Puppeteer PDF generation notice: {e}. Attempting direct browser fallback...")
+
+    if not pdf_success:
+        browser = get_browser_path()
+        if not browser:
+            print("Neither Chrome nor Edge found for headless PDF generation.")
+            return
+
+        print(f"Found browser at {browser}. Generating PDF fallback...")
+        cmd = [
+            browser,
+            "--headless=new",
+            "--disable-gpu",
+            "--run-all-compositor-stages-before-draw",
+            f"--print-to-pdf={PDF_PATH}",
+            "--no-pdf-header-footer",
+            str(HTML_PATH)
+        ]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            print(f"PDF Manual successfully created at {PDF_PATH} ({os.path.getsize(PDF_PATH)} bytes).")
+        except Exception as e:
+            print(f"Fallback PDF generation failed: {e}")
 
 if __name__ == '__main__':
     build()

@@ -9,7 +9,7 @@
 ---
 
 ## 1. Role Scope & Primary Responsibilities
-This guide serves both **Biomedical Engineering Technicians** and **General Services / Logistics Officers (*Services Généraux*)**:
+This guide serves both **Biomedical Engineering Technicians** and **General Services & Logistics Officers**:
 - 📱 Managing daily field work orders via mobile smartphone or tablet.
 - ⏱️ Logging repair labor hours, diagnostic notes, and spare parts consumed.
 - 🛒 Executing hospital purchase errands and warehouse shopping lists.
