@@ -14,8 +14,8 @@ from nicegui import app
 STRINGS: dict[str, dict[str, str]] = {
     'en': {
         'app.product': 'LedgerCore',
-        'app.tagline': 'Health Finance & Assets',
-        'app.tagline_long': 'Health Finance & Asset Management',
+        'app.tagline': 'Finance & Assets',
+        'app.tagline_long': 'Finance & Asset Management',
         'lang.en': 'English',
         'lang.fr': 'Français',
         'lang.switch': 'Language',
@@ -1167,7 +1167,7 @@ STRINGS: dict[str, dict[str, str]] = {
     'fr': {
         'app.product': 'LedgerCore',
         'app.tagline': 'Finances et patrimoine',
-        'app.tagline_long': 'Comptabilité et gestion du patrimoine hospitalier',
+        'app.tagline_long': 'Comptabilité et gestion du patrimoine',
         'lang.en': 'English',
         'lang.fr': 'Français',
         'lang.switch': 'Langue',
