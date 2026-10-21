@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LedgerCore Enterprise Mining Suite — Technical Architecture & Solutions Proposal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #d97706; /* Industrial Mining Gold */
+      --primary-dark: #b45309;
+      --primary-light: #fef3c7;
+      --copper: #ea580c;
+      --copper-light: #ffedd5;
+      --emerald: #059669;
+      --emerald-light: #d1fae5;
+      --slate-dark: #0a0f1d;
+      --slate-navy: #0f172a;
+      --slate-card: #1e293b;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --sky: #0284c7;
+      --sky-light: #e0f2fe;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--slate-800);
+      background-color: #ffffff;
+      line-height: 1.6;
+      font-size: 13.5px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Print & Page Setup */
+    @page {
+      size: A4;
+      margin: 18mm 14mm 18mm 14mm;
+    }
+
+    .page {
+      page-break-after: always;
+      position: relative;
+      padding-bottom: 1.5rem;
+    }
+
+    .page:last-child {
+      page-break-after: avoid;
+    }
+
+    .avoid-break {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .force-break {
+      page-break-before: always;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Outfit', sans-serif;
+      color: var(--slate-900);
+      letter-spacing: -0.02em;
+    }
+
+    h1 { font-size: 28px; font-weight: 800; line-height: 1.2; }
+    h2 { font-size: 20px; font-weight: 700; line-height: 1.25; margin-bottom: 0.75rem; border-bottom: 2px solid var(--slate-200); padding-bottom: 0.35rem; }
+    h3 { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 0.4rem; color: var(--slate-800); }
+    h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary-dark); }
+
+    p { margin-bottom: 0.75rem; color: #334155; }
+    strong { color: var(--slate-900); font-weight: 600; }
+    .mono { font-family: 'Fira Code', monospace; }
+
+    /* Cover Page */
+    .cover-container {
+      min-height: 980px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(145deg, #0a0f1d 0%, #0f172a 60%, #1a2234 100%);
+      color: #ffffff;
+      padding: 3.5rem 3rem;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .cover-bg-accent {
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(217, 119, 6, 0.18) 0%, rgba(234, 88, 12, 0.05) 60%, transparent 80%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .cover-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 1.5rem;
+    }
+
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(217, 119, 6, 0.15);
+      border: 1px solid rgba(217, 119, 6, 0.4);
+      color: #fde68a;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .cover-title-area {
+      margin: 3.5rem 0;
+    }
+
+    .cover-hero-title {
+      font-size: 44px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+      letter-spacing: -0.03em;
+    }
+
+    .cover-hero-title span {
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cover-hero-subtitle {
+      font-size: 18px;
+      color: #cbd5e1;
+      font-weight: 400;
+      max-width: 650px;
+      line-height: 1.45;
+      margin-bottom: 1.5rem;
+    }
+
+    .cover-pill-tags {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .pill-tag {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 10px;
+    }
+
+    .meta-item h5 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 0.25rem;
+    }
+
+    .meta-item p {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    /* Cards & Components */
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--slate-200);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .card-highlight {
+      border-left: 4px solid var(--primary);
+    }
+
+    .card-emerald {
+      border-left: 4px solid var(--emerald);
+    }
+
+    .card-sky {
+      border-left: 4px solid var(--sky);
+    }
+
+    .card-copper {
+      border-left: 4px solid var(--copper);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.9rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+
+    /* KPI Callout Boxes */
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 0.85rem;
+      text-align: left;
+    }
+
+    .kpi-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      color: var(--slate-600);
+      margin-bottom: 0.25rem;
+    }
+
+    .kpi-val {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--slate-900);
+      font-family: 'Fira Code', monospace;
+      line-height: 1.2;
+    }
+
+    .kpi-sub {
+      font-size: 10.5px;
+      color: var(--slate-600);
+      margin-top: 0.2rem;
+    }
+
+    /* Modern Architecture Diagram (HTML/CSS) */
+    .arch-container {
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin: 1.25rem 0;
+      border: 1px solid #1e293b;
+    }
+
+    .arch-layer {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .arch-layer:last-child {
+      margin-bottom: 0;
+    }
+
+    .arch-layer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+      padding-bottom: 0.35rem;
+    }
+
+    .arch-layer-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #f59e0b;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .arch-blocks {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+    }
+
+    .arch-block {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 0.5rem 0.65rem;
+      text-align: center;
+    }
+
+    .arch-block strong {
+      display: block;
+      color: #f1f5f9;
+      font-size: 11.5px;
+      margin-bottom: 0.15rem;
+    }
+
+    .arch-block span {
+      font-size: 9.5px;
+      color: #94a3b8;
+      display: block;
+      line-height: 1.25;
+    }
+
+    /* Screenshots and Mockups */
+    .screenshot-frame {
+      background: #f8fafc;
+      border: 1px solid var(--slate-300);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 1rem 0;
+      box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+    }
+
+    .screenshot-header {
+      background: #e2e8f0;
+      padding: 0.4rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--slate-300);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .screenshot-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--slate-700);
+      margin-left: 0.5rem;
+    }
+
+    .screenshot-img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Tables */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0 1.25rem 0;
+      font-size: 12px;
+    }
+
+    table.data-table th {
+      background: var(--slate-100);
+      color: var(--slate-800);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 0.75rem;
+      border-top: 1px solid var(--slate-200);
+      border-bottom: 2px solid var(--slate-300);
+      text-align: left;
+    }
+
+    table.data-table td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--slate-200);
+      color: var(--slate-700);
+      vertical-align: top;
+    }
+
+    table.data-table tr:nth-child(even) td {
+      background-color: #fafbfc;
+    }
+
+    /* Badges & Tags */
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-gold { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-green { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+    .badge-blue { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .badge-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+    /* Flow Steps */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+
+    .flow-step-item {
+      display: flex;
+      gap: 1rem;
+      background: #f8fafc;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--slate-900);
+      color: #ffffff;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 0.15rem;
+    }
+
+    .step-desc {
+      font-size: 12px;
+      color: var(--slate-600);
+      margin: 0;
+    }
+
+    .tag-module {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      margin-left: 0.4rem;
+    }
+
+    /* Section Numbering */
+    .sec-num {
+      color: var(--primary);
+      font-weight: 800;
+      margin-right: 0.35rem;
+    }
+
+    /* List styling */
+    ul.check-list {
+      list-style: none;
+      margin: 0.5rem 0;
+    }
+
+    ul.check-list li {
+      position: relative;
+      padding-left: 1.35rem;
+      margin-bottom: 0.35rem;
+      color: var(--slate-700);
+      font-size: 12.5px;
+    }
+
+    ul.check-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--emerald);
+      font-weight: 900;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 1: COVER PAGE                                                    -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <div class="cover-container">
+      <div class="cover-bg-accent"></div>
+      
+      <div class="cover-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="background: #f59e0b; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+            ⛏️
+          </div>
+          <div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: #fff;">
+              LEDGERCORE
+            </div>
+            <div style="font-size: 10px; color: #94a3b8; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">
+              Enterprise Mining & Concession Edition
+            </div>
+          </div>
+        </div>
+
+        <div class="cover-badge">
+          🛡️ Institutional & Concession Grade
+        </div>
+      </div>
+
+      <div class="cover-title-area">
+        <div style="color: #f59e0b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem;">
+          Comprehensive Technical & Solutions Proposal
+        </div>
+        <h1 class="cover-hero-title">
+          Integrated Financial, Asset & Operations Engine for <span>Mining Enterprises</span>
+        </h1>
+        <p class="cover-hero-subtitle">
+          An institutional-grade ERP platform architected specifically for high-capital extraction, fleet-intensive operations, and strict CEMAC / SYSCOHADA compliance.
+        </p>
+
+        <div class="cover-pill-tags">
+          <span class="pill-tag">⚖️ CEMAC / OHADA AUDCIF Revised</span>
+          <span class="pill-tag">🚜 Heavy Equipment & Fixed Plants</span>
+          <span class="pill-tag">🔧 Telematics & Operating Hour Maintenance</span>
+          <span class="pill-tag">📊 Multi-Axial Analytical Budgeting</span>
+          <span class="pill-tag">🌐 Offline Concession Edge-Sync</span>
+          <span class="pill-tag">📑 Dual IFRS 6 / IFRS 16 Reporting</span>
+        </div>
+      </div>
+
+      <div class="cover-meta-grid">
+        <div class="meta-item">
+          <h5>Client Sector</h5>
+          <p>Mining & Extraction</p>
+        </div>
+        <div class="meta-item">
+          <h5>Regulatory Framework</h5>
+          <p>CEMAC / OHADA / IFRS</p>
+        </div>
+        <div class="meta-item">
+          <h5>Architecture Model</h5>
+          <p>Distributed Cloud & Edge</p>
+        </div>
+        <div class="meta-item">
+          <h5>Classification</h5>
+          <p>Commercial-in-Confidence</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 2: EXECUTIVE SUMMARY & STRATEGIC FIT                             -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <h2><span class="sec-num">01</span> Executive Summary & Industry Strategic Fit</h2>
+    
+    <p>
+      Mining corporations operating within Central and West Africa (CEMAC / OHADA zone) encounter a unique convergence of operational and financial pressures. Mining assets are highly capital-intensive, extraction pits are geographically isolated with fragile communications infrastructure, equipment downtime costs tens of thousands of dollars per hour, and host-nation regulations mandate strict compliance with revised <strong>SYSCOHADA standards</strong>, local content laws, and specific mining royalty withholdings.
+    </p>
+
+    <div class="grid-2">
+      <div class="card card-highlight">
+        <h3>🚨 The Industry Dilemma: Fragmented Systems</h3>
+        <p style="font-size: 12.5px; color: #475569;">
+          Traditional mining sites rely on disconnected point solutions: standalone workshop spreadsheets, siloed procurement databases, and separate corporate accounting software.
+        </p>
+        <ul class="check-list" style="font-size: 12px;">
+          <li style="color: #b91c1c;"><strong>Uncontrolled Budget Overruns:</strong> Parts ordered for heavy machinery without real-time credit availability verification.</li>
+          <li style="color: #b91c1c;"><strong>Distorted Asset Valuation:</strong> Complex equipment overhauls expensed improperly rather than capitalized under componentized accounting.</li>
+          <li style="color: #b91c1c;"><strong>Audit & Fiscal Penalties:</strong> Late or non-compliant SYSCOHADA financial reporting and withholding tax liabilities.</li>
+        </ul>
+      </div>
+
+      <div class="card card-emerald">
+        <h3>✨ The LedgerCore Solution: Unified Convergence</h3>
+        <p style="font-size: 12.5px; color: #475569;">
+          LedgerCore delivers an institutional enterprise ecosystem where accounting, heavy fleet lifecycle, predictive maintenance, and multi-axial budgeting operate as a <strong>single, synchronized organism</strong>.
+        </p>
+        <ul class="check-list">
+          <li><strong>Real-Time Ceiling Enforcement:</strong> Maintenance requisitions automatically check and commit budget envelopes before purchase orders are issued.</li>
+          <li><strong>Units of Production (UOP) Depreciation:</strong> Machinery depreciated based on engine hours or extracted tonnage.</li>
+          <li><strong>Autonomous Edge Sync:</strong> Concession pits operate 100% offline and reconcile seamlessly with HQ upon link restoration.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 1rem; margin-bottom: 0.5rem;">Core Operational Metrics Targeted</h3>
+    <div class="grid-4">
+      <div class="kpi-card">
+        <div class="kpi-title">Fleet Availability (OEE)</div>
+        <div class="kpi-val" style="color: #059669;">+28.5%</div>
+        <div class="kpi-sub">Preventive meter-based service triggers</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Budget Variance</div>
+        <div class="kpi-val" style="color: #d97706;">0.00%</div>
+        <div class="kpi-sub">Hard automated ceiling blocking</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Audit Reconciliation Delay</div>
+        <div class="kpi-val" style="color: #0284c7;">Real-Time</div>
+        <div class="kpi-sub">Automated double-entry posting engine</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">CEMAC Statutory Compliance</div>
+        <div class="kpi-val" style="color: #475569;">100% AUDCIF</div>
+        <div class="kpi-sub">Mining royalties & fiscal seals</div>
+      </div>
+    </div>
+
+    <div class="screenshot-frame">
+      <div class="screenshot-header">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="screenshot-title">LedgerCore Unified Executive Dashboard — Mining Concession Overview</span>
+      </div>
+      <img src="images/screenshot_dashboard.png" class="screenshot-img" alt="LedgerCore Mining Dashboard">
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 3: ENTERPRISE TECHNICAL ARCHITECTURE                            -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <h2><span class="sec-num">02</span> Enterprise Technical Architecture</h2>
+    
+    <p>
+      LedgerCore is built on a <strong>Distributed Micro-Service & Modular Tiered Architecture</strong> designed for high availability, sub-second latency, zero transactional loss, and resilient operation across remote extraction zones. The architecture strictly decouples the user experience layer, business rule orchestration, security perimeter, and the financial transactional persistence store.
+    </p>
+
+    <div class="arch-container">
+      <!-- Layer 1 -->
+      <div class="arch-layer">
+        <div class="arch-layer-header">
+          <span class="arch-layer-title">🖥️ Layer 1: Client Experience & Edge Interaction</span>
+          <span style="font-size: 10px; color: #94a3b8;">Cross-Device Responsive Web & Field Mobile Interface</span>
+        </div>
+        <div class="arch-blocks">
+          <div class="arch-block">
+            <strong>Executive Web Portal</strong>
+            <span>CFO, COO & Mining Director Cockpit</span>
+          </div>
+          <div class="arch-block">
+            <strong>Workshop Field Terminal</strong>
+            <span>Mechanic Work Orders & Meter Entry</span>
+          </div>
+          <div class="arch-block">
+            <strong>Warehouse & Inventory</strong>
+            <span>QR / RFID Barcode Spares Dispatch</span>
+          </div>
+          <div class="arch-block">
+            <strong>Weighbridge & SCADA Link</strong>
+            <span>Extracted Tonnage & Asset Telematics</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 2 -->
+      <div class="arch-layer">
+        <div class="arch-layer-header">
+          <span class="arch-layer-title">🛡️ Layer 2: API Gateway & Zero-Trust Security Perimeter</span>
+          <span style="font-size: 10px; color: #94a3b8;">TLS 1.3 Encryption, RBAC & Token Auth</span>
+        </div>
+        <div class="arch-blocks">
+          <div class="arch-block">
+            <strong>API Reverse Proxy</strong>
+            <span>Traffic Shaping & Load Balancing</span>
+          </div>
+          <div class="arch-block">
+            <strong>Token Auth Service</strong>
+            <span>Stateless Token Sessions & MFA</span>
+          </div>
+          <div class="arch-block">
+            <strong>RBAC Security Matrix</strong>
+            <span>Granular Concession & Role Isolation</span>
+          </div>
+          <div class="arch-block">
+            <strong>Four-Eye Audit Interceptor</strong>
+            <span>Dual Authorization on Material Events</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 3 -->
+      <div class="arch-layer">
+        <div class="arch-layer-header">
+          <span class="arch-layer-title">⚙️ Layer 3: Core Transaction Bus & Modular Domain Services</span>
+          <span style="font-size: 10px; color: #94a3b8;">Decoupled Event-Driven Business Engines</span>
+        </div>
+        <div class="arch-blocks">
+          <div class="arch-block" style="border-top: 2px solid #059669;">
+            <strong style="color: #6ee7b7;">Core Accounting Engine</strong>
+            <span>SYSCOHADA Ledger, Postings, VAT & Tax</span>
+          </div>
+          <div class="arch-block" style="border-top: 2px solid #d97706;">
+            <strong style="color: #fde68a;">Heavy Asset Lifecycle</strong>
+            <span>Depreciation (UOP), Components & GPS</span>
+          </div>
+          <div class="arch-block" style="border-top: 2px solid #ea580c;">
+            <strong style="color: #fdba74;">Fleet Maintenance Engine</strong>
+            <span>Engine Hours, Work Orders, Safety QA</span>
+          </div>
+          <div class="arch-block" style="border-top: 2px solid #0284c7;">
+            <strong style="color: #7dd3fc;">Budget & Commitment Service</strong>
+            <span>Ceiling Checks, Reservations & Transfers</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 4 -->
+      <div class="arch-layer">
+        <div class="arch-layer-header">
+          <span class="arch-layer-title">💾 Layer 4: Enterprise Persistence & Cryptographic Audit Seal</span>
+          <span style="font-size: 10px; color: #94a3b8;">ACID-Compliant Relational Store & SHA-256 Tamper Proofing</span>
+        </div>
+        <div class="arch-blocks">
+          <div class="arch-block">
+            <strong>Transactional Store</strong>
+            <span>ACID Double-Entry Integrity</span>
+          </div>
+          <div class="arch-block">
+            <strong>Hash-Sealed Audit Trail</strong>
+            <span>Immutable SHA-256 History Ledger</span>
+          </div>
+          <div class="arch-block">
+            <strong>Document Store</strong>
+            <span>Contracts, Invoices & Inspection Certs</span>
+          </div>
+          <div class="arch-block">
+            <strong>Edge Replicator</strong>
+            <span>Bidirectional Asynchronous Sync</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 avoid-break">
+      <div class="card card-highlight">
+        <h3>🛰️ Concession Edge-Sync: Zero-Interruption Offline Capability</h3>
+        <p style="font-size: 12px; color: #475569;">
+          Remote extraction pits frequently suffer from satellite latency or fiber dropouts. LedgerCore employs an <strong>Offline-First Edge Architecture</strong>. Field supervisors can log work orders, dispatch spare parts, and verify pre-shift safety inspections locally without internet connectivity.
+        </p>
+        <p style="font-size: 12px; color: #475569; margin: 0;">
+          When satellite/GSM link is re-established, the Concession Edge-Sync automatically streams queued transactions using conflict-free deterministic resolution, ensuring headquarters has exact real-time financial visibility without halting pit operations.
+        </p>
+      </div>
+
+      <div class="card card-emerald">
+        <h3>🔒 Institutional Security & Four-Eye Segregation</h3>
+        <p style="font-size: 12px; color: #475569;">
+          Mining operations demand rigorous governance to prevent misappropriation of high-value parts, fuel, and capital expenditures. LedgerCore implements:
+        </p>
+        <ul class="check-list" style="font-size: 12px;">
+          <li><strong>Granular Role-Based Access Control (RBAC):</strong> Concession mechanics cannot modify purchase orders; accounting clerks cannot alter maintenance schedules.</li>
+          <li><strong>Dual Authorization (Four-Eye Policy):</strong> Credit transfers and asset write-offs require secondary supervisor approval.</li>
+          <li><strong>Immutable SHA-256 Journal Sealing:</strong> Fiscal period closures produce cryptographically sealed blocks that cannot be altered retroactively.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 4: CEMAC / SYSCOHADA CORE ACCOUNTING                             -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <h2><span class="sec-num">03</span> CEMAC / SYSCOHADA Core Accounting & Compliance</h2>
+    
+    <p>
+      LedgerCore is built from the ground up to comply with the <strong>SYSCOHADA Revised Accounting Framework (Acte Uniforme relatif au Droit Comptable et à l'Information Financière - AUDCIF)</strong> governing all member states across the CEMAC and UEMOA economic communities. It combines statutory local compliance with international dual-standard reporting.
+    </p>
+
+    <div class="grid-3 avoid-break">
+      <div class="card">
+        <h4>SYSCOHADA Chart of Accounts</h4>
+        <p style="font-size: 12px; color: #475569; margin-top: 0.35rem;">
+          Native support for Classes 1 to 8 with specialized mining industry account mappings: Class 2 (Mineral exploration rights, concession development, stripping assets), Class 6 (Extraction reagents, royalties, rehabilitation provisions), Class 7 (Ore & concentrate sales).
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>Dual Reporting (OHADA + IFRS)</h4>
+        <p style="font-size: 12px; color: #475569; margin-top: 0.35rem;">
+          Simultaneous presentation of statutory OHADA financial statements alongside international IFRS adjustments: <strong>IFRS 6</strong> (Exploration & Evaluation), <strong>IFRS 16</strong> (Heavy Lease Capitalization), and <strong>IAS 37</strong> (Site Environmental Decommissioning).
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>Multi-Currency Treasury</h4>
+        <p style="font-size: 12px; color: #475569; margin-top: 0.35rem;">
+          Functional currency in <strong>XAF (Central African CFA Franc)</strong> with automated FX revaluation on USD, EUR, and GBP. Essential for international ore export contracts, fuel import hedging, and overseas equipment procurement contracts.
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-highlight avoid-break">
+      <h3>🏛️ CEMAC Tax, Mining Royalties & Statutory Withholdings Engine</h3>
+      <p style="font-size: 12.5px; color: #475569;">
+        Mining operators face complex withholding obligations under the CEMAC fiscal directives. LedgerCore automates calculation, deduction, reporting, and voucher generation for:
+      </p>
+      <div class="grid-3" style="margin-top: 0.5rem;">
+        <div style="background: var(--slate-50); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+          <strong style="font-size: 12px; color: var(--slate-900);">TSR (Taxe Spéciale / Non-Resident)</strong>
+          <p style="font-size: 11px; color: #64748b; margin: 0;">Automated 15% withholding on technical assistance, drilling consultants, and foreign mining contractors.</p>
+        </div>
+        <div style="background: var(--slate-50); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+          <strong style="font-size: 12px; color: var(--slate-900);">Mining Royalties (Redevance Minière)</strong>
+          <p style="font-size: 11px; color: #64748b; margin: 0;">Automated deduction tied directly to extracted ore grade and export FOB market value.</p>
+        </div>
+        <div style="background: var(--slate-50); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+          <strong style="font-size: 12px; color: var(--slate-900);">Local Vendor Withholding</strong>
+          <p style="font-size: 11px; color: #64748b; margin: 0;">Automated 5.5% / 2.2% local advance withholding tax with automated generation of official fiscal retention certificates.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshot-frame avoid-break">
+      <div class="screenshot-header">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="screenshot-title">SYSCOHADA Revised Financial Engine — General Ledger & Journal Postings</span>
+      </div>
+      <img src="images/screenshot_journal.png" class="screenshot-img" alt="General Ledger Postings">
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 5: HEAVY MINING ASSET MANAGEMENT                                 -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <h2><span class="sec-num">04</span> Heavy Mining Asset Management</h2>
+    
+    <p>
+      In mining operations, fixed assets represent the core of the balance sheet. LedgerCore manages the entire lifecycle of high-capital yellow machinery, fixed processing infrastructure, exploratory drill rigs, and site utility networks with industrial precision.
+    </p>
+
+    <div class="grid-2 avoid-break">
+      <div class="card card-highlight">
+        <h3>🚜 Fleet & Heavy Plant Governance</h3>
+        <p style="font-size: 12.5px; color: #475569;">
+          Complete custodial tracking for excavators (Caterpillar, Komatsu, Liebherr), 100-ton haul trucks, blast-hole drill rigs, primary jaw crushers, ball mills, and diesel generator farms.
+        </p>
+        <ul class="check-list" style="font-size: 12px;">
+          <li><strong>Componentized Asset Accounting:</strong> Compliant with IAS 16 & SYSCOHADA. The chassis, engine, and undercarriage of a haul truck are tracked as distinct components with separate depreciation schedules.</li>
+          <li><strong>Rugged Asset Identification:</strong> Support for industrial metal QR tags, RFID tags, and serial barcoding for rapid field auditing in harsh pit environments.</li>
+          <li><strong>Location & Pit Assignment:</strong> Real-time tracking of asset assignment across concessions, active pits, maintenance bays, and standby reserves.</li>
+        </ul>
+      </div>
+
+      <div class="card card-emerald">
+        <h3>⚡ Units of Production (UOP) Depreciation</h3>
+        <p style="font-size: 12.5px; color: #475569;">
+          Traditional time-based straight-line depreciation misrepresents heavy mining assets, as wear-and-tear correlates directly with operating intensity rather than calendar months.
+        </p>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0;">
+          <strong style="color: #166534; font-size: 12px;">Mining-Specific UOP Formula:</strong>
+          <div class="mono" style="font-size: 11px; color: #15803d; margin-top: 0.25rem;">
+            Depreciation = (Asset Cost - Salvage Value) × (Hours Run in Period / Total Rated Engine Life)
+          </div>
+        </div>
+        <p style="font-size: 12px; color: #475569; margin: 0;">
+          LedgerCore supports <strong>Units of Production (Engine Operating Hours or Mined Tonnage)</strong>, Accelerated Reducing Balance, and Straight-Line methods, updating Net Book Value (NBV) automatically every billing cycle.
+        </p>
+      </div>
+    </div>
+
+    <div class="screenshot-frame avoid-break">
+      <div class="screenshot-header">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="screenshot-title">Heavy Asset Register & Technical Asset Valuation</span>
+      </div>
+      <img src="images/screenshot_assets.png" class="screenshot-img" alt="Heavy Mining Asset Register">
+    </div>
+
+    <div class="grid-3 avoid-break">
+      <div class="kpi-card">
+        <div class="kpi-title">IFRS 16 Lease Recognition</div>
+        <div class="kpi-sub" style="font-size: 11px;">Right-of-Use (RoU) asset recognition for leased contractor fleets with automated interest & amortization schedules.</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Revaluation & Impairment</div>
+        <div class="kpi-sub" style="font-size: 11px;">Integrated impairment testing pursuant to IAS 36 when ore grade decreases or reserve estimates are adjusted.</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Decommissioning Provisions</div>
+        <div class="kpi-sub" style="font-size: 11px;">Capitalized site restoration asset with unwinding interest provisions under SYSCOHADA Class 19 provisions.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 6: PREVENTIVE & CORRECTIVE MAINTENANCE                          -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <h2><span class="sec-num">05</span> Fleet & Plant Maintenance Management</h2>
+    
+    <p>
+      In open-pit and processing operations, unscheduled equipment downtime halts downstream production, resulting in staggering financial losses. LedgerCore's Maintenance Engine enforces <strong>Preventive, Corrective, and Telematics-Driven Service Schedules</strong> directly connected to warehouse inventory and budget envelopes.
+    </p>
+
+    <div class="grid-3 avoid-break">
+      <div class="card card-highlight">
+        <h4>Operating Hours Tracking</h4>
+        <p style="font-size: 12px; color: #475569; margin-top: 0.35rem;">
+          Continuous engine-hour logging from telematics and pre-shift inspections. Automated dispatch of Service PM-1 (250h oil/filters), PM-2 (500h hydraulics), PM-3 (1,000h transmission), and PM-4 (2,000h major engine overhaul).
+        </p>
+      </div>
+
+      <div class="card card-emerald">
+        <h4>Work Order Lifecycle</h4>
+        <p style="font-size: 12px; color: #475569; margin-top: 0.35rem;">
+          End-to-end work order tracking: Fault reporting -> Technician assignment -> Parts reservation -> Workshop execution -> QA Supervisor inspection -> Commissioning sign-off and historical log archiving.
+        </p>
+      </div>
+
+      <div class="card card-sky">
+        <h4>Critical Safety Checklists</h4>
+        <p style="font-size: 12px; color: #475569; margin-top: 0.35rem;">
+          Integrated calibration and safety governance for weighbridges, laboratory spectrometry scales, pressure vessels, and hoisting cables. Restricts machine dispatch if statutory safety testing lapses.
+        </p>
+      </div>
+    </div>
+
+    <div class="screenshot-frame avoid-break">
+      <div class="screenshot-header">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="screenshot-title">Maintenance Work Order Dispatch & Fleet Health Cockpit</span>
+      </div>
+      <img src="images/screenshot_work_orders.png" class="screenshot-img" alt="Maintenance Work Orders">
+    </div>
+
+    <div class="card avoid-break" style="background: var(--slate-50); border: 1px solid var(--slate-200);">
+      <h3 style="margin-bottom: 0.5rem;">Mean Time Between Failures (MTBF) & Spare Parts Reservation</h3>
+      <p style="font-size: 12px; color: #475569; margin-bottom: 0.5rem;">
+        When a work order is generated for a major overhaul (e.g., replacement of excavator hydraulic pumps), the system immediately performs a dual validation:
+      </p>
+      <div class="grid-2">
+        <div style="background: #ffffff; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+          <strong style="font-size: 12px; color: var(--slate-900);">1. Warehouse Spare Parts Reservation:</strong>
+          <p style="font-size: 11.5px; color: #64748b; margin: 0.2rem 0 0 0;">
+            Locks critical parts in warehouse stock to ensure parts are not double-allocated to another bay. Deducts stock upon work order sign-off and posts consumption directly to SYSCOHADA Class 31/60 accounts.
+          </p>
+        </div>
+        <div style="background: #ffffff; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+          <strong style="font-size: 12px; color: var(--slate-900);">2. Budget Ceiling Check & Commitment:</strong>
+          <p style="font-size: 11.5px; color: #64748b; margin: 0.2rem 0 0 0;">
+            Instantly checks the pit's maintenance budget allocation. If sufficient credits exist, a real-time statutory commitment is registered, preventing unauthorized expenditures.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 7: BUDGETING & COMMITMENT ACCOUNTING                             -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <h2><span class="sec-num">06</span> Budgeting & Statutory Commitment Accounting</h2>
+    
+    <p>
+      Public authorities and international joint-venture partners in the extractive sector demand absolute budgetary discipline. LedgerCore embeds a complete <strong>Multi-Axial Budgeting and Real-Time Commitment Accounting (Comptabilité des Engagements)</strong> engine designed after sovereign West African institutional standards.
+    </p>
+
+    <div class="grid-2 avoid-break">
+      <div class="card card-highlight">
+        <h3>📊 Multi-Axial Budgetary Architecture</h3>
+        <p style="font-size: 12px; color: #475569;">
+          Budgets are not monolithic lines. LedgerCore structures envelopes across four simultaneous analytical axes:
+        </p>
+        <ul class="check-list" style="font-size: 12px;">
+          <li><strong>Concession / Mining Pit:</strong> e.g., Concession North, Pit Alpha, Tailings Dam, Processing Plant.</li>
+          <li><strong>SYSCOHADA Account:</strong> Class 6 (Opex: Reagents, Diesel, Maintenance, Salaries) and Class 2 (Capex: Mine Development, Heavy Fleet).</li>
+          <li><strong>Department / Cost Center:</strong> Drilling & Blasting, Haulage, Metallurgy, Safety & Environment, Administration.</li>
+          <li><strong>Funding Program / JV Partner:</strong> Own Equity, Commercial Debt, Joint Venture Shareholder accounts.</li>
+        </ul>
+      </div>
+
+      <div class="card card-emerald">
+        <h3>🛡️ Real-Time Overrun Blocking (Contrôle des Engagements)</h3>
+        <p style="font-size: 12px; color: #475569;">
+          In traditional ERPs, budgets are evaluated post-facto during invoice entry—when the liability has already been incurred.
+        </p>
+        <p style="font-size: 12px; color: #475569;">
+          LedgerCore enforces <strong>Pre-Commitment Hard Blocking</strong>: When a purchase order, contractor agreement, or major work order is submitted, the engine checks:
+        </p>
+        <div style="background: #f8fafc; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 11.5px; color: var(--slate-800); font-family: 'Fira Code', monospace;">
+          Available = Revised Dotation - Actual Spent - Pending Commitments
+        </div>
+        <p style="font-size: 11.5px; color: #b91c1c; font-weight: 600; margin-top: 0.35rem; margin-bottom: 0;">
+          ⛔ If Request > Available Balance: Transaction is strictly blocked.
+        </p>
+      </div>
+    </div>
+
+    <div class="screenshot-frame avoid-break">
+      <div class="screenshot-header">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="screenshot-title">LedgerCore Budgeting & Commitment Accounting Interface — XAF High-Visibility Controls</span>
+      </div>
+      <img src="images/screenshot_budgeting.png" class="screenshot-img" alt="Budgeting & Commitment Module">
+    </div>
+
+    <div class="grid-2 avoid-break">
+      <div class="card">
+        <h4>Virements de Crédits (Credit Transfers)</h4>
+        <p style="font-size: 12px; color: #475569; margin-top: 0.25rem;">
+          Formal decision-making workflow to transfer surplus appropriations from one operational line to another (e.g. reallocating exploration savings to heavy haulage maintenance) with dual-executive sign-off and complete justification audit history.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Multi-Currency Contract Reservations</h4>
+        <p style="font-size: 12px; color: #475569; margin-top: 0.25rem;">
+          Reserve multi-year drilling contracts in foreign currency (USD / EUR) with automatic conversion to functional currency XAF and variance monitoring against foreign exchange fluctuations.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 8: SEAMLESS CROSS-MODULE INTEGRATION                            -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <h2><span class="sec-num">07</span> Seamless Cross-Module Synergy: The Closed-Loop Workflow</h2>
+    
+    <p>
+      The crowning achievement of the LedgerCore platform is the <strong>absolute, zero-latency integration</strong> among Accounting, Asset Management, Fleet Maintenance, and Budgeting. The following real-world mining scenario illustrates this closed-loop harmony:
+    </p>
+
+    <div class="card avoid-break" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 1rem 1.25rem;">
+      <h3 style="color: #f59e0b; margin-bottom: 0.25rem;">Scenario: 100-Ton Haul Truck CAT 777G Engine Overhaul</h3>
+      <p style="font-size: 12px; color: #cbd5e1; margin: 0;">
+        Location: Concession Pit Alpha | Asset Tag: EQ-CAT-777G-04 | Trigger: Telematics Hour Counter reaches 2,000 Operating Hours
+      </p>
+    </div>
+
+    <div class="flow-steps avoid-break">
+      <!-- Step 1 -->
+      <div class="flow-step-item">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">
+            Telematics Trigger & Work Order Dispatch 
+            <span class="badge badge-gold tag-module">Maintenance</span>
+          </div>
+          <p class="step-desc">
+            The telemetry interface detects engine operating hours crossing 2,000 hours. The system automatically opens Preventive Work Order <strong>#WO-2026-0842</strong>, attaches the engine overhaul technical protocol, schedules workshop bay 3, and drafts the required parts list (gaskets, pistons, synthetic oils).
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="flow-step-item">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">
+            Real-Time Budget Ceiling Verification & Commitment 
+            <span class="badge badge-blue tag-module">Budgeting</span>
+          </div>
+          <p class="step-desc">
+            The overhaul requisition (est. 18,500,000 XAF) automatically queries the <em>Concession Pit Alpha Heavy Fleet Maintenance</em> budget line. The engine confirms available headroom and creates an active statutory commitment <strong>#BC-9402</strong>, instantly decrementing available credits and locking the funds.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="flow-step-item">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">
+            Componentized Asset Lifecycle & Meter Update 
+            <span class="badge badge-green tag-module">Asset Management</span>
+          </div>
+          <p class="step-desc">
+            Technicians scan the CAT 777G metal QR code. The system logs the replacement of Engine Component Serial #ENG-9982, updates the asset technical record, recalculates the remaining asset useful life under IAS 16 / SYSCOHADA, and resets the PM-4 counter to zero.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="flow-step-item">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">
+            Automated SYSCOHADA Journal Entries & Inventory Relieving 
+            <span class="badge badge-slate tag-module">Core Accounting</span>
+          </div>
+          <p class="step-desc">
+            Upon QA supervisor sign-off, the transactional posting engine automatically generates balanced double-entry vouchers: Debiting <strong>Account 6241 (Equipment Maintenance)</strong> or <strong>Account 231 (Asset Capital Enhancement)</strong> and Crediting <strong>Account 311 (Warehouse Spares Inventory)</strong> and <strong>Account 401 (Vendor Payable)</strong> with full VAT and withholding tax tracking. Zero manual bookkeeping required!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <table class="data-table avoid-break">
+      <thead>
+        <tr>
+          <th>Operational Event</th>
+          <th>Maintenance Module</th>
+          <th>Budgeting Module</th>
+          <th>Asset Module</th>
+          <th>Accounting Ledger</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Hour Threshold Reached</strong></td>
+          <td><span class="badge badge-green">Auto-Generate WO</span></td>
+          <td><span class="badge badge-blue">Check Dotation</span></td>
+          <td><span class="badge badge-slate">Log Operating Meter</span></td>
+          <td><span class="badge badge-slate">Idle</span></td>
+        </tr>
+        <tr>
+          <td><strong>Parts Requisition</strong></td>
+          <td><span class="badge badge-gold">Reserve Stock</span></td>
+          <td><span class="badge badge-blue">Commit Funds (#BC)</span></td>
+          <td><span class="badge badge-slate">Link Part to Asset Tag</span></td>
+          <td><span class="badge badge-slate">Pending Voucher</span></td>
+        </tr>
+        <tr>
+          <td><strong>Work Order Execution</strong></td>
+          <td><span class="badge badge-green">Log Labor & QA Check</span></td>
+          <td><span class="badge badge-blue">Hold Reserved Amount</span></td>
+          <td><span class="badge badge-slate">Update Component S/N</span></td>
+          <td><span class="badge badge-slate">WIP Recorded</span></td>
+        </tr>
+        <tr>
+          <td><strong>Final Sign-Off</strong></td>
+          <td><span class="badge badge-green">Close & Certify WO</span></td>
+          <td><span class="badge badge-blue">Liquidate Commitment</span></td>
+          <td><span class="badge badge-slate">Update Carrying Value</span></td>
+          <td><span class="badge badge-green">Auto-Post SYSCOHADA</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 9: GOVERNANCE, AUDIT & IMPLEMENTATION ROADMAP                   -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <h2><span class="sec-num">08</span> Security, Governance & Concession Rollout Roadmap</h2>
+    
+    <p>
+      Deploying an enterprise system across operating concessions requires a structured, risk-mitigated implementation methodology. LedgerCore has been deployed in demanding industrial environments with zero operational disruption.
+    </p>
+
+    <div class="grid-2 avoid-break">
+      <div class="card card-highlight">
+        <h3>🔒 Mining Enterprise Governance Matrix</h3>
+        <ul class="check-list" style="font-size: 12px;">
+          <li><strong>Zero-Trust Architecture:</strong> TLS 1.3 encryption across all network tiers and automated session timeout on unattended terminals.</li>
+          <li><strong>Cryptographic Fiscal Locking:</strong> SYSCOHADA periods are sealed using SHA-256 digital signatures, ensuring complete immunity against retroactive tampering.</li>
+          <li><strong>Complete Traceability:</strong> Every asset movement, meter reading, work order sign-off, and credit transfer logs the user ID, timestamp, IP address, and previous values.</li>
+          <li><strong>Disaster Recovery & Redundancy:</strong> Automated hot standby replication with Point-In-Time Recovery (PITR) guaranteeing zero transactional loss.</li>
+        </ul>
+      </div>
+
+      <div class="card card-emerald">
+        <h3>🚀 Turnkey 12-Week Implementation Plan</h3>
+        <div style="font-size: 12px; color: #475569;">
+          <div style="margin-bottom: 0.4rem;">
+            <strong style="color: var(--slate-900);">Weeks 1–3: Scoping & Chart of Accounts Harmonization</strong>
+            <p style="font-size: 11px; margin: 0; color: #64748b;">Mapping existing mining cost centers, pits, and SYSCOHADA revised accounts.</p>
+          </div>
+          <div style="margin-bottom: 0.4rem;">
+            <strong style="color: var(--slate-900);">Weeks 4–6: Master Asset & Fleet Ingestion</strong>
+            <p style="font-size: 11px; margin: 0; color: #64748b;">Tagging heavy machinery, importing historical depreciation & component records.</p>
+          </div>
+          <div style="margin-bottom: 0.4rem;">
+            <strong style="color: var(--slate-900);">Weeks 7–9: Maintenance & Budget Pilot</strong>
+            <p style="font-size: 11px; margin: 0; color: #64748b;">Workshop terminal rollout, telematics configuration, and commitment ceiling rules.</p>
+          </div>
+          <div>
+            <strong style="color: var(--slate-900);">Weeks 10–12: Concession Go-Live & Corporate Sign-Off</strong>
+            <p style="font-size: 11px; margin: 0; color: #64748b;">Parallel run validation, four-eye audit verification, and full production cutover.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card avoid-break" style="margin-top: 1rem; border-top: 3px solid var(--primary);">
+      <h3 style="margin-bottom: 0.35rem;">Conclusion & Next Steps</h3>
+      <p style="font-size: 12.5px; color: #475569;">
+        LedgerCore provides mining operators with the certainty, control, and statutory compliance required to thrive in the CEMAC region. By eliminating the disconnect between pit maintenance, asset valuation, and financial ledgering, your enterprise gains an unbeatable operational advantage.
+      </p>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--slate-200);">
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--slate-900);">Prepared by: Enterprise Software Solutions Team</div>
+          <div style="font-size: 11px; color: #64748b;">Specialized in Industrial, Extractive & CEMAC Financial Systems</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--primary-dark);">Status: Approved for Client Presentation</div>
+          <div style="font-size: 10px; color: #94a3b8;">Document ID: LC-MIN-PROP-2026-V3.2</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
