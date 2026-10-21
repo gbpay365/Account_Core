@@ -170,6 +170,15 @@ async def budgeting_page() -> None:
         'transfers': [],
     }
 
+    refreshers = {}
+
+    def _refresh_all() -> None:
+        for fn in list(refreshers.values()):
+            try:
+                fn()
+            except Exception:
+                pass
+
     async def reload_data() -> None:
         budgets_resp = await api.safe(api.get('/budgets', fiscalYearId=state['fy_id']), default={'rows': []})
         state['budgets'] = budgets_resp.get('rows', [])
@@ -198,11 +207,253 @@ async def budgeting_page() -> None:
     async def _change_fy(new_id: int) -> None:
         state['fy_id'] = new_id
         await reload_data()
-        _render_kpis.refresh()
-        _render_exec_tab.refresh()
-        _render_plans_tab.refresh()
-        _render_comm_tab.refresh()
-        _render_trans_tab.refresh()
+        _refresh_all()
+
+    # --- MODALS & ACTION HANDLERS --------------------------------------------
+
+    async def _handle_approve_budget() -> None:
+        if not state['active_budget']:
+            return
+        b_id = state['active_budget']['id']
+        await api.safe(api.post(f'/budgets/{b_id}/approve', {}))
+        ui.notify(_loc('msg_budget_approved'), type='positive')
+        await reload_data()
+        _refresh_all()
+
+    async def _handle_approve_comm(comm_id: int) -> None:
+        await api.safe(api.post(f'/budget-commitments/{comm_id}/approve', {}))
+        ui.notify(_loc('msg_comm_approved', ref=f"#{comm_id}"), type='positive')
+        await reload_data()
+        _refresh_all()
+
+    async def _handle_liquidate_comm(comm_id: int) -> None:
+        await api.safe(api.post(f'/budget-commitments/{comm_id}/liquidate', {}))
+        ui.notify(_loc('msg_comm_liquidated', ref=f"#{comm_id}"), type='positive')
+        await reload_data()
+        _refresh_all()
+
+    async def _handle_approve_transfer(tr_id: int) -> None:
+        res = await api.safe(api.post(f'/budget-transfers/{tr_id}/approve', {}))
+        if res and res.get('ok'):
+            ui.notify(_loc('msg_transfer_approved', ref=f"#{tr_id}"), type='positive')
+        await reload_data()
+        _refresh_all()
+
+    # --- Modal: New Budget Commitment
+    def _open_new_comm_modal() -> None:
+        b = state['active_budget']
+        if not b or not b.get('lines'):
+            ui.notify('No active budget lines available.', type='warning')
+            return
+
+        line_options = {}
+        line_lookup = {}
+        for l in b.get('lines', []):
+            b_type = (l.get('budget_type') or 'opex').upper()
+            avail = l.get('available_balance') if l.get('available_balance') is not None else l.get('amount', 0)
+            label = f"{l.get('account_code')} ({b_type}) - Avail: {avail} {currency}"
+            line_options[l['id']] = label
+            line_lookup[l['id']] = l
+
+        first_line_id = list(line_options.keys())[0]
+
+        asset_options = {0: '— Aucun (Dépense de fonctionnement) —'}
+        for a in assets_list:
+            asset_options[a['id']] = f"🏷️ {a.get('tag')} - {a.get('name')}"
+
+        vendor_options = {0: '— Aucun fournisseur assigné —'}
+        for v in vendors:
+            vendor_options[v['id']] = v.get('legal_name') or v.get('trade_name')
+
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
+            ui.label(_loc('dialog_comm_title')).classes('text-lg font-bold text-slate-800')
+
+            sel_line = ui.select(line_options, value=first_line_id, label=_loc('lbl_select_line')).props('outlined dense options-dense').classes('w-full')
+            desc_in = ui.input(label=_loc('col_desc'), placeholder='Ex: Achat consommables laboratoire').props('outlined dense').classes('w-full')
+            vend_sel = ui.select(vendor_options, value=0, label=_loc('lbl_vendor')).props('outlined dense options-dense').classes('w-full')
+            asset_sel = ui.select(asset_options, value=0, label=_loc('lbl_asset')).props('outlined dense options-dense').classes('w-full')
+            amt_in = ui.number(label=_loc('lbl_amount'), value=1000000, format='%.0f').props('outlined dense').classes('w-full')
+
+            # Real-time availability indicator
+            status_label = ui.label('').classes('text-xs font-semibold')
+
+            def update_status() -> None:
+                cur_line = line_lookup.get(sel_line.value)
+                if not cur_line:
+                    return
+                # extract raw avail
+                avail_val = float(str(cur_line.get('available_balance', '0')).replace(',', ''))
+                req_val = float(amt_in.value or 0)
+                if req_val > avail_val:
+                    status_label.text = f"⚠️ Dépassement budgétaire ! Disponible : {w.money(avail_val, currency)} {currency} (Déficit : {w.money(req_val - avail_val, currency)})"
+                    status_label.classes('text-rose-600', remove='text-emerald-600')
+                else:
+                    status_label.text = f"✅ Crédit suffisant. Solde restant après engagement : {w.money(avail_val - req_val, currency)} {currency}"
+                    status_label.classes('text-emerald-600', remove='text-rose-600')
+
+            sel_line.on_value_change(update_status)
+            amt_in.on_value_change(update_status)
+            update_status()
+
+            with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
+
+                async def submit_comm() -> None:
+                    if not desc_in.value or not amt_in.value:
+                        ui.notify('Please fill required fields.', type='warning')
+                        return
+                    payload = {
+                        'budgetLineId': sel_line.value,
+                        'description': desc_in.value.strip(),
+                        'vendorId': vend_sel.value if vend_sel.value else None,
+                        'assetId': asset_sel.value if asset_sel.value else None,
+                        'amount': float(amt_in.value),
+                        'committedDate': datetime.date.today().isoformat(),
+                    }
+                    res = await api.safe(api.post('/budget-commitments', payload))
+                    if res and res.get('commitmentNumber'):
+                        ui.notify(_loc('msg_comm_success', ref=res['commitmentNumber']), type='positive')
+                        dlg.close()
+                        await reload_data()
+                        _refresh_all()
+
+                ui.button('Confirm & Commit', icon='check', on_click=submit_comm).props('unelevated color=primary')
+
+        dlg.open()
+
+    # --- Modal: New Credit Transfer (Virement)
+    def _open_new_transfer_modal() -> None:
+        b = state['active_budget']
+        if not b or not b.get('lines') or len(b.get('lines', [])) < 2:
+            ui.notify('At least two budget lines are required to execute a credit transfer.', type='warning')
+            return
+
+        lines = b.get('lines', [])
+        src_opts = {l['id']: f"{l.get('account_code')} - Avail: {l.get('available_balance', l.get('amount', 0))} {currency}" for l in lines}
+        tgt_opts = {l['id']: f"{l.get('account_code')} ({(l.get('budget_type') or 'opex').upper()}) - {l.get('account_name', '')}" for l in lines}
+
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
+            ui.label(_loc('dialog_transfer_title')).classes('text-lg font-bold text-slate-800')
+
+            src_sel = ui.select(src_opts, value=lines[0]['id'], label=_loc('lbl_src_line')).props('outlined dense options-dense').classes('w-full')
+            tgt_sel = ui.select(tgt_opts, value=lines[1]['id'], label=_loc('lbl_tgt_line')).props('outlined dense options-dense').classes('w-full')
+            amt_in = ui.number(label=_loc('lbl_amount'), value=500000, format='%.0f').props('outlined dense').classes('w-full')
+            reason_in = ui.input(label=_loc('lbl_reason'), placeholder='Ex: Renforcement maintenance suite à panne majeure').props('outlined dense').classes('w-full')
+
+            with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
+
+                async def submit_tr() -> None:
+                    if src_sel.value == tgt_sel.value:
+                        ui.notify('Source and target lines must be distinct.', type='warning')
+                        return
+                    if not reason_in.value or not amt_in.value:
+                        ui.notify('Please fill required fields.', type='warning')
+                        return
+                    payload = {
+                        'budgetId': b['id'],
+                        'sourceLineId': src_sel.value,
+                        'targetLineId': tgt_sel.value,
+                        'amount': float(amt_in.value),
+                        'reason': reason_in.value.strip(),
+                    }
+                    res = await api.safe(api.post('/budget-transfers', payload))
+                    if res and res.get('transferNumber'):
+                        ui.notify(_loc('msg_transfer_success', ref=res['transferNumber']), type='positive')
+                        dlg.close()
+                        await reload_data()
+                        _refresh_all()
+
+                ui.button('Authorize Transfer', icon='swap_horiz', on_click=submit_tr).props('unelevated color=primary')
+
+        dlg.open()
+
+    # --- Modal: Add Budget Line
+    def _open_add_line_modal() -> None:
+        b = state['active_budget']
+        if not b:
+            ui.notify('Please create or select a budget plan first.', type='warning')
+            return
+
+        acct_opts = {a['id']: f"{a['code']} - {a['name']}" for a in budgetable_accounts}
+        cc_opts = {0: '— Direction Générale (Global) —'}
+        for c in cost_centers:
+            cc_opts[c['id']] = f"{c['code']} - {c['name']}"
+
+        prog_opts = {0: '— Fonds Propres & Recettes —'}
+        for p in funding_programs:
+            prog_opts[p['id']] = f"{p['code']} - {p['name']}"
+
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
+            ui.label(_loc('dialog_line_title')).classes('text-lg font-bold text-slate-800')
+
+            acct_sel = ui.select(acct_opts, value=list(acct_opts.keys())[0] if acct_opts else None, label=_loc('col_account')).props('outlined dense options-dense').classes('w-full')
+            type_sel = ui.select({'opex': _loc('type_opex'), 'capex': _loc('type_capex'), 'maintenance': _loc('type_maint'), 'revenue': _loc('type_rev')}, value='opex', label=_loc('col_type')).props('outlined dense').classes('w-full')
+            cc_sel = ui.select(cc_opts, value=0, label=_loc('col_dept')).props('outlined dense options-dense').classes('w-full')
+            prog_sel = ui.select(prog_opts, value=0, label=_loc('col_program')).props('outlined dense options-dense').classes('w-full')
+            amt_in = ui.number(label=_loc('lbl_amount'), value=5000000, format='%.0f').props('outlined dense').classes('w-full')
+            ctrl_sel = ui.select({'strict_block': _loc('ctrl_strict'), 'warning': _loc('ctrl_warning')}, value='strict_block', label=_loc('lbl_ctrl_mode')).props('outlined dense').classes('w-full')
+            notes_in = ui.input(label='Notes / Justification').props('outlined dense').classes('w-full')
+
+            with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
+
+                async def submit_line() -> None:
+                    if not acct_sel.value or not amt_in.value:
+                        ui.notify('Please select account and amount.', type='warning')
+                        return
+                    payload = {
+                        'accountId': acct_sel.value,
+                        'budgetType': type_sel.value,
+                        'costCenterId': cc_sel.value if cc_sel.value else None,
+                        'programId': prog_sel.value if prog_sel.value else None,
+                        'amount': float(amt_in.value),
+                        'controlMode': ctrl_sel.value,
+                        'notes': notes_in.value or None,
+                    }
+                    res = await api.safe(api.post(f"/budgets/{b['id']}/lines", payload))
+                    if res and res.get('id'):
+                        ui.notify(_loc('msg_line_added'), type='positive')
+                        dlg.close()
+                        await reload_data()
+                        _refresh_all()
+
+                ui.button('Save Line', icon='save', on_click=submit_line).props('unelevated color=primary')
+
+        dlg.open()
+
+    # --- Modal: New Budget Master Plan
+    def _open_new_budget_modal() -> None:
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-md p-6 gap-4'):
+            ui.label(_loc('dialog_budget_title')).classes('text-lg font-bold text-slate-800')
+
+            code_in = ui.input(label=_loc('lbl_code'), value='BUD-2026-REV').props('outlined dense').classes('w-full')
+            name_in = ui.input(label=_loc('lbl_name'), value='Budget Rectificatif 2026').props('outlined dense').classes('w-full')
+            notes_in = ui.input(label='Notes / Délibération').props('outlined dense').classes('w-full')
+
+            with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
+
+                async def submit_budget() -> None:
+                    if not code_in.value or not name_in.value:
+                        ui.notify('Please fill code and name.', type='warning')
+                        return
+                    payload = {
+                        'fiscalYearId': state['fy_id'],
+                        'code': code_in.value.strip(),
+                        'name': name_in.value.strip(),
+                        'notes': notes_in.value or None,
+                    }
+                    res = await api.safe(api.post('/budgets', payload))
+                    if res and res.get('id'):
+                        ui.notify('Budget plan created.', type='positive')
+                        dlg.close()
+                        await reload_data()
+                        _refresh_all()
+
+                ui.button('Create Plan', icon='add', on_click=submit_budget).props('unelevated color=primary')
+
+        dlg.open()
 
     def _header_actions() -> None:
         with ui.row().classes('items-center gap-3'):
@@ -271,6 +522,7 @@ async def budgeting_page() -> None:
                     ui.label('consumed').classes('text-xs text-slate-400')
                 ui.linear_progress(value=min(1.0, pct / 100.0), size='8px').props('rounded ' + ('color=negative' if pct > 90 else 'color=primary'))
 
+    refreshers['kpis'] = _render_kpis.refresh
     _render_kpis()
 
     # Navigation Tabs
@@ -370,9 +622,9 @@ async def budgeting_page() -> None:
             async def _change_type(val: str) -> None:
                 state['budget_type'] = val if val else None
                 await reload_data()
-                _render_kpis.refresh()
-                _render_exec_tab.refresh()
+                _refresh_all()
 
+            refreshers['exec'] = _render_exec_tab.refresh
             _render_exec_tab()
 
         # ---------------------------------------------------------------------
@@ -431,6 +683,7 @@ async def budgeting_page() -> None:
 
                     ui.table(columns=line_cols, rows=line_rows, pagination=15).classes('w-full lc-table')
 
+            refreshers['plans'] = _render_plans_tab.refresh
             _render_plans_tab()
 
         # ---------------------------------------------------------------------
@@ -499,6 +752,7 @@ async def budgeting_page() -> None:
                     tbl.on('approve-comm', lambda e: _handle_approve_comm(e.args))
                     tbl.on('liquidate-comm', lambda e: _handle_liquidate_comm(e.args))
 
+            refreshers['comm'] = _render_comm_tab.refresh
             _render_comm_tab()
 
         # ---------------------------------------------------------------------
@@ -559,261 +813,6 @@ async def budgeting_page() -> None:
 
                     tr_table.on('approve-transfer', lambda e: _handle_approve_transfer(e.args))
 
+            refreshers['trans'] = _render_trans_tab.refresh
             _render_trans_tab()
 
-    # --- MODALS & ACTION HANDLERS --------------------------------------------
-
-    async def _handle_approve_budget() -> None:
-        if not state['active_budget']:
-            return
-        b_id = state['active_budget']['id']
-        await api.safe(api.post(f'/budgets/{b_id}/approve', {}))
-        ui.notify(_loc('msg_budget_approved'), type='positive')
-        await reload_data()
-        _render_plans_tab.refresh()
-
-    async def _handle_approve_comm(comm_id: int) -> None:
-        await api.safe(api.post(f'/budget-commitments/{comm_id}/approve', {}))
-        ui.notify(_loc('msg_comm_approved', ref=f"#{comm_id}"), type='positive')
-        await reload_data()
-        _render_kpis.refresh()
-        _render_comm_tab.refresh()
-        _render_exec_tab.refresh()
-
-    async def _handle_liquidate_comm(comm_id: int) -> None:
-        await api.safe(api.post(f'/budget-commitments/{comm_id}/liquidate', {}))
-        ui.notify(_loc('msg_comm_liquidated', ref=f"#{comm_id}"), type='positive')
-        await reload_data()
-        _render_kpis.refresh()
-        _render_comm_tab.refresh()
-        _render_exec_tab.refresh()
-
-    async def _handle_approve_transfer(tr_id: int) -> None:
-        res = await api.safe(api.post(f'/budget-transfers/{tr_id}/approve', {}))
-        if res and res.get('ok'):
-            ui.notify(_loc('msg_transfer_approved', ref=f"#{tr_id}"), type='positive')
-        await reload_data()
-        _render_kpis.refresh()
-        _render_trans_tab.refresh()
-        _render_plans_tab.refresh()
-        _render_exec_tab.refresh()
-
-    # --- Modal: New Budget Commitment
-    def _open_new_comm_modal() -> None:
-        b = state['active_budget']
-        if not b or not b.get('lines'):
-            ui.notify('No active budget lines available.', type='warning')
-            return
-
-        line_options = {}
-        line_lookup = {}
-        for l in b.get('lines', []):
-            b_type = (l.get('budget_type') or 'opex').upper()
-            avail = l.get('available_balance') if l.get('available_balance') is not None else l.get('amount', 0)
-            label = f"{l.get('account_code')} ({b_type}) - Avail: {avail} {currency}"
-            line_options[l['id']] = label
-            line_lookup[l['id']] = l
-
-        first_line_id = list(line_options.keys())[0]
-
-        asset_options = {0: '— Aucun (Dépense de fonctionnement) —'}
-        for a in assets_list:
-            asset_options[a['id']] = f"🏷️ {a.get('tag')} - {a.get('name')}"
-
-        vendor_options = {0: '— Aucun fournisseur assigné —'}
-        for v in vendors:
-            vendor_options[v['id']] = v.get('legal_name') or v.get('trade_name')
-
-        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
-            ui.label(_loc('dialog_comm_title')).classes('text-lg font-bold text-slate-800')
-
-            sel_line = ui.select(line_options, value=first_line_id, label=_loc('lbl_select_line')).props('outlined dense options-dense').classes('w-full')
-            desc_in = ui.input(label=_loc('col_desc'), placeholder='Ex: Achat consommables laboratoire').props('outlined dense').classes('w-full')
-            vend_sel = ui.select(vendor_options, value=0, label=_loc('lbl_vendor')).props('outlined dense options-dense').classes('w-full')
-            asset_sel = ui.select(asset_options, value=0, label=_loc('lbl_asset')).props('outlined dense options-dense').classes('w-full')
-            amt_in = ui.number(label=_loc('lbl_amount'), value=1000000, format='%.0f').props('outlined dense').classes('w-full')
-
-            # Real-time availability indicator
-            status_label = ui.label('').classes('text-xs font-semibold')
-
-            def update_status() -> None:
-                cur_line = line_lookup.get(sel_line.value)
-                if not cur_line:
-                    return
-                # extract raw avail
-                avail_val = float(str(cur_line.get('available_balance', '0')).replace(',', ''))
-                req_val = float(amt_in.value or 0)
-                if req_val > avail_val:
-                    status_label.text = f"⚠️ Dépassement budgétaire ! Disponible : {w.money(avail_val, currency)} {currency} (Déficit : {w.money(req_val - avail_val, currency)})"
-                    status_label.classes('text-rose-600', remove='text-emerald-600')
-                else:
-                    status_label.text = f"✅ Crédit suffisant. Solde restant après engagement : {w.money(avail_val - req_val, currency)} {currency}"
-                    status_label.classes('text-emerald-600', remove='text-rose-600')
-
-            sel_line.on_value_change(update_status)
-            amt_in.on_value_change(update_status)
-            update_status()
-
-            with ui.row().classes('w-full justify-end gap-2 mt-2'):
-                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
-
-                async def submit_comm() -> None:
-                    if not desc_in.value or not amt_in.value:
-                        ui.notify('Please fill required fields.', type='warning')
-                        return
-                    payload = {
-                        'budgetLineId': sel_line.value,
-                        'description': desc_in.value.strip(),
-                        'vendorId': vend_sel.value if vend_sel.value else None,
-                        'assetId': asset_sel.value if asset_sel.value else None,
-                        'amount': float(amt_in.value),
-                        'committedDate': datetime.date.today().isoformat(),
-                    }
-                    res = await api.safe(api.post('/budget-commitments', payload))
-                    if res and res.get('commitmentNumber'):
-                        ui.notify(_loc('msg_comm_success', ref=res['commitmentNumber']), type='positive')
-                        dlg.close()
-                        await reload_data()
-                        _render_kpis.refresh()
-                        _render_comm_tab.refresh()
-                        _render_exec_tab.refresh()
-
-                ui.button('Confirm & Commit', icon='check', on_click=submit_comm).props('unelevated color=primary')
-
-        dlg.open()
-
-    # --- Modal: New Credit Transfer (Virement)
-    def _open_new_transfer_modal() -> None:
-        b = state['active_budget']
-        if not b or not b.get('lines') or len(b.get('lines', [])) < 2:
-            ui.notify('At least two budget lines are required to execute a credit transfer.', type='warning')
-            return
-
-        lines = b.get('lines', [])
-        src_opts = {l['id']: f"{l.get('account_code')} - Avail: {l.get('available_balance', l.get('amount', 0))} {currency}" for l in lines}
-        tgt_opts = {l['id']: f"{l.get('account_code')} ({(l.get('budget_type') or 'opex').upper()}) - {l.get('account_name', '')}" for l in lines}
-
-        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
-            ui.label(_loc('dialog_transfer_title')).classes('text-lg font-bold text-slate-800')
-
-            src_sel = ui.select(src_opts, value=lines[0]['id'], label=_loc('lbl_src_line')).props('outlined dense options-dense').classes('w-full')
-            tgt_sel = ui.select(tgt_opts, value=lines[1]['id'], label=_loc('lbl_tgt_line')).props('outlined dense options-dense').classes('w-full')
-            amt_in = ui.number(label=_loc('lbl_amount'), value=500000, format='%.0f').props('outlined dense').classes('w-full')
-            reason_in = ui.input(label=_loc('lbl_reason'), placeholder='Ex: Renforcement maintenance suite à panne majeure').props('outlined dense').classes('w-full')
-
-            with ui.row().classes('w-full justify-end gap-2 mt-2'):
-                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
-
-                async def submit_tr() -> None:
-                    if src_sel.value == tgt_sel.value:
-                        ui.notify('Source and target lines must be distinct.', type='warning')
-                        return
-                    if not reason_in.value or not amt_in.value:
-                        ui.notify('Please fill required fields.', type='warning')
-                        return
-                    payload = {
-                        'budgetId': b['id'],
-                        'sourceLineId': src_sel.value,
-                        'targetLineId': tgt_sel.value,
-                        'amount': float(amt_in.value),
-                        'reason': reason_in.value.strip(),
-                    }
-                    res = await api.safe(api.post('/budget-transfers', payload))
-                    if res and res.get('transferNumber'):
-                        ui.notify(_loc('msg_transfer_success', ref=res['transferNumber']), type='positive')
-                        dlg.close()
-                        await reload_data()
-                        _render_trans_tab.refresh()
-
-                ui.button('Authorize Transfer', icon='swap_horiz', on_click=submit_tr).props('unelevated color=primary')
-
-        dlg.open()
-
-    # --- Modal: Add Budget Line
-    def _open_add_line_modal() -> None:
-        b = state['active_budget']
-        if not b:
-            ui.notify('Please create or select a budget plan first.', type='warning')
-            return
-
-        acct_opts = {a['id']: f"{a['code']} - {a['name']}" for a in budgetable_accounts}
-        cc_opts = {0: '— Direction Générale (Global) —'}
-        for c in cost_centers:
-            cc_opts[c['id']] = f"{c['code']} - {c['name']}"
-
-        prog_opts = {0: '— Fonds Propres & Recettes —'}
-        for p in funding_programs:
-            prog_opts[p['id']] = f"{p['code']} - {p['name']}"
-
-        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
-            ui.label(_loc('dialog_line_title')).classes('text-lg font-bold text-slate-800')
-
-            acct_sel = ui.select(acct_opts, value=list(acct_opts.keys())[0] if acct_opts else None, label=_loc('col_account')).props('outlined dense options-dense').classes('w-full')
-            type_sel = ui.select({'opex': _loc('type_opex'), 'capex': _loc('type_capex'), 'maintenance': _loc('type_maint'), 'revenue': _loc('type_rev')}, value='opex', label=_loc('col_type')).props('outlined dense').classes('w-full')
-            cc_sel = ui.select(cc_opts, value=0, label=_loc('col_dept')).props('outlined dense options-dense').classes('w-full')
-            prog_sel = ui.select(prog_opts, value=0, label=_loc('col_program')).props('outlined dense options-dense').classes('w-full')
-            amt_in = ui.number(label=_loc('lbl_amount'), value=5000000, format='%.0f').props('outlined dense').classes('w-full')
-            ctrl_sel = ui.select({'strict_block': _loc('ctrl_strict'), 'warning': _loc('ctrl_warning')}, value='strict_block', label=_loc('lbl_ctrl_mode')).props('outlined dense').classes('w-full')
-            notes_in = ui.input(label='Notes / Justification').props('outlined dense').classes('w-full')
-
-            with ui.row().classes('w-full justify-end gap-2 mt-2'):
-                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
-
-                async def submit_line() -> None:
-                    if not acct_sel.value or not amt_in.value:
-                        ui.notify('Please select account and amount.', type='warning')
-                        return
-                    payload = {
-                        'accountId': acct_sel.value,
-                        'budgetType': type_sel.value,
-                        'costCenterId': cc_sel.value if cc_sel.value else None,
-                        'programId': prog_sel.value if prog_sel.value else None,
-                        'amount': float(amt_in.value),
-                        'controlMode': ctrl_sel.value,
-                        'notes': notes_in.value or None,
-                    }
-                    res = await api.safe(api.post(f"/budgets/{b['id']}/lines", payload))
-                    if res and res.get('id'):
-                        ui.notify(_loc('msg_line_added'), type='positive')
-                        dlg.close()
-                        await reload_data()
-                        _render_kpis.refresh()
-                        _render_plans_tab.refresh()
-                        _render_exec_tab.refresh()
-
-                ui.button('Save Line', icon='save', on_click=submit_line).props('unelevated color=primary')
-
-        dlg.open()
-
-    # --- Modal: New Budget Master Plan
-    def _open_new_budget_modal() -> None:
-        with ui.dialog() as dlg, ui.card().classes('w-full max-w-md p-6 gap-4'):
-            ui.label(_loc('dialog_budget_title')).classes('text-lg font-bold text-slate-800')
-
-            code_in = ui.input(label=_loc('lbl_code'), value='BUD-2026-REV').props('outlined dense').classes('w-full')
-            name_in = ui.input(label=_loc('lbl_name'), value='Budget Rectificatif 2026').props('outlined dense').classes('w-full')
-            notes_in = ui.input(label='Notes / Délibération').props('outlined dense').classes('w-full')
-
-            with ui.row().classes('w-full justify-end gap-2 mt-2'):
-                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
-
-                async def submit_budget() -> None:
-                    if not code_in.value or not name_in.value:
-                        ui.notify('Please fill code and name.', type='warning')
-                        return
-                    payload = {
-                        'fiscalYearId': state['fy_id'],
-                        'code': code_in.value.strip(),
-                        'name': name_in.value.strip(),
-                        'notes': notes_in.value or None,
-                    }
-                    res = await api.safe(api.post('/budgets', payload))
-                    if res and res.get('id'):
-                        ui.notify('Budget plan created.', type='positive')
-                        dlg.close()
-                        await reload_data()
-                        _render_plans_tab.refresh()
-
-                ui.button('Create Plan', icon='add', on_click=submit_budget).props('unelevated color=primary')
-
-        dlg.open()
