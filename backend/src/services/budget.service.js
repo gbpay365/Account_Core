@@ -83,7 +83,6 @@ export async function getBudgetById({ query, queryOne }, orgId, budgetId) {
             cc.name_en AS cost_center_name_en,
             fp.code AS program_code,
             fp.name AS program_name,
-            fp.name_en AS program_name_en,
             -- Committed expenditures (approved or draft commitments)
             COALESCE(comm.total_committed, 0) AS total_committed,
             -- Actual general ledger postings
@@ -243,7 +242,6 @@ export async function listCommitments({ query }, orgId, { budgetId = null, budge
             v.name AS vendor_name,
             ast.asset_tag AS asset_tag,
             ast.name AS asset_name,
-            ast.name_en AS asset_name_en,
             u.full_name AS approver_name
        FROM budget_commitments bc
        JOIN budget_lines bl ON bl.id = bc.budget_line_id
@@ -621,7 +619,6 @@ export async function getBudgetExecutionReport({ query, queryOne }, orgId, { fis
       fp.id AS program_id,
       fp.code AS program_code,
       fp.name AS program_name,
-      fp.name_en AS program_name_en,
       COALESCE(b_sub.budget_amount, 0) AS budget_amount,
       COALESCE(b_sub.initial_budget, 0) AS initial_budget,
       COALESCE(comm_sub.committed_amount, 0) AS committed_amount,
