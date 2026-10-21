@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #d97706; /* Mining Gold */
+      --primary: #d97706; /* Industrial Mining Gold */
       --primary-dark: #b45309;
       --primary-light: #fef3c7;
       --copper: #ea580c;
@@ -26,6 +26,9 @@
       --slate-800: #1e293b;
       --slate-900: #0f172a;
       --sky: #0284c7;
+      --sky-light: #e0f2fe;
+      --indigo: #4f46e5;
+      --indigo-light: #e0e7ff;
     }
 
     * {
@@ -46,15 +49,15 @@
     /* Strict A4 Print Page Geometry */
     @page {
       size: A4 portrait;
-      margin: 14mm 13mm 14mm 13mm;
+      margin: 13mm 13mm 13mm 13mm;
     }
 
     .page {
       page-break-after: always;
       page-break-inside: avoid;
       break-inside: avoid;
-      height: 269mm; /* Exact printable height inside 297mm A4 minus margins */
-      max-height: 269mm;
+      height: 271mm; /* Exact printable height inside 297mm A4 */
+      max-height: 271mm;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -235,13 +238,13 @@
       margin: 0;
     }
 
-    /* Cards & Layout */
+    /* Cards & Containers */
     .card {
       background: #ffffff;
       border: 1px solid var(--slate-200);
       border-radius: 8px;
       padding: 0.75rem 0.9rem;
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.55rem;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
     }
 
@@ -259,13 +262,19 @@
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 0.6rem;
+      gap: 0.55rem;
     }
 
     .grid-4 {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 0.5rem;
+    }
+
+    .grid-5 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.45rem;
     }
 
     /* KPI Callout Boxes */
@@ -301,91 +310,28 @@
       line-height: 1.25;
     }
 
-    /* Architecture Diagram */
-    .arch-container {
-      background: #0f172a;
-      color: #ffffff;
-      border-radius: 8px;
-      padding: 0.8rem 0.9rem;
-      margin: 0.5rem 0;
-      border: 1px solid #1e293b;
-    }
-
-    .arch-layer {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 6px;
-      padding: 0.5rem 0.75rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .arch-layer:last-child { margin-bottom: 0; }
-
-    .arch-layer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.35rem;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
-      padding-bottom: 0.2rem;
-    }
-
-    .arch-layer-title {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: #f59e0b;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .arch-blocks {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.45rem;
-    }
-
-    .arch-block {
-      background: rgba(30, 41, 59, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 5px;
-      padding: 0.4rem 0.5rem;
-      text-align: center;
-    }
-
-    .arch-block strong {
-      display: block;
-      color: #f1f5f9;
-      font-size: 10.5px;
-      margin-bottom: 0.1rem;
-    }
-
-    .arch-block span {
-      font-size: 8.5px;
-      color: #94a3b8;
-      display: block;
-      line-height: 1.2;
-    }
-
-    /* Screenshots and Mockups - Strictly Constrained */
-    .screenshot-frame {
-      background: #f8fafc;
+    /* Custom Native UI Simulation Components */
+    .ui-mockup {
+      background: #ffffff;
       border: 1px solid var(--slate-300);
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
       margin: 0.5rem 0;
       box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.06);
     }
 
-    .screenshot-header {
-      background: #e2e8f0;
-      padding: 0.25rem 0.6rem;
+    .ui-mockup-header {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 0.35rem 0.75rem;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.4rem;
-      border-bottom: 1px solid var(--slate-300);
+    }
+
+    .ui-mockup-body {
+      padding: 0.6rem 0.75rem;
+      background: #ffffff;
     }
 
     .dot {
@@ -398,27 +344,12 @@
     .dot-yellow { background: #f59e0b; }
     .dot-green { background: #10b981; }
 
-    .screenshot-title {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--slate-700);
-      margin-left: 0.4rem;
-    }
-
-    .screenshot-img {
-      width: 100%;
-      max-height: 185px;
-      object-fit: cover;
-      object-position: top;
-      display: block;
-    }
-
     /* Tables */
     table.data-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 0.45rem 0 0.6rem 0;
-      font-size: 11px;
+      margin: 0.35rem 0 0.5rem 0;
+      font-size: 10.5px;
     }
 
     table.data-table th {
@@ -426,16 +357,16 @@
       color: var(--slate-800);
       font-weight: 700;
       text-transform: uppercase;
-      font-size: 9.5px;
+      font-size: 9px;
       letter-spacing: 0.05em;
-      padding: 0.45rem 0.6rem;
+      padding: 0.4rem 0.55rem;
       border-top: 1px solid var(--slate-200);
       border-bottom: 2px solid var(--slate-300);
       text-align: left;
     }
 
     table.data-table td {
-      padding: 0.45rem 0.6rem;
+      padding: 0.4rem 0.55rem;
       border-bottom: 1px solid var(--slate-200);
       color: var(--slate-700);
       vertical-align: top;
@@ -448,7 +379,7 @@
       display: inline-block;
       padding: 0.12rem 0.4rem;
       border-radius: 4px;
-      font-size: 9px;
+      font-size: 8.5px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.03em;
@@ -458,13 +389,14 @@
     .badge-green { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
     .badge-blue { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
     .badge-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .badge-red { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
     /* Flow Steps */
     .flow-steps {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      margin: 0.5rem 0;
+      gap: 0.45rem;
+      margin: 0.45rem 0;
     }
 
     .flow-step-item {
@@ -506,7 +438,7 @@
     }
 
     .tag-module {
-      font-size: 8.5px;
+      font-size: 8px;
       font-weight: 700;
       text-transform: uppercase;
       padding: 0.08rem 0.3rem;
@@ -653,7 +585,7 @@
         </div>
       </div>
 
-      <h3 style="margin-top: 0.45rem; margin-bottom: 0.35rem;">Core Operational Metrics Targeted</h3>
+      <h3 style="margin-top: 0.45rem; margin-bottom: 0.35rem;">Core Operational Targets</h3>
       <div class="grid-4">
         <div class="kpi-card">
           <div class="kpi-title">Fleet Availability (OEE)</div>
@@ -677,14 +609,49 @@
         </div>
       </div>
 
-      <div class="screenshot-frame" style="margin-top: 0.5rem;">
-        <div class="screenshot-header">
-          <span class="dot dot-red"></span>
-          <span class="dot dot-yellow"></span>
-          <span class="dot dot-green"></span>
-          <span class="screenshot-title">LedgerCore Unified Executive Dashboard — Mining Concession Overview</span>
+      <!-- Native Executive Mining Cockpit UI Component (Replacing Screenshot) -->
+      <div class="ui-mockup" style="margin-top: 0.5rem;">
+        <div class="ui-mockup-header">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+            <span style="font-size: 10px; font-weight: 700; color: #f8fafc; margin-left: 0.35rem;">
+              LedgerCore Mining Cockpit — Concession Pit Alpha & Processing Plant (Active Real-Time Monitoring)
+            </span>
+          </div>
+          <span class="badge badge-green">● ALL EDGE NODES SYNCHRONIZED</span>
         </div>
-        <img src="images/screenshot_dashboard.png" class="screenshot-img" alt="LedgerCore Mining Dashboard">
+        <div class="ui-mockup-body" style="background: #0f172a; color: #ffffff;">
+          <div class="grid-4" style="margin-bottom: 0.5rem;">
+            <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">
+              <div style="font-size: 8.5px; color: #94a3b8; text-transform: uppercase;">Ore Extracted (MTD)</div>
+              <div class="mono" style="font-size: 14px; font-weight: 800; color: #f59e0b;">482,500 MT</div>
+              <div style="font-size: 8.5px; color: #34d399;">▲ 104.2% of Concession Target</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">
+              <div style="font-size: 8.5px; color: #94a3b8; text-transform: uppercase;">Heavy Fleet OEE</div>
+              <div class="mono" style="font-size: 14px; font-weight: 800; color: #34d399;">89.4%</div>
+              <div style="font-size: 8.5px; color: #94a3b8;">38 Active / 2 In Workshop</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">
+              <div style="font-size: 8.5px; color: #94a3b8; text-transform: uppercase;">Diesel Fuel In-Tank</div>
+              <div class="mono" style="font-size: 14px; font-weight: 800; color: #38bdf8;">1,240,000 L</div>
+              <div style="font-size: 8.5px; color: #94a3b8;">18 Days Reserve at Current Burn</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">
+              <div style="font-size: 8.5px; color: #94a3b8; text-transform: uppercase;">Safety Incident-Free</div>
+              <div class="mono" style="font-size: 14px; font-weight: 800; color: #a78bfa;">412 Days</div>
+              <div style="font-size: 8.5px; color: #34d399;">Zero LTI Recorded</div>
+            </div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 0.4rem 0.6rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 10px;">
+            <span style="color: #cbd5e1;"><strong>FY2026 Concession Budget Envelope:</strong> 48 500 000 000 XAF</span>
+            <span style="color: #fbbf24;">Committed: 8 240 000 000 XAF (17.0%)</span>
+            <span style="color: #38bdf8;">Liquidated: 12 850 000 000 XAF (26.5%)</span>
+            <span style="color: #34d399; font-weight: 700;">Remaining Balance: 27 410 000 000 XAF (56.5%)</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -700,107 +667,107 @@
         LedgerCore is built on a <strong>Distributed Micro-Service & Modular Tiered Architecture</strong> designed for high availability, sub-second latency, zero transactional loss, and resilient operation across remote extraction zones. The architecture strictly decouples the user experience layer, business rule orchestration, security perimeter, and the financial transactional persistence store.
       </p>
 
-      <div class="arch-container">
+      <div class="arch-container" style="background: #0f172a; color: #ffffff; border-radius: 8px; padding: 0.75rem 0.9rem; margin: 0.45rem 0; border: 1px solid #1e293b;">
         <!-- Layer 1 -->
-        <div class="arch-layer">
-          <div class="arch-layer-header">
-            <span class="arch-layer-title">🖥️ Layer 1: Client Experience & Edge Interaction</span>
+        <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 6px; padding: 0.45rem 0.7rem; margin-bottom: 0.45rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; border-bottom: 1px dashed rgba(255, 255, 255, 0.12); padding-bottom: 0.15rem;">
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #f59e0b;">🖥️ Layer 1: Client Experience & Edge Interaction</span>
             <span style="font-size: 8.5px; color: #94a3b8;">Cross-Device Responsive Web & Field Mobile Interface</span>
           </div>
-          <div class="arch-blocks">
-            <div class="arch-block">
-              <strong>Executive Web Portal</strong>
-              <span>CFO, COO & Mining Director Cockpit</span>
+          <div class="grid-4">
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Executive Web Portal</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">CFO, COO & Mining Director Cockpit</span>
             </div>
-            <div class="arch-block">
-              <strong>Workshop Field Terminal</strong>
-              <span>Mechanic Work Orders & Meter Entry</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Workshop Field Terminal</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Mechanic Work Orders & Meter Entry</span>
             </div>
-            <div class="arch-block">
-              <strong>Warehouse & Inventory</strong>
-              <span>QR / RFID Barcode Spares Dispatch</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Warehouse & Inventory</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">QR / RFID Barcode Spares Dispatch</span>
             </div>
-            <div class="arch-block">
-              <strong>Weighbridge & SCADA Link</strong>
-              <span>Extracted Tonnage & Asset Telematics</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Weighbridge & SCADA Link</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Extracted Tonnage & Asset Telematics</span>
             </div>
           </div>
         </div>
 
         <!-- Layer 2 -->
-        <div class="arch-layer">
-          <div class="arch-layer-header">
-            <span class="arch-layer-title">🛡️ Layer 2: API Gateway & Zero-Trust Security Perimeter</span>
+        <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 6px; padding: 0.45rem 0.7rem; margin-bottom: 0.45rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; border-bottom: 1px dashed rgba(255, 255, 255, 0.12); padding-bottom: 0.15rem;">
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #f59e0b;">🛡️ Layer 2: API Gateway & Zero-Trust Security Perimeter</span>
             <span style="font-size: 8.5px; color: #94a3b8;">TLS 1.3 Encryption, RBAC & Token Auth</span>
           </div>
-          <div class="arch-blocks">
-            <div class="arch-block">
-              <strong>API Reverse Proxy</strong>
-              <span>Traffic Shaping & Load Balancing</span>
+          <div class="grid-4">
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">API Reverse Proxy</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Traffic Shaping & Load Balancing</span>
             </div>
-            <div class="arch-block">
-              <strong>Token Auth Service</strong>
-              <span>Stateless Token Sessions & MFA</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Token Auth Service</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Stateless Token Sessions & MFA</span>
             </div>
-            <div class="arch-block">
-              <strong>RBAC Security Matrix</strong>
-              <span>Granular Concession & Role Isolation</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">RBAC Security Matrix</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Granular Concession & Role Isolation</span>
             </div>
-            <div class="arch-block">
-              <strong>Four-Eye Audit Interceptor</strong>
-              <span>Dual Authorization on Material Events</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Four-Eye Audit Interceptor</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Dual Authorization on Material Events</span>
             </div>
           </div>
         </div>
 
         <!-- Layer 3 -->
-        <div class="arch-layer">
-          <div class="arch-layer-header">
-            <span class="arch-layer-title">⚙️ Layer 3: Core Transaction Bus & Modular Domain Services</span>
+        <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 6px; padding: 0.45rem 0.7rem; margin-bottom: 0.45rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; border-bottom: 1px dashed rgba(255, 255, 255, 0.12); padding-bottom: 0.15rem;">
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #f59e0b;">⚙️ Layer 3: Core Transaction Bus & Modular Domain Services</span>
             <span style="font-size: 8.5px; color: #94a3b8;">Decoupled Event-Driven Business Engines</span>
           </div>
-          <div class="arch-blocks">
-            <div class="arch-block" style="border-top: 2px solid #059669;">
-              <strong style="color: #6ee7b7;">Core Accounting Engine</strong>
-              <span>SYSCOHADA Ledger, Postings, VAT & Tax</span>
+          <div class="grid-4">
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center; border-top: 2px solid #059669;">
+              <strong style="color: #6ee7b7; font-size: 10px; display: block;">Core Accounting Engine</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">SYSCOHADA Ledger, Postings, VAT & Tax</span>
             </div>
-            <div class="arch-block" style="border-top: 2px solid #d97706;">
-              <strong style="color: #fde68a;">Heavy Asset Lifecycle</strong>
-              <span>Depreciation (UOP), Components & GPS</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center; border-top: 2px solid #d97706;">
+              <strong style="color: #fde68a; font-size: 10px; display: block;">Heavy Asset Lifecycle</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Depreciation (UOP), Components & GPS</span>
             </div>
-            <div class="arch-block" style="border-top: 2px solid #ea580c;">
-              <strong style="color: #fdba74;">Fleet Maintenance Engine</strong>
-              <span>Engine Hours, Work Orders, Safety QA</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center; border-top: 2px solid #ea580c;">
+              <strong style="color: #fdba74; font-size: 10px; display: block;">Fleet Maintenance Engine</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Engine Hours, Work Orders, Safety QA</span>
             </div>
-            <div class="arch-block" style="border-top: 2px solid #0284c7;">
-              <strong style="color: #7dd3fc;">Budget & Commitment Service</strong>
-              <span>Ceiling Checks, Reservations & Transfers</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center; border-top: 2px solid #0284c7;">
+              <strong style="color: #7dd3fc; font-size: 10px; display: block;">Budget & Commitment Service</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Ceiling Checks, Reservations & Transfers</span>
             </div>
           </div>
         </div>
 
         <!-- Layer 4 -->
-        <div class="arch-layer">
-          <div class="arch-layer-header">
-            <span class="arch-layer-title">💾 Layer 4: Enterprise Persistence & Cryptographic Audit Seal</span>
+        <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 6px; padding: 0.45rem 0.7rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; border-bottom: 1px dashed rgba(255, 255, 255, 0.12); padding-bottom: 0.15rem;">
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #f59e0b;">💾 Layer 4: Enterprise Persistence & Cryptographic Audit Seal</span>
             <span style="font-size: 8.5px; color: #94a3b8;">ACID-Compliant Relational Store & SHA-256 Tamper Proofing</span>
           </div>
-          <div class="arch-blocks">
-            <div class="arch-block">
-              <strong>Transactional Store</strong>
-              <span>ACID Double-Entry Integrity</span>
+          <div class="grid-4">
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Transactional Store</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">ACID Double-Entry Integrity</span>
             </div>
-            <div class="arch-block">
-              <strong>Hash-Sealed Audit Trail</strong>
-              <span>Immutable SHA-256 History Ledger</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Hash-Sealed Audit Trail</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Immutable SHA-256 History Ledger</span>
             </div>
-            <div class="arch-block">
-              <strong>Document Store</strong>
-              <span>Contracts, Invoices & Inspection Certs</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Document Store</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Contracts, Invoices & Inspection Certs</span>
             </div>
-            <div class="arch-block">
-              <strong>Edge Replicator</strong>
-              <span>Bidirectional Asynchronous Sync</span>
+            <div style="background: rgba(30, 41, 59, 0.85); padding: 0.35rem 0.45rem; border-radius: 4px; text-align: center;">
+              <strong style="color: #f1f5f9; font-size: 10px; display: block;">Edge Replicator</strong>
+              <span style="font-size: 8.5px; color: #94a3b8;">Bidirectional Asynchronous Sync</span>
             </div>
           </div>
         </div>
@@ -866,35 +833,111 @@
         </div>
       </div>
 
-      <div class="card card-highlight" style="margin-top: 0.35rem;">
+      <div class="card card-highlight" style="margin-top: 0.25rem;">
         <h3>🏛️ CEMAC Tax, Mining Royalties & Statutory Withholdings Engine</h3>
-        <p style="font-size: 11px; color: #475569; margin-bottom: 0.35rem;">
+        <p style="font-size: 11px; color: #475569; margin-bottom: 0.25rem;">
           Mining operators face complex withholding obligations under CEMAC fiscal directives. LedgerCore automates calculation, deduction, reporting, and voucher generation for:
         </p>
         <div class="grid-3">
-          <div style="background: var(--slate-50); padding: 0.45rem 0.6rem; border-radius: 5px; border: 1px solid var(--slate-200);">
+          <div style="background: var(--slate-50); padding: 0.4rem 0.55rem; border-radius: 5px; border: 1px solid var(--slate-200);">
             <strong style="font-size: 11px; color: var(--slate-900);">TSR (Taxe Spéciale / Non-Resident)</strong>
-            <p style="font-size: 10px; color: #64748b; margin: 0;">Automated 15% withholding on technical assistance, drilling consultants, and foreign mining contractors.</p>
+            <p style="font-size: 9.5px; color: #64748b; margin: 0;">Automated 15% withholding on technical assistance, drilling consultants, and foreign mining contractors.</p>
           </div>
-          <div style="background: var(--slate-50); padding: 0.45rem 0.6rem; border-radius: 5px; border: 1px solid var(--slate-200);">
+          <div style="background: var(--slate-50); padding: 0.4rem 0.55rem; border-radius: 5px; border: 1px solid var(--slate-200);">
             <strong style="font-size: 11px; color: var(--slate-900);">Mining Royalties (Redevance Minière)</strong>
-            <p style="font-size: 10px; color: #64748b; margin: 0;">Automated deduction tied directly to extracted ore grade and export FOB market value.</p>
+            <p style="font-size: 9.5px; color: #64748b; margin: 0;">Automated deduction tied directly to extracted ore grade and export FOB market value.</p>
           </div>
-          <div style="background: var(--slate-50); padding: 0.45rem 0.6rem; border-radius: 5px; border: 1px solid var(--slate-200);">
+          <div style="background: var(--slate-50); padding: 0.4rem 0.55rem; border-radius: 5px; border: 1px solid var(--slate-200);">
             <strong style="font-size: 11px; color: var(--slate-900);">Local Vendor Withholding</strong>
-            <p style="font-size: 10px; color: #64748b; margin: 0;">Automated 5.5% / 2.2% advance withholding tax with automated generation of official fiscal retention certificates.</p>
+            <p style="font-size: 9.5px; color: #64748b; margin: 0;">Automated 5.5% / 2.2% advance withholding tax with automated generation of official fiscal retention certificates.</p>
           </div>
         </div>
       </div>
 
-      <div class="screenshot-frame" style="margin-top: 0.5rem;">
-        <div class="screenshot-header">
-          <span class="dot dot-red"></span>
-          <span class="dot dot-yellow"></span>
-          <span class="dot dot-green"></span>
-          <span class="screenshot-title">SYSCOHADA Revised Financial Engine — General Ledger & Journal Postings</span>
+      <!-- Native Mining SYSCOHADA Journal Entries Table (Replacing Screenshot) -->
+      <div class="ui-mockup" style="margin-top: 0.35rem;">
+        <div class="ui-mockup-header">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+            <span style="font-size: 10px; font-weight: 700; color: #f8fafc; margin-left: 0.35rem;">
+              LedgerCore SYSCOHADA General Ledger Postings — Concession Operations Vouchers
+            </span>
+          </div>
+          <span class="badge badge-gold">BALANCED DOUBLE-ENTRY LEDGER</span>
         </div>
-        <img src="images/screenshot_journal.png" class="screenshot-img" alt="General Ledger Postings">
+        <div class="ui-mockup-body" style="padding: 0.2rem 0.5rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Voucher #</th>
+                <th>Date</th>
+                <th>Account (SYSCOHADA Revised)</th>
+                <th>Description / Transaction Object</th>
+                <th style="text-align: right;">Debit (XAF)</th>
+                <th style="text-align: right;">Credit (XAF)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono"><strong>JE-2026-0842</strong></td>
+                <td>18 Oct 2026</td>
+                <td><span class="mono">6813</span> Dotations Amort. Matériel Minier</td>
+                <td>Units of Production (UOP) Depreciation — CAT 777G Fleet (8,420 Engine Hours)</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: var(--slate-900);">96 668 983</td>
+                <td class="mono" style="text-align: right;">—</td>
+                <td><span class="badge badge-green">Posted</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>JE-2026-0842</strong></td>
+                <td>18 Oct 2026</td>
+                <td><span class="mono">2818</span> Amort. Matériel d’Exploitation</td>
+                <td>Accumulated Depreciation — CAT 777G Fleet</td>
+                <td class="mono" style="text-align: right;">—</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: var(--slate-900);">96 668 983</td>
+                <td><span class="badge badge-green">Posted</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>JE-2026-0843</strong></td>
+                <td>18 Oct 2026</td>
+                <td><span class="mono">6041</span> Matières Consommables (Diesel)</td>
+                <td>Bulk Fuel Issuance: 45,000 Liters Heavy Diesel to Pit Alpha Fleet</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: var(--slate-900);">31 500 000</td>
+                <td class="mono" style="text-align: right;">—</td>
+                <td><span class="badge badge-green">Posted</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>JE-2026-0843</strong></td>
+                <td>18 Oct 2026</td>
+                <td><span class="mono">3111</span> Stocks Combustibles & Carburants</td>
+                <td>Warehouse Stock Relieving — Concession Fuel Depots</td>
+                <td class="mono" style="text-align: right;">—</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: var(--slate-900);">31 500 000</td>
+                <td><span class="badge badge-green">Posted</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>JE-2026-0844</strong></td>
+                <td>19 Oct 2026</td>
+                <td><span class="mono">6412</span> Redevances Minières & Concessions</td>
+                <td>CEMAC Statutory Mining Royalty Accrual — High-Grade Ore FOB Export</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: var(--slate-900);">14 280 000</td>
+                <td class="mono" style="text-align: right;">—</td>
+                <td><span class="badge badge-blue">Verified</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>JE-2026-0845</strong></td>
+                <td>19 Oct 2026</td>
+                <td><span class="mono">4472</span> Impôts Retenus à la Source (TSR)</td>
+                <td>15% TSR Non-Resident Withholding — International Core Drilling Contractor</td>
+                <td class="mono" style="text-align: right;">—</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: var(--slate-900);">5 400 000</td>
+                <td><span class="badge badge-green">Posted</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -928,9 +971,9 @@
           <p style="font-size: 11px; color: #475569; margin-bottom: 0.35rem;">
             Traditional time-based straight-line depreciation misrepresents heavy mining assets, as wear-and-tear correlates directly with operating intensity rather than calendar months.
           </p>
-          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.55rem; border-radius: 5px; margin: 0.35rem 0;">
-            <strong style="color: #166534; font-size: 11px;">Mining-Specific UOP Formula:</strong>
-            <div class="mono" style="font-size: 10px; color: #15803d; margin-top: 0.15rem;">
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.45rem; border-radius: 5px; margin: 0.25rem 0;">
+            <strong style="color: #166534; font-size: 10.5px;">Mining-Specific UOP Formula:</strong>
+            <div class="mono" style="font-size: 9.5px; color: #15803d; margin-top: 0.15rem;">
               Depreciation = (Asset Cost - Salvage Value) × (Hours Run in Period / Total Rated Engine Life)
             </div>
           </div>
@@ -940,17 +983,90 @@
         </div>
       </div>
 
-      <div class="screenshot-frame" style="margin: 0.45rem 0;">
-        <div class="screenshot-header">
-          <span class="dot dot-red"></span>
-          <span class="dot dot-yellow"></span>
-          <span class="dot dot-green"></span>
-          <span class="screenshot-title">Heavy Asset Register & Technical Asset Valuation</span>
+      <!-- Native Heavy Equipment Asset Register Table (Replacing Screenshot) -->
+      <div class="ui-mockup" style="margin: 0.35rem 0;">
+        <div class="ui-mockup-header">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+            <span style="font-size: 10px; font-weight: 700; color: #f8fafc; margin-left: 0.35rem;">
+              Heavy Mining Asset Register & Component Valuation Master
+            </span>
+          </div>
+          <span class="badge badge-green">38 HEAVY ASSETS MONITORED</span>
         </div>
-        <img src="images/screenshot_assets.png" class="screenshot-img" alt="Heavy Mining Asset Register">
+        <div class="ui-mockup-body" style="padding: 0.2rem 0.5rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Asset Tag</th>
+                <th>Machinery Description</th>
+                <th>Category</th>
+                <th>Concession / Location</th>
+                <th>Operating Meter</th>
+                <th>Gross Acquisition Cost</th>
+                <th>Net Book Value (XAF)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono"><strong>EQ-CAT-777G-04</strong></td>
+                <td>Caterpillar 777G Off-Highway Truck (100T)</td>
+                <td>Heavy Yellow Fleet</td>
+                <td>Pit Alpha (North Haulage)</td>
+                <td class="mono">8,420 Engine Hrs</td>
+                <td class="mono">845 000 000 XAF</td>
+                <td class="mono" style="font-weight: 700; color: var(--slate-900);">512 800 000 XAF</td>
+                <td><span class="badge badge-green">In Service</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>EQ-KOM-PC2000-01</strong></td>
+                <td>Komatsu PC2000-8 Hydraulic Excavator</td>
+                <td>Extraction Digging</td>
+                <td>Pit Bravo (Bench 4)</td>
+                <td class="mono">11,250 Engine Hrs</td>
+                <td class="mono">1 420 000 000 XAF</td>
+                <td class="mono" style="font-weight: 700; color: var(--slate-900);">780 400 000 XAF</td>
+                <td><span class="badge badge-green">In Service</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>PL-TEREX-J1175</strong></td>
+                <td>Terex Finlay J-1175 Jaw Crusher Plant</td>
+                <td>Ore Processing</td>
+                <td>Run-of-Mine Feed Plant</td>
+                <td class="mono">6,840 Running Hrs</td>
+                <td class="mono">650 000 000 XAF</td>
+                <td class="mono" style="font-weight: 700; color: var(--slate-900);">448 200 000 XAF</td>
+                <td><span class="badge badge-green">In Service</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>DR-ATLAS-L8-02</strong></td>
+                <td>Atlas Copco SmartROC L8 Drill Rig</td>
+                <td>Drill & Blast Fleet</td>
+                <td>Bench Development North</td>
+                <td class="mono">4,120 Impact Hrs</td>
+                <td class="mono">410 000 000 XAF</td>
+                <td class="mono" style="font-weight: 700; color: var(--slate-900);">295 000 000 XAF</td>
+                <td><span class="badge badge-gold">In Maintenance</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>PW-CAT-C175-01</strong></td>
+                <td>Caterpillar C175-16 Diesel Genset (3100kVA)</td>
+                <td>Power Infrastructure</td>
+                <td>Concession Central Powerhouse</td>
+                <td class="mono">14,900 Hours</td>
+                <td class="mono">380 000 000 XAF</td>
+                <td class="mono" style="font-weight: 700; color: var(--slate-900);">198 500 000 XAF</td>
+                <td><span class="badge badge-green">In Service</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="grid-3" style="margin-top: 0.35rem;">
+      <div class="grid-3" style="margin-top: 0.25rem;">
         <div class="kpi-card">
           <div class="kpi-title">IFRS 16 Lease Recognition</div>
           <div class="kpi-sub">Right-of-Use (RoU) asset recognition for leased contractor fleets with automated interest & amortization schedules.</div>
@@ -1001,31 +1117,99 @@
         </div>
       </div>
 
-      <div class="screenshot-frame" style="margin: 0.45rem 0;">
-        <div class="screenshot-header">
-          <span class="dot dot-red"></span>
-          <span class="dot dot-yellow"></span>
-          <span class="dot dot-green"></span>
-          <span class="screenshot-title">Maintenance Work Order Dispatch & Fleet Health Cockpit</span>
+      <!-- Native Maintenance Work Order Dispatch Board (Replacing Screenshot) -->
+      <div class="ui-mockup" style="margin: 0.35rem 0;">
+        <div class="ui-mockup-header">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+            <span style="font-size: 10px; font-weight: 700; color: #f8fafc; margin-left: 0.35rem;">
+              LedgerCore Work Order Dispatch Cockpit — Mining Workshop & Heavy Bay Operations
+            </span>
+          </div>
+          <span class="badge badge-gold">8 AWAITING QA │ 2 IN PROGRESS</span>
         </div>
-        <img src="images/screenshot_work_orders.png" class="screenshot-img" alt="Maintenance Work Orders">
+        <div class="ui-mockup-body" style="padding: 0.2rem 0.5rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>WO Ref</th>
+                <th>Priority</th>
+                <th>Target Mining Asset</th>
+                <th>Work Order Type / Action</th>
+                <th>Assigned Specialist</th>
+                <th>Spares Reserved</th>
+                <th>Est. Cost (XAF)</th>
+                <th>Budget Commitment</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono"><strong>#WO-2026-0842</strong></td>
+                <td><span class="badge badge-red">CRITICAL</span></td>
+                <td><strong>EQ-CAT-777G-04</strong> (Haul Truck)</td>
+                <td>PM-4 Major Engine Overhaul (2,000h Trigger)</td>
+                <td>Chief Master Mechanic J. Ndong</td>
+                <td>Gaskets, Injectors, Oil 15W40</td>
+                <td class="mono">18 500 000</td>
+                <td><span class="badge badge-green">#BC-9402 Committed</span></td>
+                <td><span class="badge badge-gold">In Progress</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>#WO-2026-0855</strong></td>
+                <td><span class="badge badge-gold">HIGH</span></td>
+                <td><strong>PL-TEREX-J1175</strong> (Jaw Crusher)</td>
+                <td>Manganese Liner Plates Replacement</td>
+                <td>Heavy Millwright A. Talla</td>
+                <td>Manganese Jaw Dies Set</td>
+                <td class="mono">12 400 000</td>
+                <td><span class="badge badge-green">#BC-9418 Committed</span></td>
+                <td><span class="badge badge-blue">Scheduled</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>#WO-2026-0861</strong></td>
+                <td><span class="badge badge-slate">SAFETY</span></td>
+                <td><strong>DR-ATLAS-L8-02</strong> (Drill Rig)</td>
+                <td>Hydraulic Accumulator Pressure Certification</td>
+                <td>Certified Inspector E. Nkoa</td>
+                <td>Calibration Test Couplers</td>
+                <td class="mono">2 850 000</td>
+                <td><span class="badge badge-green">#BC-9425 Committed</span></td>
+                <td><span class="badge badge-green">Approved QA</span></td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>#WO-2026-0868</strong></td>
+                <td><span class="badge badge-slate">PREVENTIVE</span></td>
+                <td><strong>PW-CAT-C175-01</strong> (Powerhouse)</td>
+                <td>PM-2 Lubrication, Air Filter & Fuel Line Flush</td>
+                <td>Power Plant Electrician C. Fotso</td>
+                <td>Filter Kits, 500L Lube Oil</td>
+                <td class="mono">4 150 000</td>
+                <td><span class="badge badge-green">#BC-9430 Committed</span></td>
+                <td><span class="badge badge-blue">Scheduled</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="card" style="background: var(--slate-50); border: 1px solid var(--slate-200); margin-top: 0.35rem;">
-        <h3 style="margin-bottom: 0.25rem;">Mean Time Between Failures (MTBF) & Spare Parts Dual Validation</h3>
-        <p style="font-size: 11px; color: #475569; margin-bottom: 0.35rem;">
+      <div class="card" style="background: var(--slate-50); border: 1px solid var(--slate-200); margin-top: 0.25rem;">
+        <h3 style="margin-bottom: 0.2rem;">Mean Time Between Failures (MTBF) & Spare Parts Dual Validation</h3>
+        <p style="font-size: 11px; color: #475569; margin-bottom: 0.25rem;">
           When a work order is generated for a major overhaul (e.g., replacement of excavator hydraulic pumps), the system automatically performs dual validation:
         </p>
         <div class="grid-2">
-          <div style="background: #ffffff; padding: 0.55rem 0.65rem; border-radius: 5px; border: 1px solid var(--slate-200);">
+          <div style="background: #ffffff; padding: 0.45rem 0.6rem; border-radius: 5px; border: 1px solid var(--slate-200);">
             <strong style="font-size: 11px; color: var(--slate-900);">1. Warehouse Spare Parts Reservation:</strong>
-            <p style="font-size: 10px; color: #64748b; margin: 0.15rem 0 0 0;">
+            <p style="font-size: 9.5px; color: #64748b; margin: 0.1rem 0 0 0;">
               Locks critical parts in warehouse stock to ensure parts are not double-allocated. Deducts stock upon work order sign-off and posts consumption directly to SYSCOHADA Class 31/60 accounts.
             </p>
           </div>
-          <div style="background: #ffffff; padding: 0.55rem 0.65rem; border-radius: 5px; border: 1px solid var(--slate-200);">
+          <div style="background: #ffffff; padding: 0.45rem 0.6rem; border-radius: 5px; border: 1px solid var(--slate-200);">
             <strong style="font-size: 11px; color: var(--slate-900);">2. Budget Ceiling Check & Commitment:</strong>
-            <p style="font-size: 10px; color: #64748b; margin: 0.15rem 0 0 0;">
+            <p style="font-size: 9.5px; color: #64748b; margin: 0.1rem 0 0 0;">
               Instantly checks the pit's maintenance budget allocation. If sufficient credits exist, a real-time statutory commitment is registered, preventing unauthorized expenditures.
             </p>
           </div>
@@ -1076,17 +1260,136 @@
         </div>
       </div>
 
-      <div class="screenshot-frame" style="margin: 0.45rem 0;">
-        <div class="screenshot-header">
-          <span class="dot dot-red"></span>
-          <span class="dot dot-yellow"></span>
-          <span class="dot dot-green"></span>
-          <span class="screenshot-title">LedgerCore Budgeting & Commitment Interface — High-Visibility XAF Controls</span>
+      <!-- Native High-Visibility Budgeting Ribbon & Analytics (Replacing Screenshot) -->
+      <div class="ui-mockup" style="margin: 0.35rem 0;">
+        <div class="ui-mockup-header">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+            <span style="font-size: 10px; font-weight: 700; color: #f8fafc; margin-left: 0.35rem;">
+              LedgerCore Budgeting & Commitment Interface — High-Visibility XAF Controls
+            </span>
+          </div>
+          <span class="badge badge-green">FY2026 ACTIVE BUDGET</span>
         </div>
-        <img src="images/screenshot_budgeting.png" class="screenshot-img" alt="Budgeting & Commitment Module">
+        <div class="ui-mockup-body" style="padding: 0.45rem 0.65rem;">
+          <!-- 5 Top KPI Cards -->
+          <div class="grid-5" style="margin-bottom: 0.45rem;">
+            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.45rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 8.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Approved Budget</span>
+                <span style="background: #e0f2fe; color: #0284c7; width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;">🏛️</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 2px;">
+                <span class="mono" style="font-size: 12.5px; font-weight: 800; color: var(--slate-900);">48 500 000 000</span>
+                <span style="font-size: 8.5px; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 1px 4px; border-radius: 3px;">XAF</span>
+              </div>
+              <div style="font-size: 8px; color: #94a3b8;">All Sections (Opex + Capex)</div>
+            </div>
+
+            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.45rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 8.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Committed Credits</span>
+                <span style="background: #fef3c7; color: #b45309; width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;">📋</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 2px;">
+                <span class="mono" style="font-size: 12.5px; font-weight: 800; color: var(--slate-900);">8 240 000 000</span>
+                <span style="font-size: 8.5px; font-weight: 800; background: #fef3c7; color: #b45309; padding: 1px 4px; border-radius: 3px;">XAF</span>
+              </div>
+              <div style="font-size: 8px; color: #94a3b8;">Active POs & Work Orders</div>
+            </div>
+
+            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.45rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 8.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Liquidated / Posted</span>
+                <span style="background: #e0e7ff; color: #4338ca; width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;">🧾</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 2px;">
+                <span class="mono" style="font-size: 12.5px; font-weight: 800; color: var(--slate-900);">12 850 000 000</span>
+                <span style="font-size: 8.5px; font-weight: 800; background: #e0e7ff; color: #4338ca; padding: 1px 4px; border-radius: 3px;">XAF</span>
+              </div>
+              <div style="font-size: 8px; color: #94a3b8;">Class 6 & 2 Postings</div>
+            </div>
+
+            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.45rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 8.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Available Balance</span>
+                <span style="background: #d1fae5; color: #047857; width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;">🛡️</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 2px;">
+                <span class="mono" style="font-size: 12.5px; font-weight: 800; color: #047857;">27 410 000 000</span>
+                <span style="font-size: 8.5px; font-weight: 800; background: #d1fae5; color: #047857; padding: 1px 4px; border-radius: 3px;">XAF</span>
+              </div>
+              <div style="font-size: 8px; color: #94a3b8;">Net Available Appropriations</div>
+            </div>
+
+            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.45rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 8.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Execution Rate</span>
+                <span style="background: #ccfbf1; color: #0f766e; width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px;">⚡</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 2px;">
+                <span class="mono" style="font-size: 13.5px; font-weight: 800; color: #0f766e;">43.5%</span>
+                <span style="font-size: 8.5px; color: #64748b;">Consumed</span>
+              </div>
+              <div style="background: #e2e8f0; height: 4px; border-radius: 2px; margin-top: 4px; overflow: hidden;">
+                <div style="background: #0f766e; width: 43.5%; height: 100%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analytical Lines Excerpt -->
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Account (SYSCOHADA)</th>
+                <th>Section</th>
+                <th>Concession / Cost Center</th>
+                <th style="text-align: right;">Budget (XAF)</th>
+                <th style="text-align: right;">Committed (XAF)</th>
+                <th style="text-align: right;">Actual Spent (XAF)</th>
+                <th style="text-align: right;">Available (XAF)</th>
+                <th>Burn %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>6041 Diesel Fuel</strong></td>
+                <td><span class="badge badge-gold">OPEX</span></td>
+                <td>Pit Alpha (Drill & Haulage)</td>
+                <td class="mono" style="text-align: right;">12 500 000 000</td>
+                <td class="mono" style="text-align: right;">1 850 000 000</td>
+                <td class="mono" style="text-align: right;">4 200 000 000</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: #047857;">6 450 000 000</td>
+                <td class="mono">48.4%</td>
+              </tr>
+              <tr>
+                <td><strong>6241 Machinery Maintenance</strong></td>
+                <td><span class="badge badge-gold">OPEX</span></td>
+                <td>Heavy Yellow Fleet Bay</td>
+                <td class="mono" style="text-align: right;">8 400 000 000</td>
+                <td class="mono" style="text-align: right;">2 100 000 000</td>
+                <td class="mono" style="text-align: right;">2 850 000 000</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: #047857;">3 450 000 000</td>
+                <td class="mono">58.9%</td>
+              </tr>
+              <tr>
+                <td><strong>2311 Mine Development</strong></td>
+                <td><span class="badge badge-blue">CAPEX</span></td>
+                <td>Bench Stripping (Pit North)</td>
+                <td class="mono" style="text-align: right;">16 000 000 000</td>
+                <td class="mono" style="text-align: right;">3 200 000 000</td>
+                <td class="mono" style="text-align: right;">4 100 000 000</td>
+                <td class="mono" style="text-align: right; font-weight: 700; color: #047857;">8 700 000 000</td>
+                <td class="mono">45.6%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="grid-2" style="margin-top: 0.35rem;">
+      <div class="grid-2" style="margin-top: 0.25rem;">
         <div class="card">
           <h4>Virements de Crédits (Credit Transfers)</h4>
           <p style="font-size: 10.5px; color: #475569; margin-top: 0.15rem;">
@@ -1280,7 +1583,7 @@
           </div>
           <div style="text-align: right;">
             <div style="font-size: 10.5px; font-weight: 700; color: var(--primary-dark);">Status: Approved for Client Presentation</div>
-            <div style="font-size: 9px; color: #94a3b8;">Document ID: LC-MIN-PROP-2026-V3.2</div>
+            <div style="font-size: 9px; color: #94a3b8;">Document ID: LC-PROP-2026-V3.2</div>
           </div>
         </div>
       </div>

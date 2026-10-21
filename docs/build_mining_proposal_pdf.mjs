@@ -6,8 +6,8 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const htmlPath = path.resolve(__dirname, 'LEDGERCORE_MINING_TECHNICAL_PROPOSAL.html');
-const pdfPath = path.resolve(__dirname, 'LEDGERCORE_TECHNICAL_PROPOSAL.pdf');
+const htmlPath = path.resolve(__dirname, 'LEDGERCORE_TECHNICAL_PROPOSAL.html');
+const pdfPath = path.resolve(__dirname, 'LEDGERCORE_TECHNICAL_PROPOSAL_REVAMPED.pdf');
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 async function generatePdf() {
