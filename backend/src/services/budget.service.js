@@ -236,7 +236,7 @@ export async function listCommitments({ query }, orgId, { budgetId = null, budge
             cc.code AS cost_center_code,
             cc.name AS cost_center_name,
             v.legal_name AS vendor_name,
-            ast.tag AS asset_tag,
+            ast.asset_tag AS asset_tag,
             ast.name AS asset_name,
             u.full_name AS approver_name
        FROM budget_commitments bc

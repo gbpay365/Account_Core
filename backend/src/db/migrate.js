@@ -125,13 +125,14 @@ export async function runMigrations({ drop = false, silent = false } = {}) {
       try {
         await conn.query(stmt);
       } catch (err) {
-        // Idempotent schema operations (e.g. duplicate column/key or table already exists) are safe to ignore
-        if (err.errno === 1060 || err.errno === 1061 || err.errno === 1050 || err.errno === 1068 || err.errno === 1091) {
-          if (!silent) process.stdout.write(`[note: ${err.code || err.sqlState}] `);
+        // Idempotent schema operations (e.g. duplicate column/key/constraint or table already exists) are safe to ignore
+        const idempotentErrnos = [1060, 1061, 1050, 1068, 1091, 1826, 1022, 1005, 121];
+        if (idempotentErrnos.includes(err.errno) || err.code === 'ER_DUP_FIELDNAME' || err.code === 'ER_FK_DUP_NAME') {
+          if (!silent) process.stdout.write(`[note: ${err.code || err.sqlState || err.errno}] `);
           continue;
         }
         if (!silent) console.log('FAILED');
-        console.error(`\nStatement #${idx + 1} in ${file}:\n${stmt.slice(0, 600)}\n`);
+        console.error(`\nStatement #${idx + 1} in ${file}:\n${stmt.slice(0, 600)}\nError: ${err.message} (errno: ${err.errno}, code: ${err.code})\n`);
         throw err;
       }
     }

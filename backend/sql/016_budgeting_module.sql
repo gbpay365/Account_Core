@@ -5,9 +5,8 @@
 -- -----------------------------------------------------------------------------
 
 -- 1. Enhance budget_lines with initial dotation and control mode
-ALTER TABLE budget_lines
-  ADD COLUMN initial_amount DECIMAL(20,2) NOT NULL DEFAULT 0 AFTER budget_type,
-  ADD COLUMN control_mode ENUM('strict_block','warning','none') NOT NULL DEFAULT 'strict_block' AFTER amount;
+ALTER TABLE budget_lines ADD COLUMN initial_amount DECIMAL(20,2) NOT NULL DEFAULT 0;
+ALTER TABLE budget_lines ADD COLUMN control_mode ENUM('strict_block','warning','none') NOT NULL DEFAULT 'strict_block';
 
 -- Backfill initial_amount with amount for existing lines
 UPDATE budget_lines SET initial_amount = amount WHERE initial_amount = 0 AND amount > 0;
@@ -72,14 +71,11 @@ CREATE TABLE IF NOT EXISTS budget_transfers (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Cross-Module Linkages: Assets, Work Orders & Journal Lines
-ALTER TABLE assets
-  ADD COLUMN budget_line_id INT UNSIGNED NULL AFTER category_id,
-  ADD CONSTRAINT fk_ast_bl FOREIGN KEY (budget_line_id) REFERENCES budget_lines (id) ON DELETE SET NULL;
+ALTER TABLE assets ADD COLUMN budget_line_id INT UNSIGNED NULL;
+ALTER TABLE assets ADD CONSTRAINT fk_ast_bl FOREIGN KEY (budget_line_id) REFERENCES budget_lines (id) ON DELETE SET NULL;
 
-ALTER TABLE work_orders
-  ADD COLUMN budget_line_id INT UNSIGNED NULL AFTER asset_id,
-  ADD CONSTRAINT fk_wo_bl FOREIGN KEY (budget_line_id) REFERENCES budget_lines (id) ON DELETE SET NULL;
+ALTER TABLE work_orders ADD COLUMN budget_line_id INT UNSIGNED NULL;
+ALTER TABLE work_orders ADD CONSTRAINT fk_wo_bl FOREIGN KEY (budget_line_id) REFERENCES budget_lines (id) ON DELETE SET NULL;
 
-ALTER TABLE journal_lines
-  ADD COLUMN commitment_id INT UNSIGNED NULL AFTER activity_id,
-  ADD CONSTRAINT fk_jl_comm FOREIGN KEY (commitment_id) REFERENCES budget_commitments (id) ON DELETE SET NULL;
+ALTER TABLE journal_lines ADD COLUMN commitment_id INT UNSIGNED NULL;
+ALTER TABLE journal_lines ADD CONSTRAINT fk_jl_comm FOREIGN KEY (commitment_id) REFERENCES budget_commitments (id) ON DELETE SET NULL;

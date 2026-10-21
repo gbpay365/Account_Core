@@ -62,7 +62,9 @@ def _backend_diagnostic() -> str:
         try:
             lines = [l.strip() for l in log_file.read_text(encoding='utf-8', errors='replace').splitlines() if l.strip()]
             if lines:
-                return f" [Log: {lines[-1]}]"
+                err_lines = [l for l in lines if any(k in l.lower() for k in ('error', 'failed', 'cannot', 'exception', 'fatal'))]
+                chosen = err_lines[-1] if err_lines else lines[-1]
+                return f" [Log: {chosen[:220]}]"
         except Exception:
             pass
     return ""
