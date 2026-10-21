@@ -9,6 +9,7 @@ import { seedPhase2 } from './seed_phase2.js';
 import { seedPhase3 } from './seed_phase3.js';
 import { seedPhase4 } from './seed_phase4.js';
 import { seedGovernance } from './seed_governance.js';
+import { seedBudget } from './seed_budget.js';
 
 import bcrypt from 'bcryptjs';
 import { DEMO_USERS } from './seed/data/demo-assets.js';
@@ -307,6 +308,13 @@ export async function ensureOrganizationData(orgId, { skipDemo = false, silent =
       await seedGovernance(orgId);
     } catch (e) {
       console.error(`[seed] seedGovernance failed for org ${orgId}:`, e.message);
+    }
+
+    try {
+      step(`Seeding West African Budgeting Module (BUD-2026, Lines & Commitments) for org ${orgId}...`);
+      await seedBudget(orgId);
+    } catch (e) {
+      console.error(`[seed] seedBudget failed for org ${orgId}:`, e.message);
     }
   }
 

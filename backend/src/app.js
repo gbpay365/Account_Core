@@ -32,6 +32,7 @@ import { dfeRoutes } from './routes/dfe.routes.js';
 import { interbranchRoutes } from './routes/interbranch.routes.js';
 import { leaseRoutes } from './routes/lease.routes.js';
 import { adminRoutes } from './routes/admin.routes.js';
+import { budgetRoutes } from './routes/budget.routes.js';
 import * as dfeService from './services/dfe.service.js';
 import { renderLandingPage } from './views/landing.js';
 
@@ -103,6 +104,7 @@ export function createApp() {
   api.use(reversalRoutes);
   api.use(fxRevaluationRoutes);
   api.use(governanceRoutes);
+  api.use(budgetRoutes);
   api.use(bankRoutes);
   api.use(withholdingRoutes);
   api.use(dsfRoutes);

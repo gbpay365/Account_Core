@@ -29,6 +29,7 @@ def get_nav() -> list[tuple[str, list[tuple[str, str, str, tuple[str, ...]]]]]:
             ('/ledger', 'nav.ledger', 'menu_book', ('journal.view',)),
             ('/periods', 'nav.periods', 'event_available', ('period.view', 'close.view')),
             ('/bank-reconciliation', 'nav.bank_reconciliation', 'account_balance', ('journal.view',)),
+            ('/budgeting', 'nav.budgeting', 'account_balance_wallet', ('budget.view', 'coa.view')),
         ]
         # IFRS Assets Management Application sidebar items
         asset_items = [
@@ -50,6 +51,7 @@ def get_nav() -> list[tuple[str, list[tuple[str, str, str, tuple[str, ...]]]]]:
             ('/ledger', 'nav.ledger', 'menu_book', ('journal.view',)),
             ('/periods', 'nav.periods', 'event_available', ('period.view', 'close.view')),
             ('/bank-reconciliation', 'nav.bank_reconciliation', 'account_balance', ('journal.view',)),
+            ('/budgeting', 'nav.budgeting', 'account_balance_wallet', ('budget.view', 'coa.view')),
             ('/withholding-tax', 'nav.withholding_tax', 'request_quote', ('journal.view',)),
             ('/cash-registers', 'nav.cash_registers', 'point_of_sale', ('journal.view',)),
             ('/donor-projects', 'nav.donor_projects', 'handshake', ('journal.view',)),
