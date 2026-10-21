@@ -282,26 +282,16 @@ export async function createCommitment({ query, queryOne }, orgId, userId, paylo
     throw new Error('Budget line not found or does not belong to this organization.');
   }
 
-  // 2. Check current consumption on this line
+  // 2. Check current commitments on this line
   const commRes = await queryOne(
     `SELECT COALESCE(SUM(amount), 0) AS total_committed
        FROM budget_commitments
       WHERE budget_line_id = ? AND status IN ('approved', 'draft')`,
     [budgetLineId]
   );
-  const actRes = await queryOne(
-    `SELECT COALESCE(SUM(jl.debit - jl.credit), 0) AS total_actual
-       FROM journal_lines jl
-       JOIN journal_entries je ON je.id = jl.entry_id
-       JOIN accounting_periods ap ON ap.id = je.period_id
-      WHERE je.org_id = ? AND ap.fiscal_year_id = ? AND je.status = 'posted'
-        AND jl.account_id = ?
-        AND (? IS NULL OR jl.cost_center_id = ?)`,
-    [orgId, line.fiscal_year_id, line.account_id, line.cost_center_id, line.cost_center_id]
-  );
 
   const budgetCap = Number(line.amount || 0);
-  const alreadyConsumed = Number(commRes?.total_committed || 0) + Number(actRes?.total_actual || 0);
+  const alreadyConsumed = Number(commRes?.total_committed || 0);
   const available = budgetCap - alreadyConsumed;
 
   if (line.control_mode === 'strict_block' && numAmount > available) {
@@ -595,7 +585,16 @@ export async function checkBudgetCeiling({ query, queryOne }, orgId, { lines, en
   };
 }
 
-export async function getBudgetExecutionReport({ query }, orgId, { fiscalYearId, costCenterId = null, programId = null, budgetType = null } = {}) {
+export async function getBudgetExecutionReport({ query, queryOne }, orgId, { fiscalYearId = null, costCenterId = null, programId = null, budgetType = null } = {}) {
+  let fyId = fiscalYearId;
+  if (!fyId) {
+    const activeFy = await queryOne(
+      `SELECT id FROM fiscal_years WHERE org_id = ? AND status != 'closed' ORDER BY start_date DESC LIMIT 1`,
+      [orgId]
+    );
+    fyId = activeFy?.id || null;
+  }
+
   const typeFilter = budgetType ? 'AND bl.budget_type = ?' : '';
   const typeParam = budgetType ? [budgetType] : [];
 
@@ -663,9 +662,9 @@ export async function getBudgetExecutionReport({ query }, orgId, { fiscalYearId,
   const rows = await query(sql, [
     costCenterId, costCenterId,
     programId, programId,
-    orgId, fiscalYearId, ...typeParam,
+    orgId, fyId, ...typeParam,
     orgId,
-    orgId, fiscalYearId,
+    orgId, fyId,
     orgId,
   ]);
 
@@ -682,7 +681,7 @@ export async function getBudgetExecutionReport({ query }, orgId, { fiscalYearId,
   const totalConsumed = totalCommitted + totalSpent;
 
   return {
-    fiscalYearId,
+    fiscalYearId: fyId,
     totalBudget: money(totalBudget),
     totalCommitted: money(totalCommitted),
     totalSpent: money(totalSpent),
