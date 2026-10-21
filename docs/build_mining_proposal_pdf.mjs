@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const htmlPath = path.resolve(__dirname, 'LEDGERCORE_MINING_TECHNICAL_PROPOSAL.html');
-const pdfPath = path.resolve(__dirname, 'LEDGERCORE_MINING_TECHNICAL_PROPOSAL.pdf');
+const pdfPath = path.resolve(__dirname, 'LEDGERCORE_MINING_ENTERPRISE_PROPOSAL.pdf');
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 async function generatePdf() {
