@@ -33,7 +33,7 @@ async function generatePdf() {
 
   const footerTemplate = `
     <div style="font-size: 8pt; width: 100%; display: flex; justify-content: space-between; padding: 0 14mm; color: #64748b; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
-      <span>CEMAC / SYSCOHADA Revised &amp; Dual IFRS Compliance for Mining Operations</span>
+      <span>CEMAC / SYSCOHADA Revised &amp; Dual IFRS Enterprise Compliance</span>
       <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
     </div>
   `;
