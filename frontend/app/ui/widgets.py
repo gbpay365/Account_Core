@@ -140,6 +140,11 @@ def kpi(title: str, value: str, *, hint: str | None = None, icon: str | None = N
     return card
 
 
+def card(*args, **kwargs) -> ui.card:
+    """Convenience helper wrapping ui.card with standard styling."""
+    return ui.card(*args, **kwargs)
+
+
 def page_header(title: str, subtitle: str | None = None, *,
                 actions: Callable[[], None] | None = None,
                 emoji: str | None = None, icon: str | None = None) -> None:

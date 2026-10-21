@@ -264,7 +264,7 @@ async def budgeting_page() -> None:
                 icon='verified_user' if tot_avail >= 0 else 'warning',
             ).classes('flex-1')
 
-            with w.card().classes('flex-1 p-4 justify-between'):
+            with ui.card().classes('flex-1 p-4 justify-between'):
                 ui.label(_loc('kpi_rate')).classes('text-xs uppercase tracking-wider text-slate-500 font-semibold')
                 with ui.row().classes('items-baseline gap-2'):
                     ui.label(f"{pct}%").classes('text-2xl font-bold font-mono ' + ('text-rose-600' if pct > 90 else 'text-emerald-700'))
@@ -290,7 +290,7 @@ async def budgeting_page() -> None:
                 rep = state['report'] or {}
                 rows = rep.get('rows', [])
 
-                with w.card().classes('w-full p-4 gap-4'):
+                with ui.card().classes('w-full p-4 gap-4'):
                     with ui.row().classes('w-full items-center justify-between no-wrap'):
                         with ui.row().classes('items-center gap-3'):
                             type_opts = {
@@ -384,7 +384,7 @@ async def budgeting_page() -> None:
                 b = state['active_budget']
                 lines = b.get('lines', []) if b else []
 
-                with w.card().classes('w-full p-4 gap-4'):
+                with ui.card().classes('w-full p-4 gap-4'):
                     with ui.row().classes('w-full items-center justify-between no-wrap'):
                         if b:
                             with ui.row().classes('items-center gap-3'):
@@ -441,7 +441,7 @@ async def budgeting_page() -> None:
             def _render_comm_tab() -> None:
                 comms = state['commitments']
 
-                with w.card().classes('w-full p-4 gap-4'):
+                with ui.card().classes('w-full p-4 gap-4'):
                     with ui.row().classes('w-full items-center justify-between no-wrap'):
                         with ui.column().classes('gap-0'):
                             ui.label('Engagements Budgétaires & Réservations de Crédits').classes('text-base font-bold text-slate-800')
@@ -509,7 +509,7 @@ async def budgeting_page() -> None:
             def _render_trans_tab() -> None:
                 trans = state['transfers']
 
-                with w.card().classes('w-full p-4 gap-4'):
+                with ui.card().classes('w-full p-4 gap-4'):
                     with ui.row().classes('w-full items-center justify-between no-wrap'):
                         with ui.column().classes('gap-0'):
                             ui.label('Virements de Crédits & Décisions Modificatives').classes('text-base font-bold text-slate-800')
@@ -624,7 +624,7 @@ async def budgeting_page() -> None:
         for v in vendors:
             vendor_options[v['id']] = v.get('legal_name') or v.get('trade_name')
 
-        with ui.dialog() as dlg, w.card().classes('w-full max-w-lg p-6 gap-4'):
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
             ui.label(_loc('dialog_comm_title')).classes('text-lg font-bold text-slate-800')
 
             sel_line = ui.select(line_options, value=first_line_id, label=_loc('lbl_select_line')).props('outlined dense options-dense').classes('w-full')
@@ -693,7 +693,7 @@ async def budgeting_page() -> None:
         src_opts = {l['id']: f"{l.get('account_code')} - Avail: {l.get('available_balance', l.get('amount', 0))} {currency}" for l in lines}
         tgt_opts = {l['id']: f"{l.get('account_code')} ({(l.get('budget_type') or 'opex').upper()}) - {l.get('account_name', '')}" for l in lines}
 
-        with ui.dialog() as dlg, w.card().classes('w-full max-w-lg p-6 gap-4'):
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
             ui.label(_loc('dialog_transfer_title')).classes('text-lg font-bold text-slate-800')
 
             src_sel = ui.select(src_opts, value=lines[0]['id'], label=_loc('lbl_src_line')).props('outlined dense options-dense').classes('w-full')
@@ -745,7 +745,7 @@ async def budgeting_page() -> None:
         for p in funding_programs:
             prog_opts[p['id']] = f"{p['code']} - {p['name']}"
 
-        with ui.dialog() as dlg, w.card().classes('w-full max-w-lg p-6 gap-4'):
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
             ui.label(_loc('dialog_line_title')).classes('text-lg font-bold text-slate-800')
 
             acct_sel = ui.select(acct_opts, value=list(acct_opts.keys())[0] if acct_opts else None, label=_loc('col_account')).props('outlined dense options-dense').classes('w-full')
@@ -787,7 +787,7 @@ async def budgeting_page() -> None:
 
     # --- Modal: New Budget Master Plan
     def _open_new_budget_modal() -> None:
-        with ui.dialog() as dlg, w.card().classes('w-full max-w-md p-6 gap-4'):
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-md p-6 gap-4'):
             ui.label(_loc('dialog_budget_title')).classes('text-lg font-bold text-slate-800')
 
             code_in = ui.input(label=_loc('lbl_code'), value='BUD-2026-REV').props('outlined dense').classes('w-full')
