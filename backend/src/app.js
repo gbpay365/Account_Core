@@ -79,7 +79,7 @@ export function createApp() {
 
   app.get('/api/health', handler(async (_req, res) => {
     const db = await healthcheck();
-    res.json({ ok: true, service: 'ledgercore-api', env: config.env, database: db, version: '1.2.0-budgeting' });
+    res.json({ ok: true, service: 'ledgercore-api', env: config.env, database: db, version: '1.2.1-budgeting' });
   }));
 
   app.use('/api/auth', authRoutes);

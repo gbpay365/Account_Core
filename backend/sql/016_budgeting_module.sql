@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS budget_commitments (
   CONSTRAINT fk_bcomm_org   FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE CASCADE,
   CONSTRAINT fk_bcomm_bud   FOREIGN KEY (budget_id) REFERENCES budgets (id) ON DELETE CASCADE,
   CONSTRAINT fk_bcomm_line  FOREIGN KEY (budget_line_id) REFERENCES budget_lines (id) ON DELETE CASCADE,
-  CONSTRAINT fk_bcomm_vend  FOREIGN KEY (vendor_id) REFERENCES vendors (id) ON DELETE SET NULL,
+  CONSTRAINT fk_bcomm_vend  FOREIGN KEY (vendor_id) REFERENCES suppliers (id) ON DELETE SET NULL,
   CONSTRAINT fk_bcomm_ast   FOREIGN KEY (asset_id) REFERENCES assets (id) ON DELETE SET NULL,
   CONSTRAINT fk_bcomm_wo    FOREIGN KEY (work_order_id) REFERENCES work_orders (id) ON DELETE SET NULL,
   CONSTRAINT fk_bcomm_je    FOREIGN KEY (journal_entry_id) REFERENCES journal_entries (id) ON DELETE SET NULL

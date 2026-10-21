@@ -116,7 +116,7 @@ export async function seedBudget(orgId = 1) {
     const opexLine = lines.find((l) => l.budget_type === 'opex');
 
     // Find vendor and asset
-    const vendor = await queryOne('SELECT id FROM vendors WHERE org_id = ? LIMIT 1', [orgId]);
+    const vendor = await queryOne('SELECT id FROM suppliers WHERE org_id = ? LIMIT 1', [orgId]);
     const asset = await queryOne('SELECT id FROM assets WHERE org_id = ? LIMIT 1', [orgId]);
     const user = await queryOne('SELECT id FROM users WHERE org_id = ? LIMIT 1', [orgId]);
 

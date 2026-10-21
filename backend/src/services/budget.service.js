@@ -235,7 +235,7 @@ export async function listCommitments({ query }, orgId, { budgetId = null, budge
             ac.name AS account_name,
             cc.code AS cost_center_code,
             cc.name AS cost_center_name,
-            v.legal_name AS vendor_name,
+            v.name AS vendor_name,
             ast.asset_tag AS asset_tag,
             ast.name AS asset_name,
             u.full_name AS approver_name
@@ -243,7 +243,7 @@ export async function listCommitments({ query }, orgId, { budgetId = null, budge
        JOIN budget_lines bl ON bl.id = bc.budget_line_id
        JOIN accounts ac ON ac.id = bl.account_id
        LEFT JOIN cost_centers cc ON cc.id = bl.cost_center_id
-       LEFT JOIN vendors v ON v.id = bc.vendor_id
+       LEFT JOIN suppliers v ON v.id = bc.vendor_id
        LEFT JOIN assets ast ON ast.id = bc.asset_id
        LEFT JOIN users u ON u.id = bc.approved_by
       WHERE bc.org_id = ? ${whereClause}
