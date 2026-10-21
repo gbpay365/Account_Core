@@ -34,6 +34,11 @@ _T: dict[str, dict[str, str]] = {
     'kpi_available': {'en': 'Available Balance (Disponible)', 'fr': 'Disponible Budgétaire Net'},
     'kpi_rate': {'en': 'Overall Execution Rate', 'fr': 'Taux d’Exécution Global'},
 
+    'hint_budget_all': {'en': 'All Sections (Opex + Capex)', 'fr': 'Toutes sections (Fonct. + Invest.)'},
+    'hint_committed': {'en': 'Statutory expenditure obligations', 'fr': 'Engagements juridiques validés'},
+    'hint_actual': {'en': 'Class 6 & 2 GL postings', 'fr': 'Écritures comptables classes 6 & 2'},
+    'hint_available': {'en': 'Net available appropriations', 'fr': 'Crédits disponibles nets'},
+
     'tab_exec': {'en': 'Execution Dashboard', 'fr': 'Tableau de Bord d’Exécution'},
     'tab_plans': {'en': 'Budget Plans & Lines', 'fr': 'Plans & Dotations Budgétaires'},
     'tab_comm': {'en': 'Commitments (Engagements)', 'fr': 'Engagements de Dépenses'},
@@ -635,45 +640,95 @@ async def budgeting_page() -> None:
         tot_avail = rep.get('remainingBudget', 0)
         pct = rep.get('overallPctConsumed', 0)
 
-        with ui.row().classes('w-full gap-4'):
-            w.kpi(
+        def _render_kpi_card(
+            title: str,
+            amount: float | int,
+            curr: str,
+            *,
+            hint: str,
+            icon_name: str,
+            tone: str,
+        ) -> None:
+            tints = {
+                'sky': ('bg-sky-50 text-sky-700 border-sky-200/80', 'bg-sky-50 text-sky-700 border-sky-300/80'),
+                'amber': ('bg-amber-50 text-amber-700 border-amber-200/80', 'bg-amber-50 text-amber-800 border-amber-300/80'),
+                'indigo': ('bg-indigo-50 text-indigo-700 border-indigo-200/80', 'bg-indigo-50 text-indigo-700 border-indigo-300/80'),
+                'emerald': ('bg-emerald-50 text-emerald-700 border-emerald-200/80', 'bg-emerald-50 text-emerald-800 border-emerald-300/80'),
+                'rose': ('bg-rose-50 text-rose-700 border-rose-200/80', 'bg-rose-50 text-rose-800 border-rose-300/80'),
+                'teal': ('bg-teal-50 text-teal-700 border-teal-200/80', 'bg-teal-50 text-teal-800 border-teal-300/80'),
+            }
+            icon_theme, badge_theme = tints.get(tone, tints['sky'])
+            formatted_amt = w.money(amount, curr)
+
+            card_el = ui.element('div').classes('lc-card p-4 flex-1 min-w-[200px] flex flex-col justify-between hover:border-slate-300 transition-colors')
+            with card_el:
+                # Row 1: Title on left, Adjusted Icon on top-right
+                with ui.row().classes('items-center justify-between w-full no-wrap gap-2 mb-2'):
+                    ui.label(title).classes('text-[11px] font-bold uppercase tracking-wider text-slate-500 leading-snug truncate')
+                    with ui.element('div').classes(f'{icon_theme} w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border shadow-2xs'):
+                        ui.icon(icon_name).classes('text-[16px]')
+
+                # Row 2: Formatted Value + Distinct, high-visibility XAF badge
+                with ui.row().classes('items-baseline gap-1.5 w-full no-wrap my-0.5').tooltip(f"{formatted_amt} {curr}"):
+                    ui.label(formatted_amt).classes('text-[18px] xl:text-[20px] font-bold font-mono text-slate-900 tracking-tight truncate')
+                    ui.label(curr).classes(f'text-[11px] font-extrabold uppercase shrink-0 px-2 py-0.5 rounded tracking-wide font-mono border {badge_theme}')
+
+                # Row 3: Subtitle / hint
+                ui.label(hint).classes('text-[11px] text-slate-400 truncate mt-1')
+
+        with ui.row().classes('w-full gap-3.5 items-stretch'):
+            _render_kpi_card(
                 _loc('kpi_total_budget'),
-                f"{w.money(tot_b, currency)} {currency}",
-                hint=_loc('filter_all_types'),
-                tone='slate',
-                icon='account_balance_wallet',
-            ).classes('flex-1')
+                tot_b,
+                currency,
+                hint=_loc('hint_budget_all'),
+                icon_name='account_balance',
+                tone='sky',
+            )
 
-            w.kpi(
+            _render_kpi_card(
                 _loc('kpi_committed'),
-                f"{w.money(tot_comm, currency)} {currency}",
-                hint=_loc('note_comm_intro'),
+                tot_comm,
+                currency,
+                hint=_loc('hint_committed'),
+                icon_name='assignment_turned_in',
                 tone='amber',
-                icon='pending_actions',
-            ).classes('flex-1')
+            )
 
-            w.kpi(
+            _render_kpi_card(
                 _loc('kpi_actual'),
-                f"{w.money(tot_spent, currency)} {currency}",
-                hint='Class 6 & 2 postings',
+                tot_spent,
+                currency,
+                hint=_loc('hint_actual'),
+                icon_name='receipt_long',
                 tone='indigo',
-                icon='receipt_long',
-            ).classes('flex-1')
+            )
 
-            w.kpi(
+            avail_tone = 'emerald' if tot_avail >= 0 else 'rose'
+            avail_icon = 'savings' if tot_avail >= 0 else 'warning'
+            _render_kpi_card(
                 _loc('kpi_available'),
-                f"{w.money(tot_avail, currency)} {currency}",
-                hint='Net available appropriations',
-                tone='emerald' if tot_avail >= 0 else 'rose',
-                icon='verified_user' if tot_avail >= 0 else 'warning',
-            ).classes('flex-1')
+                tot_avail,
+                currency,
+                hint=_loc('hint_available'),
+                icon_name=avail_icon,
+                tone=avail_tone,
+            )
 
-            with ui.card().classes('flex-1 p-4 justify-between'):
-                ui.label(_loc('kpi_rate')).classes('text-xs uppercase tracking-wider text-slate-500 font-semibold')
-                with ui.row().classes('items-baseline gap-2'):
-                    ui.label(f"{pct}%").classes('text-2xl font-bold font-mono ' + ('text-rose-600' if pct > 90 else 'text-emerald-700'))
-                    ui.label(_loc('consumed_label')).classes('text-xs text-slate-400')
-                ui.linear_progress(value=min(1.0, pct / 100.0), size='8px').props('rounded ' + ('color=negative' if pct > 90 else 'color=primary'))
+            # Card 5: Overall Execution Rate
+            with ui.element('div').classes('lc-card p-4 flex-1 min-w-[200px] flex flex-col justify-between hover:border-slate-300 transition-colors'):
+                with ui.row().classes('items-center justify-between w-full no-wrap gap-2 mb-2'):
+                    ui.label(_loc('kpi_rate')).classes('text-[11px] font-bold uppercase tracking-wider text-slate-500 leading-snug truncate')
+                    with ui.element('div').classes('bg-teal-50 text-teal-700 border border-teal-200/80 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border shadow-2xs'):
+                        ui.icon('speed').classes('text-[16px]')
+
+                with ui.row().classes('items-baseline gap-2 w-full no-wrap my-0.5'):
+                    rate_color = 'text-rose-600' if pct > 90 else 'text-emerald-700'
+                    ui.label(f"{pct}%").classes(f'text-[20px] font-bold font-mono {rate_color}')
+                    ui.label(_loc('consumed_label')).classes('text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded shrink-0')
+
+                with ui.row().classes('w-full items-center mt-1'):
+                    ui.linear_progress(value=min(1.0, pct / 100.0), size='7px').props('rounded ' + ('color=negative' if pct > 90 else 'color=primary')).classes('w-full')
 
     refreshers['kpis'] = _render_kpis.refresh
     _render_kpis()
