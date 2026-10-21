@@ -605,7 +605,7 @@ export async function getBudgetExecutionReport({ query }, orgId, { fiscalYearId,
       ac.code AS account_code,
       ac.name AS account_name,
       ac.account_class,
-      bl.budget_type,
+      b_sub.budget_type,
       cc.id AS cost_center_id,
       cc.code AS cost_center_code,
       cc.name AS cost_center_name,
@@ -658,7 +658,7 @@ export async function getBudgetExecutionReport({ query }, orgId, { fiscalYearId,
            AND (a_sub.program_id IS NULL OR a_sub.program_id = fp.id)
     WHERE ac.org_id = ? AND ac.account_class IN (6, 2, 7)
       AND (b_sub.budget_amount IS NOT NULL OR a_sub.actual_spent IS NOT NULL OR comm_sub.committed_amount IS NOT NULL)
-    ORDER BY bl.budget_type ASC, ac.code ASC, cc.code ASC`;
+    ORDER BY b_sub.budget_type ASC, ac.code ASC, cc.code ASC`;
 
   const rows = await query(sql, [
     costCenterId, costCenterId,
