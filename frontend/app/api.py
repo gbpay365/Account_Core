@@ -162,7 +162,7 @@ def notify_error(exc: Exception) -> None:
     ui.notify(f'Something went wrong: {exc}', type='negative', position='top', timeout=6000)
 
 
-async def safe(coro, *, on_error=None, notify: bool = True):
+async def safe(coro, *, on_error=None, notify: bool = True, default: Any = None) -> Any:
     """
     Awaits an API call and reports failure rather than leaving a dead page.
 
@@ -170,10 +170,11 @@ async def safe(coro, *, on_error=None, notify: bool = True):
     the rest of the page usable instead of raising a toast the user cannot act on.
     """
     try:
-        return await coro
+        res = await coro
+        return default if res is None and default is not None else res
     except Exception as exc:  # noqa: BLE001 - surfaced to the user, not swallowed
         if notify:
             notify_error(exc)
         if on_error is not None:
             on_error(exc)
-        return None
+        return default
