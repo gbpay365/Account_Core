@@ -124,14 +124,15 @@ def _loc(key: str, **kwargs) -> str:
 
 @page('/budgeting', title='Budgeting & Commitments', permissions=('budget.view', 'coa.view'))
 async def budgeting_page() -> None:
-    user = await api.me()
-    currency = user.get('currency', 'XAF')
+    user = api.user()
+    currency = user.get('functional_currency', 'XAF')
 
     # Load initial reference data
     fiscal_years = await api.safe(api.get('/periods/fiscal-years'), default=[])
     cost_centers = await api.safe(api.get('/accounts/cost-centers'), default=[])
     funding_programs = await api.safe(api.get('/governance/programs'), default=[])
-    vendors = await api.safe(api.get('/subledger/vendors'), default=[])
+    vendors_resp = await api.safe(api.get('/partners', type='supplier'), default={'rows': []})
+    vendors = vendors_resp.get('rows', []) if isinstance(vendors_resp, dict) else (vendors_resp or [])
     assets_list = await api.safe(api.get('/assets'), default=[])
     if isinstance(assets_list, dict):
         assets_list = assets_list.get('rows', [])
@@ -597,7 +598,9 @@ async def budgeting_page() -> None:
         line_options = {}
         line_lookup = {}
         for l in b.get('lines', []):
-            label = f"{l['account_code']} ({l['budget_type'].upper()}) - Avail: {l['available_balance']} {currency}"
+            b_type = (l.get('budget_type') or 'opex').upper()
+            avail = l.get('available_balance') if l.get('available_balance') is not None else l.get('amount', 0)
+            label = f"{l.get('account_code')} ({b_type}) - Avail: {avail} {currency}"
             line_options[l['id']] = label
             line_lookup[l['id']] = l
 
@@ -677,8 +680,8 @@ async def budgeting_page() -> None:
             return
 
         lines = b.get('lines', [])
-        src_opts = {l['id']: f"{l['account_code']} - Avail: {l['available_balance']} {currency}" for l in lines}
-        tgt_opts = {l['id']: f"{l['account_code']} ({l['budget_type'].upper()}) - {l['account_name']}" for l in lines}
+        src_opts = {l['id']: f"{l.get('account_code')} - Avail: {l.get('available_balance', l.get('amount', 0))} {currency}" for l in lines}
+        tgt_opts = {l['id']: f"{l.get('account_code')} ({(l.get('budget_type') or 'opex').upper()}) - {l.get('account_name', '')}" for l in lines}
 
         with ui.dialog() as dlg, w.card().classes('w-full max-w-lg p-6 gap-4'):
             ui.label(_loc('dialog_transfer_title')).classes('text-lg font-bold text-slate-800')
