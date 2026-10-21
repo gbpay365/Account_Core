@@ -188,11 +188,16 @@ async def budgeting_page() -> None:
     await reload_data()
 
     # --- UI RENDER -----------------------------------------------------------
-    with chrome.page_header(
-        title=_loc('title'),
-        subtitle=_loc('subtitle'),
-        icon='account_balance_wallet',
-    ):
+    async def _change_fy(new_id: int) -> None:
+        state['fy_id'] = new_id
+        await reload_data()
+        _render_kpis.refresh()
+        _render_exec_tab.refresh()
+        _render_plans_tab.refresh()
+        _render_comm_tab.refresh()
+        _render_trans_tab.refresh()
+
+    def _header_actions() -> None:
         with ui.row().classes('items-center gap-3'):
             fy_opts = {fy['id']: f"{fy['code']} ({fy['name']})" for fy in fiscal_years}
             ui.select(
@@ -202,14 +207,12 @@ async def budgeting_page() -> None:
                 on_change=lambda e: _change_fy(e.value),
             ).props('outlined dense options-dense bg-white').classes('w-64')
 
-    async def _change_fy(new_id: int) -> None:
-        state['fy_id'] = new_id
-        await reload_data()
-        _render_kpis.refresh()
-        _render_exec_tab.refresh()
-        _render_plans_tab.refresh()
-        _render_comm_tab.refresh()
-        _render_trans_tab.refresh()
+    w.page_header(
+        _loc('title'),
+        _loc('subtitle'),
+        icon='account_balance_wallet',
+        actions=_header_actions,
+    )
 
     # Top KPI Ribbon
     @ui.refreshable
