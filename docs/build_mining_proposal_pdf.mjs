@@ -7,11 +7,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const htmlPath = path.resolve(__dirname, 'LEDGERCORE_MINING_TECHNICAL_PROPOSAL.html');
-const pdfPath = path.resolve(__dirname, 'LEDGERCORE_MINING_ENTERPRISE_PROPOSAL.pdf');
+const pdfPath = path.resolve(__dirname, 'LEDGERCORE_TECHNICAL_PROPOSAL.pdf');
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 async function generatePdf() {
-  console.log('Generating Mining Enterprise Technical Proposal PDF via Puppeteer...');
+  console.log('Generating Technical Proposal PDF via Puppeteer...');
   const browser = await puppeteer.launch({
     executablePath: chromePath,
     headless: 'new',
@@ -27,7 +27,7 @@ async function generatePdf() {
 
   const headerTemplate = `
     <div style="font-size: 8pt; width: 100%; text-align: right; padding-right: 14mm; color: #94a3b8; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
-      <span>LedgerCore Enterprise Mining Suite — Technical Architecture &amp; Solutions Proposal</span>
+      <span>Technical Proposal</span>
     </div>
   `;
 
