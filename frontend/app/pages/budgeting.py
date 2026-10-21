@@ -15,7 +15,7 @@ from nicegui import ui
 
 from .. import api
 from ..i18n import lang, t
-from ..ui import chrome, widgets as w
+from ..ui import widgets as w
 from ..ui.shell import page
 
 _T = {
@@ -128,11 +128,18 @@ async def budgeting_page() -> None:
     currency = user.get('functional_currency', 'XAF')
 
     # Load initial reference data
-    fiscal_years = await api.safe(api.get('/periods/fiscal-years'), default=[])
-    cost_centers = await api.safe(api.get('/accounts/cost-centers'), default=[])
-    funding_programs = await api.safe(api.get('/governance/programs'), default=[])
+    fy_resp = await api.safe(api.get('/fiscal-years'), default=[])
+    fiscal_years = fy_resp.get('rows', []) if isinstance(fy_resp, dict) else (fy_resp or [])
+
+    cc_resp = await api.safe(api.get('/cost-centers'), default=[])
+    cost_centers = cc_resp.get('rows', []) if isinstance(cc_resp, dict) else (cc_resp or [])
+
+    prog_resp = await api.safe(api.get('/analytical/programs'), default=[])
+    funding_programs = prog_resp.get('rows', []) if isinstance(prog_resp, dict) else (prog_resp or [])
+
     vendors_resp = await api.safe(api.get('/partners', type='supplier'), default={'rows': []})
     vendors = vendors_resp.get('rows', []) if isinstance(vendors_resp, dict) else (vendors_resp or [])
+
     assets_list = await api.safe(api.get('/assets'), default=[])
     if isinstance(assets_list, dict):
         assets_list = assets_list.get('rows', [])

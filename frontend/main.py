@@ -79,7 +79,7 @@ ui.run(
     port=UI_PORT,
     title=UI_TITLE,
     storage_secret=STORAGE_SECRET,
-    favicon='🏥',
+    favicon='💼',
     dark=False,
     reload=False,
     show=False,

@@ -11,7 +11,7 @@ from typing import Callable, Iterable
 
 from nicegui import app, ui
 
-from .. import api
+from .. import api, config
 from ..i18n import framework, lang, set_framework, set_lang, t
 from ..theme import ACCENT, NAVY, NAVY_SOFT, apply as apply_theme
 from . import chrome
@@ -118,7 +118,7 @@ def page(route: str, *, title: str, permissions: tuple[str, ...] = (), shell: bo
     area; path parameters are declared by the caller through `route`.
     """
     def decorator(render: Callable):
-        @ui.page(route, title=f'{title} · LedgerCore Health')
+        @ui.page(route, title=f'{title} · {config.UI_TITLE}')
         @functools.wraps(render)
         async def wrapper(*args, **kwargs):
             apply_theme()

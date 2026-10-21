@@ -36,8 +36,8 @@ def get_api_base_url() -> str:
 API_BASE_URL = get_api_base_url()
 UI_HOST = os.getenv('UI_HOST', '0.0.0.0')
 UI_PORT = int(os.getenv('PORT', os.getenv('UI_PORT', '8700')))
-UI_TITLE = os.getenv('UI_TITLE', 'LedgerCore Health')
+UI_TITLE = os.getenv('UI_TITLE', 'LedgerCore Finance')
 STORAGE_SECRET = os.getenv('STORAGE_SECRET', 'change-me')
 
-#: The hospital keeps its books in XAF; the UI never assumes a decimal currency.
+#: The enterprise keeps its books in XAF; the UI never assumes a decimal currency.
 ZERO_DECIMAL_CURRENCIES = {'XAF', 'XOF', 'JPY', 'KMF', 'GNF', 'RWF', 'UGX', 'VUV'}
