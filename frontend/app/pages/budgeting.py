@@ -11,6 +11,7 @@ Provides:
 from __future__ import annotations
 
 import datetime
+from typing import Any
 from nicegui import ui
 
 from .. import api
@@ -18,7 +19,7 @@ from ..i18n import lang, t
 from ..ui import widgets as w
 from ..ui.shell import page
 
-_T = {
+_T: dict[str, dict[str, str]] = {
     'title': {
         'en': 'Budgeting & Commitment Accounting (SYSCOHADA / CEMAC)',
         'fr': 'Gestion Budgétaire & Comptabilité des Engagements (OHADA)',
@@ -38,6 +39,15 @@ _T = {
     'tab_comm': {'en': 'Commitments (Engagements)', 'fr': 'Engagements de Dépenses'},
     'tab_trans': {'en': 'Credit Transfers (Virements)', 'fr': 'Virements & Modifications'},
 
+    'lbl_comm_section_title': {
+        'en': 'Budget Commitments & Credit Reservations',
+        'fr': 'Engagements Budgétaires & Réservations de Crédits',
+    },
+    'lbl_transfer_section_title': {
+        'en': 'Credit Transfers & Budget Amendments',
+        'fr': 'Virements de Crédits & Décisions Modificatives',
+    },
+
     'btn_new_budget': {'en': 'New Budget Plan', 'fr': 'Nouveau Plan Budgétaire'},
     'btn_new_line': {'en': 'Add Budget Line', 'fr': 'Ajouter une Ligne'},
     'btn_new_comm': {'en': 'New Commitment', 'fr': 'Nouvel Engagement'},
@@ -49,10 +59,10 @@ _T = {
     'filter_fy': {'en': 'Fiscal Year', 'fr': 'Exercice Budgétaire'},
     'filter_type': {'en': 'Budget Section', 'fr': 'Section Budgétaire'},
     'filter_all_types': {'en': 'All Sections (Opex + Capex)', 'fr': 'Toutes les sections (Opex + Capex)'},
-    'type_opex': {'en': 'Operating (Fonctionnement)', 'fr': 'Fonctionnement (Charges)'},
-    'type_capex': {'en': 'Capital Investment (Investissement)', 'fr': 'Investissement (Immobilisations)'},
-    'type_maint': {'en': 'Maintenance (Entretien)', 'fr': 'Maintenance & Travaux'},
-    'type_rev': {'en': 'Revenue (Recettes)', 'fr': 'Recettes / Produits'},
+    'type_opex': {'en': 'Operating (Opex)', 'fr': 'Fonctionnement (Charges)'},
+    'type_capex': {'en': 'Capital Investment (Capex)', 'fr': 'Investissement (Immobilisations)'},
+    'type_maint': {'en': 'Maintenance (Repairs)', 'fr': 'Maintenance & Travaux'},
+    'type_rev': {'en': 'Revenue (Income)', 'fr': 'Recettes / Produits'},
 
     'col_account': {'en': 'Account (SYSCOHADA)', 'fr': 'Compte (SYSCOHADA)'},
     'col_type': {'en': 'Section', 'fr': 'Section'},
@@ -73,11 +83,45 @@ _T = {
     'col_asset': {'en': 'Linked Asset (Capex)', 'fr': 'Immobilisation Liée (Capex)'},
     'col_amount': {'en': 'Amount', 'fr': 'Montant'},
     'col_actions': {'en': 'Actions', 'fr': 'Actions'},
+    'col_control_mode': {'en': 'Control Policy', 'fr': 'Mode de Contrôle'},
+    'col_notes': {'en': 'Notes & Justification', 'fr': 'Notes / Justification'},
 
     'status_draft': {'en': 'Draft', 'fr': 'Brouillon'},
     'status_approved': {'en': 'Approved', 'fr': 'Approuvé'},
     'status_liquidated': {'en': 'Liquidated', 'fr': 'Liquidé'},
     'status_pending': {'en': 'Pending Approval', 'fr': 'En attente'},
+    'status_cancelled': {'en': 'Cancelled', 'fr': 'Annulé'},
+
+    'badge_strict': {'en': 'STRICT BLOCK', 'fr': 'BLOCAGE STRICT'},
+    'badge_warning': {'en': 'WARNING', 'fr': 'ALERTE'},
+
+    'default_dept': {'en': 'General Management', 'fr': 'Direction Générale'},
+    'default_dept_opt': {'en': '— General Management (Global) —', 'fr': '— Direction Générale (Global) —'},
+    'default_program': {'en': 'Own Funds & Revenue', 'fr': 'Fonds Propres & Recettes'},
+    'default_program_opt': {'en': '— Own Funds & Revenue —', 'fr': '— Fonds Propres & Recettes —'},
+    'no_asset_opt': {'en': '— None (Operating expense) —', 'fr': '— Aucun (Dépense de fonctionnement) —'},
+    'no_vendor_opt': {'en': '— No vendor assigned —', 'fr': '— Aucun fournisseur assigné —'},
+
+    'btn_cancel': {'en': 'Cancel', 'fr': 'Annuler'},
+    'btn_save_line': {'en': 'Save Line', 'fr': 'Enregistrer la ligne'},
+    'btn_create_plan': {'en': 'Create Plan', 'fr': 'Créer le plan'},
+    'btn_confirm_commit': {'en': 'Confirm & Commit', 'fr': 'Confirmer l’engagement'},
+    'btn_authorize_transfer': {'en': 'Authorize Transfer', 'fr': 'Valider le virement'},
+    'btn_approve_comm': {'en': 'Approve', 'fr': 'Approuver'},
+    'btn_liquidate_comm': {'en': 'Liquidate', 'fr': 'Liquider'},
+    'btn_approve_transfer': {'en': 'Approve Transfer', 'fr': 'Valider Virement'},
+
+    'search_placeholder': {'en': 'Search account or department...', 'fr': 'Rechercher un compte ou service...'},
+    'no_plan_notice': {'en': 'No budget plan for this fiscal year.', 'fr': 'Aucun plan budgétaire pour cet exercice.'},
+    'visa_label': {'en': 'Approved by:', 'fr': 'Visa :'},
+    'default_budget_name': {'en': 'Revised Budget 2026', 'fr': 'Budget Rectificatif 2026'},
+    'comm_desc_placeholder': {'en': 'e.g. Purchase of laboratory reagents & consumables', 'fr': 'Ex: Achat consommables laboratoire'},
+    'transfer_reason_placeholder': {'en': 'e.g. Maintenance budget reinforcement following technical audit', 'fr': 'Ex: Renforcement maintenance suite à panne majeure'},
+    'overrun_warning': {'en': '⚠️ Budget ceiling exceeded! Available: {avail} {curr} (Deficit: {deficit} {curr})', 'fr': '⚠️ Dépassement budgétaire ! Disponible : {avail} {curr} (Déficit : {deficit} {curr})'},
+    'credit_ok': {'en': '✅ Sufficient credit. Remaining balance after commitment: {rem} {curr}', 'fr': '✅ Crédit suffisant. Solde restant après engagement : {rem} {curr}'},
+    'consumed_label': {'en': 'consumed', 'fr': 'consommé'},
+    'notes_label': {'en': 'Notes / Resolution', 'fr': 'Notes / Délibération'},
+    'source_line_avail': {'en': 'Avail:', 'fr': 'Dispo :'},
 
     'note_comm_intro': {
         'en': 'Commitment accounting records statutory expenditure obligations before actual invoicing, reserving credit envelopes to guarantee budgetary discipline.',
@@ -89,7 +133,7 @@ _T = {
     },
 
     'dialog_comm_title': {'en': 'Register Budget Commitment (Engagement)', 'fr': 'Enregistrer un Engagement Budgétaire'},
-    'dialog_transfer_title': {'en': 'Authorise Budget Transfer (Virement de Crédits)', 'fr': 'Effectuer un Virement de Crédits'},
+    'dialog_transfer_title': {'en': 'Authorise Budget Transfer (Credit Virement)', 'fr': 'Effectuer un Virement de Crédits'},
     'dialog_line_title': {'en': 'Add Budget Line Allocation', 'fr': 'Ajouter une Ligne Budgétaire'},
     'dialog_budget_title': {'en': 'Create Budget Plan', 'fr': 'Créer un Plan Budgétaire'},
 
@@ -115,11 +159,115 @@ _T = {
     'msg_budget_approved': {'en': 'Budget plan approved and active.', 'fr': 'Plan budgétaire approuvé et actif.'},
 }
 
+_DATA_I18N = {
+    'en': {
+        'Budget Prévisionnel 2026 — Exploitation & Investissements': 'Operating & Capital Expenditure Budget 2026',
+        'Budget Prévisionnel 2026': 'Initial Budget 2026',
+        'Budget Initial 2026': 'Initial Budget 2026',
+        'Budget Rectificatif 2026': 'Revised Budget 2026',
+        'Acquisition moniteur multiparamétrique haute résolution': 'High-resolution multiparametric monitor acquisition',
+        'Contrat de maintenance préventive semestrielle groupe électrogène': 'Semi-annual generator preventive maintenance contract',
+        'Commande trimestrielle de consommables généraux': 'Quarterly general consumables & supplies order',
+        'Acquisition Scanner IRM 1.5T (Siemens)': '1.5T MRI Scanner Acquisition (Siemens)',
+        'Renforcement de la ligne maintenance préventive suite à audit technique': 'Preventive maintenance line reinforcement following technical audit',
+        'Renforcement maintenance biomédicale préventive suite à audit': 'Preventive maintenance reinforcement following audit',
+        'Achats consommables & réactifs': 'Consumables & laboratory reagents purchases',
+        'Fournitures de maintenance & pièces détachées': 'Maintenance supplies & spare parts',
+        'Contrats d entretien & prestations techniques': 'Maintenance contracts & technical services',
+        'Masse salariale & charges sociales': 'Salaries & statutory social charges',
+        'Acquisition matériel technique & biomédical': 'Technical & capital equipment acquisition',
+        'Rénovation parc informatique & serveurs': 'IT infrastructure & server renewal',
+        'Recettes d exploitation & facturations': 'Operating revenues & billings',
+        'Direction Générale': 'General Management',
+        'Direction Générale (Global)': 'General Management (Global)',
+        'Fonds Propres': 'Own Funds & Equity',
+        'Fonds Propres & Recettes': 'Own Funds & Operating Revenue',
+    },
+    'fr': {
+        'Operating & Capital Expenditure Budget 2026': 'Budget Prévisionnel 2026 — Exploitation & Investissements',
+        'Initial Budget 2026': 'Budget Prévisionnel 2026',
+        'Revised Budget 2026': 'Budget Rectificatif 2026',
+        'General Management': 'Direction Générale',
+        'General Management (Global)': 'Direction Générale (Global)',
+        'Own Funds & Equity': 'Fonds Propres',
+        'Own Funds & Operating Revenue': 'Fonds Propres & Recettes',
+    }
+}
 
-def _loc(key: str, **kwargs) -> str:
+
+def _loc(key: str, **kwargs: Any) -> str:
     user_lang = lang()
     text = _T.get(key, {}).get(user_lang, _T.get(key, {}).get('en', key))
     return text.format(**kwargs) if kwargs else text
+
+
+def _tr_val(val: Any) -> str:
+    if not val:
+        return ''
+    s = str(val).strip()
+    user_lang = lang()
+    pack = _DATA_I18N.get(user_lang, {})
+    return pack.get(s, s)
+
+
+def _tr_status(raw: Any) -> str:
+    s = str(raw or '').lower()
+    mapping = {
+        'approved': {'en': 'APPROVED', 'fr': 'APPROUVÉ'},
+        'draft': {'en': 'DRAFT', 'fr': 'BROUILLON'},
+        'liquidated': {'en': 'LIQUIDATED', 'fr': 'LIQUIDÉ'},
+        'pending': {'en': 'PENDING', 'fr': 'EN ATTENTE'},
+        'cancelled': {'en': 'CANCELLED', 'fr': 'ANNULÉ'},
+    }
+    return mapping.get(s, {}).get(lang(), s.upper())
+
+
+def _tr_type(raw: Any) -> str:
+    t_key = str(raw or '').lower()
+    mapping = {
+        'opex': {'en': 'OPERATING (OPEX)', 'fr': 'FONCTIONNEMENT (CHARGES)'},
+        'capex': {'en': 'CAPITAL (CAPEX)', 'fr': 'INVESTISSEMENT (IMMOBILISATIONS)'},
+        'maintenance': {'en': 'MAINTENANCE', 'fr': 'MAINTENANCE & TRAVAUX'},
+        'revenue': {'en': 'REVENUE', 'fr': 'RECETTES / PRODUITS'},
+    }
+    return mapping.get(t_key, {}).get(lang(), t_key.upper())
+
+
+def _tr_ctrl(mode: Any) -> str:
+    m = str(mode or '').lower()
+    if m == 'strict_block':
+        return _loc('badge_strict')
+    return _loc('badge_warning')
+
+
+def _tr_account(code: Any, name: Any, name_en: Any = None) -> str:
+    c = str(code or '')
+    if lang() == 'en' and name_en:
+        return f"{c} — {name_en}"
+    return f"{c} — {_tr_val(name)}"
+
+
+def _tr_dept(name: Any, name_en: Any = None) -> str:
+    if lang() == 'en' and name_en:
+        return str(name_en)
+    if name:
+        return _tr_val(name)
+    return _loc('default_dept')
+
+
+def _tr_prog(code: Any, name_en: Any = None) -> str:
+    if lang() == 'en' and name_en:
+        return str(name_en)
+    if code:
+        return _tr_val(code)
+    return _loc('default_program')
+
+
+def _tr_asset(asset_tag: Any, asset_name: Any, asset_name_en: Any = None) -> str:
+    if not asset_tag:
+        return '—'
+    nm = asset_name_en if (lang() == 'en' and asset_name_en) else asset_name
+    return f"🏷️ {asset_tag} ({_tr_val(nm)})"
 
 
 @page('/budgeting', title='Budgeting & Commitments', permissions=('budget.view', 'coa.view'))
@@ -170,7 +318,7 @@ async def budgeting_page() -> None:
         'transfers': [],
     }
 
-    refreshers = {}
+    refreshers: dict[str, Any] = {}
 
     def _refresh_all() -> None:
         for fn in list(refreshers.values()):
@@ -248,20 +396,23 @@ async def budgeting_page() -> None:
 
         line_options = {}
         line_lookup = {}
+        avail_label = _loc('source_line_avail')
         for l in b.get('lines', []):
-            b_type = (l.get('budget_type') or 'opex').upper()
+            b_type = _tr_type(l.get('budget_type') or 'opex')
             avail = l.get('available_balance') if l.get('available_balance') is not None else l.get('amount', 0)
-            label = f"{l.get('account_code')} ({b_type}) - Avail: {avail} {currency}"
+            acct_display = _tr_account(l.get('account_code'), l.get('account_name'), l.get('account_name_en'))
+            label = f"{acct_display} ({b_type}) - {avail_label} {w.money(avail, currency)} {currency}"
             line_options[l['id']] = label
             line_lookup[l['id']] = l
 
         first_line_id = list(line_options.keys())[0]
 
-        asset_options = {0: '— Aucun (Dépense de fonctionnement) —'}
+        asset_options = {0: _loc('no_asset_opt')}
         for a in assets_list:
-            asset_options[a['id']] = f"🏷️ {a.get('tag')} - {a.get('name')}"
+            a_name = a.get('name_en') if (lang() == 'en' and a.get('name_en')) else a.get('name')
+            asset_options[a['id']] = f"🏷️ {a.get('tag')} - {_tr_val(a_name)}"
 
-        vendor_options = {0: '— Aucun fournisseur assigné —'}
+        vendor_options = {0: _loc('no_vendor_opt')}
         for v in vendors:
             vendor_options[v['id']] = v.get('legal_name') or v.get('trade_name')
 
@@ -269,7 +420,7 @@ async def budgeting_page() -> None:
             ui.label(_loc('dialog_comm_title')).classes('text-lg font-bold text-slate-800')
 
             sel_line = ui.select(line_options, value=first_line_id, label=_loc('lbl_select_line')).props('outlined dense options-dense').classes('w-full')
-            desc_in = ui.input(label=_loc('col_desc'), placeholder='Ex: Achat consommables laboratoire').props('outlined dense').classes('w-full')
+            desc_in = ui.input(label=_loc('col_desc'), placeholder=_loc('comm_desc_placeholder')).props('outlined dense').classes('w-full')
             vend_sel = ui.select(vendor_options, value=0, label=_loc('lbl_vendor')).props('outlined dense options-dense').classes('w-full')
             asset_sel = ui.select(asset_options, value=0, label=_loc('lbl_asset')).props('outlined dense options-dense').classes('w-full')
             amt_in = ui.number(label=_loc('lbl_amount'), value=1000000, format='%.0f').props('outlined dense').classes('w-full')
@@ -281,14 +432,13 @@ async def budgeting_page() -> None:
                 cur_line = line_lookup.get(sel_line.value)
                 if not cur_line:
                     return
-                # extract raw avail
                 avail_val = float(str(cur_line.get('available_balance', '0')).replace(',', ''))
                 req_val = float(amt_in.value or 0)
                 if req_val > avail_val:
-                    status_label.text = f"⚠️ Dépassement budgétaire ! Disponible : {w.money(avail_val, currency)} {currency} (Déficit : {w.money(req_val - avail_val, currency)})"
+                    status_label.text = _loc('overrun_warning', avail=w.money(avail_val, currency), curr=currency, deficit=w.money(req_val - avail_val, currency))
                     status_label.classes('text-rose-600', remove='text-emerald-600')
                 else:
-                    status_label.text = f"✅ Crédit suffisant. Solde restant après engagement : {w.money(avail_val - req_val, currency)} {currency}"
+                    status_label.text = _loc('credit_ok', rem=w.money(avail_val - req_val, currency), curr=currency)
                     status_label.classes('text-emerald-600', remove='text-rose-600')
 
             sel_line.on_value_change(update_status)
@@ -296,7 +446,7 @@ async def budgeting_page() -> None:
             update_status()
 
             with ui.row().classes('w-full justify-end gap-2 mt-2'):
-                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
+                ui.button(_loc('btn_cancel'), on_click=dlg.close).props('flat color=slate-600')
 
                 async def submit_comm() -> None:
                     if not desc_in.value or not amt_in.value:
@@ -317,7 +467,7 @@ async def budgeting_page() -> None:
                         await reload_data()
                         _refresh_all()
 
-                ui.button('Confirm & Commit', icon='check', on_click=submit_comm).props('unelevated color=primary')
+                ui.button(_loc('btn_confirm_commit'), icon='check', on_click=submit_comm).props('unelevated color=primary')
 
         dlg.open()
 
@@ -329,8 +479,9 @@ async def budgeting_page() -> None:
             return
 
         lines = b.get('lines', [])
-        src_opts = {l['id']: f"{l.get('account_code')} - Avail: {l.get('available_balance', l.get('amount', 0))} {currency}" for l in lines}
-        tgt_opts = {l['id']: f"{l.get('account_code')} ({(l.get('budget_type') or 'opex').upper()}) - {l.get('account_name', '')}" for l in lines}
+        avail_label = _loc('source_line_avail')
+        src_opts = {l['id']: f"{_tr_account(l.get('account_code'), l.get('account_name'), l.get('account_name_en'))} - {avail_label} {w.money(l.get('available_balance', l.get('amount', 0)), currency)} {currency}" for l in lines}
+        tgt_opts = {l['id']: f"{_tr_account(l.get('account_code'), l.get('account_name'), l.get('account_name_en'))} ({_tr_type(l.get('budget_type') or 'opex')})" for l in lines}
 
         with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
             ui.label(_loc('dialog_transfer_title')).classes('text-lg font-bold text-slate-800')
@@ -338,17 +489,17 @@ async def budgeting_page() -> None:
             src_sel = ui.select(src_opts, value=lines[0]['id'], label=_loc('lbl_src_line')).props('outlined dense options-dense').classes('w-full')
             tgt_sel = ui.select(tgt_opts, value=lines[1]['id'], label=_loc('lbl_tgt_line')).props('outlined dense options-dense').classes('w-full')
             amt_in = ui.number(label=_loc('lbl_amount'), value=500000, format='%.0f').props('outlined dense').classes('w-full')
-            reason_in = ui.input(label=_loc('lbl_reason'), placeholder='Ex: Renforcement maintenance suite à panne majeure').props('outlined dense').classes('w-full')
+            reason_in = ui.input(label=_loc('lbl_reason'), placeholder=_loc('transfer_reason_placeholder')).props('outlined dense').classes('w-full')
 
             with ui.row().classes('w-full justify-end gap-2 mt-2'):
-                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
+                ui.button(_loc('btn_cancel'), on_click=dlg.close).props('flat color=slate-600')
 
                 async def submit_tr() -> None:
                     if src_sel.value == tgt_sel.value:
                         ui.notify('Source and target lines must be distinct.', type='warning')
                         return
                     if not reason_in.value or not amt_in.value:
-                        ui.notify('Please fill required fields.', type='warning')
+                        ui.notify('Please fill amount and reason.', type='warning')
                         return
                     payload = {
                         'budgetId': b['id'],
@@ -364,7 +515,7 @@ async def budgeting_page() -> None:
                         await reload_data()
                         _refresh_all()
 
-                ui.button('Authorize Transfer', icon='swap_horiz', on_click=submit_tr).props('unelevated color=primary')
+                ui.button(_loc('btn_authorize_transfer'), icon='swap_horiz', on_click=submit_tr).props('unelevated color=primary')
 
         dlg.open()
 
@@ -375,14 +526,16 @@ async def budgeting_page() -> None:
             ui.notify('Please create or select a budget plan first.', type='warning')
             return
 
-        acct_opts = {a['id']: f"{a['code']} - {a['name']}" for a in budgetable_accounts}
-        cc_opts = {0: '— Direction Générale (Global) —'}
+        acct_opts = {a['id']: _tr_account(a.get('code'), a.get('name'), a.get('name_en')) for a in budgetable_accounts}
+        cc_opts = {0: _loc('default_dept_opt')}
         for c in cost_centers:
-            cc_opts[c['id']] = f"{c['code']} - {c['name']}"
+            cc_name = c.get('name_en') if (lang() == 'en' and c.get('name_en')) else c.get('name')
+            cc_opts[c['id']] = f"{c['code']} - {_tr_val(cc_name)}"
 
-        prog_opts = {0: '— Fonds Propres & Recettes —'}
+        prog_opts = {0: _loc('default_program_opt')}
         for p in funding_programs:
-            prog_opts[p['id']] = f"{p['code']} - {p['name']}"
+            p_name = p.get('name_en') if (lang() == 'en' and p.get('name_en')) else p.get('name')
+            prog_opts[p['id']] = f"{p['code']} - {_tr_val(p_name)}"
 
         with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
             ui.label(_loc('dialog_line_title')).classes('text-lg font-bold text-slate-800')
@@ -393,10 +546,10 @@ async def budgeting_page() -> None:
             prog_sel = ui.select(prog_opts, value=0, label=_loc('col_program')).props('outlined dense options-dense').classes('w-full')
             amt_in = ui.number(label=_loc('lbl_amount'), value=5000000, format='%.0f').props('outlined dense').classes('w-full')
             ctrl_sel = ui.select({'strict_block': _loc('ctrl_strict'), 'warning': _loc('ctrl_warning')}, value='strict_block', label=_loc('lbl_ctrl_mode')).props('outlined dense').classes('w-full')
-            notes_in = ui.input(label='Notes / Justification').props('outlined dense').classes('w-full')
+            notes_in = ui.input(label=_loc('col_notes')).props('outlined dense').classes('w-full')
 
             with ui.row().classes('w-full justify-end gap-2 mt-2'):
-                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
+                ui.button(_loc('btn_cancel'), on_click=dlg.close).props('flat color=slate-600')
 
                 async def submit_line() -> None:
                     if not acct_sel.value or not amt_in.value:
@@ -418,7 +571,7 @@ async def budgeting_page() -> None:
                         await reload_data()
                         _refresh_all()
 
-                ui.button('Save Line', icon='save', on_click=submit_line).props('unelevated color=primary')
+                ui.button(_loc('btn_save_line'), icon='save', on_click=submit_line).props('unelevated color=primary')
 
         dlg.open()
 
@@ -428,11 +581,11 @@ async def budgeting_page() -> None:
             ui.label(_loc('dialog_budget_title')).classes('text-lg font-bold text-slate-800')
 
             code_in = ui.input(label=_loc('lbl_code'), value='BUD-2026-REV').props('outlined dense').classes('w-full')
-            name_in = ui.input(label=_loc('lbl_name'), value='Budget Rectificatif 2026').props('outlined dense').classes('w-full')
-            notes_in = ui.input(label='Notes / Délibération').props('outlined dense').classes('w-full')
+            name_in = ui.input(label=_loc('lbl_name'), value=_loc('default_budget_name')).props('outlined dense').classes('w-full')
+            notes_in = ui.input(label=_loc('notes_label')).props('outlined dense').classes('w-full')
 
             with ui.row().classes('w-full justify-end gap-2 mt-2'):
-                ui.button('Cancel', on_click=dlg.close).props('flat color=slate-600')
+                ui.button(_loc('btn_cancel'), on_click=dlg.close).props('flat color=slate-600')
 
                 async def submit_budget() -> None:
                     if not code_in.value or not name_in.value:
@@ -451,7 +604,7 @@ async def budgeting_page() -> None:
                         await reload_data()
                         _refresh_all()
 
-                ui.button('Create Plan', icon='add', on_click=submit_budget).props('unelevated color=primary')
+                ui.button(_loc('btn_create_plan'), icon='add', on_click=submit_budget).props('unelevated color=primary')
 
         dlg.open()
 
@@ -519,7 +672,7 @@ async def budgeting_page() -> None:
                 ui.label(_loc('kpi_rate')).classes('text-xs uppercase tracking-wider text-slate-500 font-semibold')
                 with ui.row().classes('items-baseline gap-2'):
                     ui.label(f"{pct}%").classes('text-2xl font-bold font-mono ' + ('text-rose-600' if pct > 90 else 'text-emerald-700'))
-                    ui.label('consumed').classes('text-xs text-slate-400')
+                    ui.label(_loc('consumed_label')).classes('text-xs text-slate-400')
                 ui.linear_progress(value=min(1.0, pct / 100.0), size='8px').props('rounded ' + ('color=negative' if pct > 90 else 'color=primary'))
 
     refreshers['kpis'] = _render_kpis.refresh
@@ -560,17 +713,21 @@ async def budgeting_page() -> None:
                             ).props('outlined dense options-dense bg-white').classes('w-72')
 
                         with ui.row().classes('items-center gap-2'):
-                            search_inp = ui.input(placeholder='Search account or department...').props('outlined dense clearable')
+                            search_inp = ui.input(placeholder=_loc('search_placeholder')).props('outlined dense clearable')
                             search_inp.classes('w-64')
 
                     table_rows = []
                     for r in rows:
-                        b_type = r.get('budget_type') or ('Investissement' if r.get('account_class') == 2 else 'Fonctionnement')
+                        b_type_str = _tr_type(r.get('budget_type') or ('capex' if r.get('account_class') == 2 else 'opex'))
+                        acct_str = _tr_account(r.get('account_code'), r.get('account_name'), r.get('account_name_en'))
+                        dept_str = _tr_dept(r.get('cost_center_name'), r.get('cost_center_name_en'))
+                        prog_str = _tr_prog(r.get('program_code'), r.get('program_name_en'))
+
                         table_rows.append({
-                            'account': f"{r.get('account_code')} — {r.get('account_name')}",
-                            'type': b_type.upper(),
-                            'dept': r.get('cost_center_name') or 'Direction Générale',
-                            'program': r.get('program_code') or 'Fonds Propres',
+                            'account': acct_str,
+                            'type': b_type_str,
+                            'dept': dept_str,
+                            'program': prog_str,
                             'budget': w.money(r.get('budget_amount', 0), currency),
                             'committed': w.money(r.get('committed_amount', 0), currency),
                             'spent': w.money(r.get('actual_spent', 0), currency),
@@ -595,17 +752,16 @@ async def budgeting_page() -> None:
                     exec_table = ui.table(columns=columns, rows=table_rows, pagination=15).classes('w-full lc-table')
                     exec_table.bind_filter_from(search_inp, 'value')
 
-                    # Formatting cells
                     exec_table.add_slot('body-cell-type', '''
                         <q-td :props="props">
-                            <q-badge :color="props.value === 'CAPEX' || props.value === 'INVESTISSEMENT' ? 'purple' : (props.value === 'MAINTENANCE' ? 'amber-9' : 'teal')" outline>
+                            <q-badge color="grey-3" text-color="grey-9" class="text-weight-bold">
                                 {{ props.value }}
                             </q-badge>
                         </q-td>
                     ''')
 
                     exec_table.add_slot('body-cell-avail', '''
-                        <q-td :props="props" :class="props.row._avail_num < 0 ? 'text-red-600 font-bold' : 'text-emerald-700 font-semibold font-mono'">
+                        <q-td :props="props" :class="props.row._avail_num < 0 ? 'text-negative text-weight-bold' : 'text-positive'">
                             {{ props.value }}
                         </q-td>
                     ''')
@@ -640,13 +796,14 @@ async def budgeting_page() -> None:
                     with ui.row().classes('w-full items-center justify-between no-wrap'):
                         if b:
                             with ui.row().classes('items-center gap-3'):
-                                ui.label(f"{b.get('code')} — {b.get('name')}").classes('text-lg font-bold text-slate-800')
+                                plan_name = _tr_val(b.get('name'))
+                                ui.label(f"{b.get('code')} — {plan_name}").classes('text-lg font-bold text-slate-800')
                                 status_color = 'green' if b.get('status') == 'approved' else 'orange'
-                                ui.badge(b.get('status', '').upper(), color=status_color).props('outline')
+                                ui.badge(_tr_status(b.get('status')), color=status_color).props('outline')
                                 if b.get('approver_name'):
-                                    ui.label(f"Visa: {b.get('approver_name')}").classes('text-xs text-slate-500 italic')
+                                    ui.label(f"{_loc('visa_label')} {b.get('approver_name')}").classes('text-xs text-slate-500 italic')
                         else:
-                            ui.label('No budget plan for this fiscal year.').classes('text-slate-500 italic')
+                            ui.label(_loc('no_plan_notice')).classes('text-slate-500 italic')
 
                         with ui.row().classes('items-center gap-2'):
                             if b and b.get('status') != 'approved':
@@ -656,17 +813,24 @@ async def budgeting_page() -> None:
 
                     line_rows = []
                     for l in lines:
+                        acct_str = _tr_account(l.get('account_code'), l.get('account_name'), l.get('account_name_en'))
+                        dept_str = _tr_dept(l.get('cost_center_name'), l.get('cost_center_name_en'))
+                        prog_str = _tr_prog(l.get('program_code'), l.get('program_name_en'))
+                        type_str = _tr_type(l.get('budget_type'))
+                        ctrl_str = _tr_ctrl(l.get('control_mode'))
+                        notes_str = _tr_val(l.get('notes') or '')
+
                         line_rows.append({
                             'id': l.get('id'),
-                            'account': f"{l.get('account_code')} — {l.get('account_name')}",
-                            'type': str(l.get('budget_type', '')).upper(),
-                            'dept': l.get('cost_center_name') or 'Direction Générale',
-                            'program': l.get('program_code') or 'Fonds Propres',
+                            'account': acct_str,
+                            'type': type_str,
+                            'dept': dept_str,
+                            'program': prog_str,
                             'initial': w.money(l.get('initial_amount', 0), currency),
                             'transfers': w.money(l.get('net_transfers', 0), currency),
                             'amount': w.money(l.get('revised_amount', 0), currency),
-                            'control': 'BLOCAGE STRICT' if l.get('control_mode') == 'strict_block' else 'ALERTE',
-                            'notes': l.get('notes') or '',
+                            'control': ctrl_str,
+                            'notes': notes_str,
                         })
 
                     line_cols = [
@@ -677,8 +841,8 @@ async def budgeting_page() -> None:
                         {'name': 'initial', 'label': _loc('col_initial'), 'field': 'initial', 'align': 'right'},
                         {'name': 'transfers', 'label': _loc('col_transfers'), 'field': 'transfers', 'align': 'right'},
                         {'name': 'amount', 'label': _loc('col_budget'), 'field': 'amount', 'align': 'right'},
-                        {'name': 'control', 'label': 'Mode Contrôle', 'field': 'control', 'align': 'center'},
-                        {'name': 'notes', 'label': 'Notes / Justification', 'field': 'notes', 'align': 'left'},
+                        {'name': 'control', 'label': _loc('col_control_mode'), 'field': 'control', 'align': 'center'},
+                        {'name': 'notes', 'label': _loc('col_notes'), 'field': 'notes', 'align': 'left'},
                     ]
 
                     ui.table(columns=line_cols, rows=line_rows, pagination=15).classes('w-full lc-table')
@@ -697,25 +861,34 @@ async def budgeting_page() -> None:
                 with ui.card().classes('w-full p-4 gap-4'):
                     with ui.row().classes('w-full items-center justify-between no-wrap'):
                         with ui.column().classes('gap-0'):
-                            ui.label('Engagements Budgétaires & Réservations de Crédits').classes('text-base font-bold text-slate-800')
+                            ui.label(_loc('lbl_comm_section_title')).classes('text-base font-bold text-slate-800')
                             ui.label(_loc('note_comm_intro')).classes('text-xs text-slate-500 max-w-2xl')
 
                         ui.button(_loc('btn_new_comm'), icon='add_shopping_cart', on_click=_open_new_comm_modal).props('unelevated color=primary')
 
                     comm_rows = []
+                    btn_approve_txt = _loc('btn_approve_comm')
+                    btn_liquidate_txt = _loc('btn_liquidate_comm')
+
                     for c in comms:
-                        asset_str = f"🏷️ {c.get('asset_tag')} ({c.get('asset_name')})" if c.get('asset_tag') else '—'
+                        asset_str = _tr_asset(c.get('asset_tag'), c.get('asset_name'), c.get('asset_name_en'))
+                        desc_str = _tr_val(c.get('description'))
+                        type_str = _tr_type(c.get('budget_type'))
+                        acct_code = c.get('account_code') or ''
+
                         comm_rows.append({
                             'id': c.get('id'),
                             'ref': c.get('commitment_number'),
                             'date': str(c.get('committed_date') or '')[:10],
-                            'desc': c.get('description'),
-                            'account': f"{c.get('account_code')} ({c.get('budget_type', '').upper()})",
+                            'desc': desc_str,
+                            'account': f"{acct_code} ({type_str})",
                             'vendor': c.get('vendor_name') or '—',
                             'asset': asset_str,
                             'amount': w.money(c.get('amount', 0), currency),
-                            'status': str(c.get('status', '')).upper(),
+                            'status': _tr_status(c.get('status')),
                             '_status_raw': c.get('status'),
+                            '_btn_approve': btn_approve_txt,
+                            '_btn_liquidate': btn_liquidate_txt,
                         })
 
                     comm_cols = [
@@ -734,7 +907,7 @@ async def budgeting_page() -> None:
 
                     tbl.add_slot('body-cell-status', '''
                         <q-td :props="props">
-                            <q-badge :color="props.value === 'APPROVED' ? 'positive' : (props.value === 'LIQUIDATED' ? 'indigo' : 'grey-7')">
+                            <q-badge :color="props.row._status_raw === 'approved' ? 'positive' : (props.row._status_raw === 'liquidated' ? 'indigo' : 'grey-7')">
                                 {{ props.value }}
                             </q-badge>
                         </q-td>
@@ -742,9 +915,9 @@ async def budgeting_page() -> None:
 
                     tbl.add_slot('body-cell-actions', '''
                         <q-td :props="props">
-                            <q-btn v-if="props.row._status_raw === 'draft'" size="xs" color="positive" dense label="Approuver"
+                            <q-btn v-if="props.row._status_raw === 'draft'" size="xs" color="positive" dense :label="props.row._btn_approve"
                                    @click="$parent.$emit('approve-comm', props.row.id)" class="q-mr-xs" />
-                            <q-btn v-if="props.row._status_raw === 'approved'" size="xs" color="indigo" dense label="Liquider"
+                            <q-btn v-if="props.row._status_raw === 'approved'" size="xs" color="indigo" dense :label="props.row._btn_liquidate"
                                    @click="$parent.$emit('liquidate-comm', props.row.id)" />
                         </q-td>
                     ''')
@@ -766,22 +939,29 @@ async def budgeting_page() -> None:
                 with ui.card().classes('w-full p-4 gap-4'):
                     with ui.row().classes('w-full items-center justify-between no-wrap'):
                         with ui.column().classes('gap-0'):
-                            ui.label('Virements de Crédits & Décisions Modificatives').classes('text-base font-bold text-slate-800')
+                            ui.label(_loc('lbl_transfer_section_title')).classes('text-base font-bold text-slate-800')
                             ui.label(_loc('note_transfer_intro')).classes('text-xs text-slate-500 max-w-2xl')
 
                         ui.button(_loc('btn_new_transfer'), icon='swap_horiz', on_click=_open_new_transfer_modal).props('unelevated color=primary')
 
                     tr_rows = []
+                    btn_approve_tr_txt = _loc('btn_approve_transfer')
+
                     for t_item in trans:
+                        src_str = _tr_account(t_item.get('source_account_code'), t_item.get('source_account_name'), t_item.get('source_account_name_en'))
+                        tgt_str = _tr_account(t_item.get('target_account_code'), t_item.get('target_account_name'), t_item.get('target_account_name_en'))
+                        reason_str = _tr_val(t_item.get('reason'))
+
                         tr_rows.append({
                             'id': t_item.get('id'),
                             'ref': t_item.get('transfer_number'),
-                            'src': f"{t_item.get('source_account_code')} — {t_item.get('source_account_name')}",
-                            'tgt': f"{t_item.get('target_account_code')} — {t_item.get('target_account_name')}",
+                            'src': src_str,
+                            'tgt': tgt_str,
                             'amount': w.money(t_item.get('amount', 0), currency),
-                            'reason': t_item.get('reason'),
-                            'status': str(t_item.get('status', '')).upper(),
+                            'reason': reason_str,
+                            'status': _tr_status(t_item.get('status')),
                             '_status_raw': t_item.get('status'),
+                            '_btn_label': btn_approve_tr_txt,
                         })
 
                     tr_cols = [
@@ -798,7 +978,7 @@ async def budgeting_page() -> None:
 
                     tr_table.add_slot('body-cell-status', '''
                         <q-td :props="props">
-                            <q-badge :color="props.value === 'APPROVED' ? 'positive' : 'warning'">
+                            <q-badge :color="props.row._status_raw === 'approved' ? 'positive' : 'warning'">
                                 {{ props.value }}
                             </q-badge>
                         </q-td>
@@ -806,7 +986,7 @@ async def budgeting_page() -> None:
 
                     tr_table.add_slot('body-cell-actions', '''
                         <q-td :props="props">
-                            <q-btn v-if="props.row._status_raw === 'pending'" size="xs" color="positive" dense label="Valider Virement"
+                            <q-btn v-if="props.row._status_raw === 'pending'" size="xs" color="positive" dense :label="props.row._btn_label"
                                    @click="$parent.$emit('approve-transfer', props.row.id)" />
                         </q-td>
                     ''')
@@ -815,4 +995,3 @@ async def budgeting_page() -> None:
 
             refreshers['trans'] = _render_trans_tab.refresh
             _render_trans_tab()
-
