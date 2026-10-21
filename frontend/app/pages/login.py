@@ -190,7 +190,7 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
 
                 with ui.row().classes('gap-2 lc-rise lc-d2'):
                     for icon, text in [('verified', 'SYSCOHADA'), ('public', 'IFRS'),
-                                       ('biotech', 'IEC 60601'), ('lock', t('auth.chip_audit'))]:
+                                       ('verified_user', 'Asset Governance'), ('lock', t('auth.chip_audit'))]:
                         with ui.element('span').classes('lc-chip'):
                             ui.icon(icon).classes('text-[13px] text-teal-300')
                             ui.label(text)
@@ -204,7 +204,7 @@ async def login_page(next: str = '/') -> None:  # noqa: A002 - query parameter n
                 with ui.column().classes('gap-3 w-full'):
                     for i, (icon, title, body) in enumerate([
                         ('balance', t('auth.feat1_t'), t('auth.feat1_b')),
-                        ('health_and_safety', t('auth.feat2_t'), t('auth.feat2_b')),
+                        ('precision_manufacturing', t('auth.feat2_t'), t('auth.feat2_b')),
                         ('trending_down', t('auth.feat3_t'), t('auth.feat3_b')),
                     ]):
                         with ui.row().classes(f'lc-feature items-start gap-3 no-wrap lc-rise lc-d{4 + i}'):

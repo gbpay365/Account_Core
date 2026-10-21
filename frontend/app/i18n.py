@@ -64,11 +64,11 @@ STRINGS: dict[str, dict[str, str]] = {
         'auth.email': 'Email address',
         'auth.password': 'Password',
         'auth.submit': 'Sign in',
-        'auth.use_account': 'Use your hospital account.',
+        'auth.use_account': 'Use your organization account.',
         'auth.headline': 'One ledger. Two compliant presentations.',
         'auth.pitch': (
             'Core accounting on the SYSCOHADA revised chart of accounts with a full IFRS '
-            'presentation from the same postings, and a hospital asset register that ties '
+            'presentation from the same postings, and an enterprise asset register that ties '
             'to the general ledger with zero variance.'
         ),
         'auth.feat1_t': 'OHADA and IFRS side by side',
@@ -76,10 +76,10 @@ STRINGS: dict[str, dict[str, str]] = {
             'Balance sheet, income statement and cash flow (TAFIRE) alongside IAS 1, IAS 7 and IAS 16 — '
             'reconciled by a dual-standard bridge rather than a second set of books.'
         ),
-        'auth.feat2_t': 'Biomedical equipment, properly governed',
+        'auth.feat2_t': 'Physical assets & equipment, properly governed',
         'auth.feat2_b': (
-            'Calibration and IEC 60601 safety testing restrict use when a certificate '
-            'lapses; disposal needs decontamination on record.'
+            'Calibration, preventive maintenance, and statutory safety inspections restrict '
+            'operation when a certificate lapses; disposal enforces audited decommissioning.'
         ),
         'auth.feat3_t': 'Depreciation on both bases',
         'auth.feat3_b': (
@@ -1216,11 +1216,11 @@ STRINGS: dict[str, dict[str, str]] = {
         'auth.email': 'Adresse e-mail',
         'auth.password': 'Mot de passe',
         'auth.submit': 'Se connecter',
-        'auth.use_account': 'Utilisez votre compte hospitalier.',
+        'auth.use_account': 'Utilisez votre compte professionnel.',
         'auth.headline': 'Un seul livre. Deux présentations conformes.',
         'auth.pitch': (
             'Comptabilité sur le plan SYSCOHADA révisé, présentation IFRS complète à partir '
-            'des mêmes écritures, et un registre des immobilisations hospitalières qui se '
+            'des mêmes écritures, et un registre des immobilisations qui se '
             'rattache au grand livre sans écart.'
         ),
         'auth.feat1_t': 'OHADA et IFRS côte à côte',
@@ -1228,10 +1228,10 @@ STRINGS: dict[str, dict[str, str]] = {
             'Bilan, compte de résultat et TAFIRE aux côtés d’IAS 1, IAS 7 et IAS 16 — '
             'rapprochés par un pont dual-standard plutôt que par un second jeu de livres.'
         ),
-        'auth.feat2_t': 'Matériel biomédical gouverné',
+        'auth.feat2_t': 'Équipements et immobilisations gouvernés',
         'auth.feat2_b': (
-            'L’étalonnage et le contrôle IEC 60601 restreignent l’usage dès qu’un certificat '
-            'est échu ; une sortie exige une décontamination enregistrée.'
+            'L’étalonnage, la maintenance préventive et les contrôles de sécurité restreignent '
+            'l’usage dès qu’un certificat est échu ; la sortie exige une mise hors service enregistrée.'
         ),
         'auth.feat3_t': 'Amortissement sur les deux bases',
         'auth.feat3_b': (
