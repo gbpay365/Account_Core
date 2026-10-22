@@ -17,3 +17,4 @@ backend/api.err
 backend/ui.err
 frontend/ui.err
 frontend/ui.log
+scratch/

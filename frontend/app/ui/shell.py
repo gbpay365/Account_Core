@@ -174,7 +174,7 @@ def _frame(active: str):
     # leaving a technician almost no room to read a job card. show-if-above
     # opens it on a desktop while leaving a phone to start with it closed.
     drawer = ui.left_drawer(value=False, fixed=True, bordered=False) \
-        .props('width=248 breakpoint=1023 show-if-above') \
+        .props('width=310 breakpoint=1023 show-if-above') \
         .classes('p-0 lc-no-print').style(f'background: {NAVY}')
     with drawer:
         _brand(user)
@@ -191,7 +191,8 @@ def _frame(active: str):
                     item.on('click', lambda r=route: ui.navigate.to(r))
                     with item:
                         ui.label(chrome.NAV_ITEM.get(route, '•')).classes('text-[16px] leading-none w-6 text-center shrink-0')
-                        ui.label(t(label_key)).classes('text-[13px] font-medium truncate')
+                        nav_text = t(label_key)
+                        ui.label(nav_text).classes('text-[13px] font-medium truncate').props(f'title="{nav_text}"')
         _rail_footer(user)
 
     with ui.header(bordered=False).classes('bg-white border-b border-slate-200 px-6 py-0 lc-no-print') \

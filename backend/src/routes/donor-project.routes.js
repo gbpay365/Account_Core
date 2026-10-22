@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { handler, requirePermission, validate } from '../middleware/index.js';
+import { query, queryOne } from '../db/pool.js';
 import {
   listProjects,
   getProjectDetails,
@@ -9,9 +10,23 @@ import {
   getDRFDetails,
   createDRF,
 } from '../services/donor-project.service.js';
+import {
+  listCofinancingKeys,
+  getCofinancingKeyById,
+  createCofinancingKey,
+  updateCofinancingKey,
+  simulateCofinancingSplit,
+  executeCofinancingSplit,
+  listCofinancingSplits,
+  getCofinancingStats,
+} from '../services/donor-cofinancing.service.js';
 import { seedPhase3 } from '../db/seed_phase3.js';
 
 export const donorProjectRoutes = Router();
+
+function getDb() {
+  return { query, queryOne };
+}
 
 donorProjectRoutes.get(
   '/donor-projects',
@@ -117,3 +132,163 @@ donorProjectRoutes.post(
     res.status(201).json(result);
   })
 );
+
+// -----------------------------------------------------------------------------
+// Phase 7: Multi-Donor Co-Financing Keys & Expense Proration (TOMPRO Standard)
+// -----------------------------------------------------------------------------
+
+donorProjectRoutes.get(
+  '/donor-cofinancing/keys',
+  requirePermission('journal.view', 'budget.view'),
+  handler(async (req, res) => {
+    const db = getDb();
+    const rows = await listCofinancingKeys(db, req.orgId);
+    res.json({ rows, total: rows.length });
+  })
+);
+
+donorProjectRoutes.get(
+  '/donor-cofinancing/keys/:id',
+  requirePermission('journal.view', 'budget.view'),
+  handler(async (req, res) => {
+    const db = getDb();
+    const key = await getCofinancingKeyById(db, req.orgId, Number(req.params.id));
+    if (!key) {
+      return res.status(404).json({ error: 'Clé de co-financement introuvable' });
+    }
+    res.json(key);
+  })
+);
+
+donorProjectRoutes.post(
+  '/donor-cofinancing/keys',
+  requirePermission('journal.post', 'budget.manage'),
+  validate({
+    body: z.object({
+      code: z.string().trim().min(2),
+      name: z.string().trim().min(2),
+      description: z.string().optional().nullable(),
+      lines: z.array(
+        z.object({
+          project_id: z.number(),
+          category_id: z.number().optional().nullable(),
+          percentage: z.number().min(0.01).max(100.0),
+          notes: z.string().optional().nullable(),
+        })
+      ).min(1),
+    }),
+  }),
+  handler(async (req, res) => {
+    const db = getDb();
+    try {
+      const key = await createCofinancingKey(db, req.orgId, req.body);
+      res.status(201).json(key);
+    } catch (err) {
+      res.status(422).json({ error: err.message });
+    }
+  })
+);
+
+donorProjectRoutes.put(
+  '/donor-cofinancing/keys/:id',
+  requirePermission('journal.post', 'budget.manage'),
+  validate({
+    body: z.object({
+      name: z.string().optional(),
+      description: z.string().optional().nullable(),
+      is_active: z.boolean().optional(),
+      lines: z.array(
+        z.object({
+          project_id: z.number(),
+          category_id: z.number().optional().nullable(),
+          percentage: z.number().min(0.01).max(100.0),
+          notes: z.string().optional().nullable(),
+        })
+      ).optional(),
+    }),
+  }),
+  handler(async (req, res) => {
+    const db = getDb();
+    try {
+      const key = await updateCofinancingKey(db, req.orgId, Number(req.params.id), req.body);
+      res.json(key);
+    } catch (err) {
+      res.status(422).json({ error: err.message });
+    }
+  })
+);
+
+donorProjectRoutes.post(
+  '/donor-cofinancing/simulate',
+  requirePermission('journal.view', 'budget.view'),
+  validate({
+    body: z.object({
+      keyId: z.number(),
+      amount: z.number().positive(),
+      currency: z.string().default('XAF'),
+    }),
+  }),
+  handler(async (req, res) => {
+    const db = getDb();
+    try {
+      const sim = await simulateCofinancingSplit(db, req.orgId, req.body);
+      res.json(sim);
+    } catch (err) {
+      res.status(422).json({ error: err.message });
+    }
+  })
+);
+
+donorProjectRoutes.post(
+  '/donor-cofinancing/splits',
+  requirePermission('journal.post', 'budget.manage'),
+  validate({
+    body: z.object({
+      keyId: z.number(),
+      sourceAmount: z.number().positive(),
+      currency: z.string().default('XAF'),
+      commitmentId: z.number().optional().nullable(),
+      paymentOrderId: z.number().optional().nullable(),
+      voucherRef: z.string().optional().nullable(),
+      stage: z.enum(['commitment', 'mandat', 'disbursed']).default('commitment'),
+      notes: z.string().optional().nullable(),
+    }),
+  }),
+  handler(async (req, res) => {
+    const db = getDb();
+    try {
+      const result = await executeCofinancingSplit(db, req.orgId, req.user.id, req.body);
+      res.status(201).json(result);
+    } catch (err) {
+      res.status(422).json({ error: err.message });
+    }
+  })
+);
+
+donorProjectRoutes.get(
+  '/donor-cofinancing/splits',
+  requirePermission('journal.view', 'budget.view'),
+  handler(async (req, res) => {
+    const db = getDb();
+    const { keyId, projectId, commitmentId, paymentOrderId, stage } = req.query;
+    const rows = await listCofinancingSplits(db, req.orgId, {
+      keyId: keyId ? Number(keyId) : null,
+      projectId: projectId ? Number(projectId) : null,
+      commitmentId: commitmentId ? Number(commitmentId) : null,
+      paymentOrderId: paymentOrderId ? Number(paymentOrderId) : null,
+      stage: stage ? String(stage) : null,
+    });
+    res.json({ rows, total: rows.length });
+  })
+);
+
+donorProjectRoutes.get(
+  '/donor-cofinancing/stats',
+  requirePermission('journal.view', 'budget.view'),
+  handler(async (req, res) => {
+    const db = getDb();
+    const stats = await getCofinancingStats(db, req.orgId);
+    res.json(stats);
+  })
+);
+

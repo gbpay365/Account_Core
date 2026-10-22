@@ -1,4 +1,5 @@
 import { money } from '../utils/money.js';
+import { executeCofinancingSplit } from './donor-cofinancing.service.js';
 
 /**
  * Multi-Axial Analytical & Budget Control Service
@@ -60,6 +61,51 @@ export async function listBudgets({ query }, orgId, { fiscalYearId = null } = {}
   );
 }
 
+// -----------------------------------------------------------------------------
+// Helper: Periodic Phasing & Spread Curves (SAP S/4HANA & Sage X3 Model)
+// -----------------------------------------------------------------------------
+
+export function calculateSpreadQuarters(amount, spreadCurve = 'equal_quarterly', customQuarters = null) {
+  const tot = Number(amount || 0);
+  if (tot <= 0) {
+    return { q1: 0, q2: 0, q3: 0, q4: 0, spreadCurve };
+  }
+
+  if (spreadCurve === 'custom' && customQuarters) {
+    const q1 = Number(customQuarters.q1 || 0);
+    const q2 = Number(customQuarters.q2 || 0);
+    const q3 = Number(customQuarters.q3 || 0);
+    const q4 = Number(customQuarters.q4 || 0);
+    return { q1, q2, q3, q4, spreadCurve: 'custom' };
+  }
+
+  if (spreadCurve === 'front_loaded') {
+    // 40% Q1, 30% Q2, 20% Q3, 10% Q4
+    const q1 = Math.round(tot * 0.40 * 100) / 100;
+    const q2 = Math.round(tot * 0.30 * 100) / 100;
+    const q3 = Math.round(tot * 0.20 * 100) / 100;
+    const q4 = Math.round((tot - q1 - q2 - q3) * 100) / 100;
+    return { q1, q2, q3, q4, spreadCurve };
+  }
+
+  if (spreadCurve === 'back_loaded') {
+    // 10% Q1, 20% Q2, 30% Q3, 40% Q4
+    const q1 = Math.round(tot * 0.10 * 100) / 100;
+    const q2 = Math.round(tot * 0.20 * 100) / 100;
+    const q3 = Math.round(tot * 0.30 * 100) / 100;
+    const q4 = Math.round((tot - q1 - q2 - q3) * 100) / 100;
+    return { q1, q2, q3, q4, spreadCurve };
+  }
+
+  // equal_quarterly and even_monthly (25% / quarter)
+  const qBase = Math.round((tot / 4) * 100) / 100;
+  const q1 = qBase;
+  const q2 = qBase;
+  const q3 = qBase;
+  const q4 = Math.round((tot - qBase * 3) * 100) / 100;
+  return { q1, q2, q3, q4, spreadCurve: spreadCurve === 'even_monthly' ? 'even_monthly' : 'equal_quarterly' };
+}
+
 export async function getBudgetById({ query, queryOne }, orgId, budgetId) {
   const budget = await queryOne(
     `SELECT b.*, fy.code AS fiscal_year_code, fy.name AS fiscal_year_name, u.full_name AS approver_name
@@ -85,8 +131,18 @@ export async function getBudgetById({ query, queryOne }, orgId, budgetId) {
             fp.name AS program_name,
             -- Committed expenditures (approved or draft commitments)
             COALESCE(comm.total_committed, 0) AS total_committed,
+            COALESCE(comm.pre_committed_amount, 0) AS pre_committed_amount,
+            COALESCE(comm.firm_committed_amount, 0) AS firm_committed_amount,
+            COALESCE(comm.q1_committed, 0) AS q1_committed,
+            COALESCE(comm.q2_committed, 0) AS q2_committed,
+            COALESCE(comm.q3_committed, 0) AS q3_committed,
+            COALESCE(comm.q4_committed, 0) AS q4_committed,
             -- Actual general ledger postings
             COALESCE(act.total_actual, 0) AS total_actual,
+            COALESCE(act.q1_actual, 0) AS q1_actual,
+            COALESCE(act.q2_actual, 0) AS q2_actual,
+            COALESCE(act.q3_actual, 0) AS q3_actual,
+            COALESCE(act.q4_actual, 0) AS q4_actual,
             -- Net transfers (transfers in - transfers out)
             COALESCE(tr_in.total_in, 0) - COALESCE(tr_out.total_out, 0) AS net_transfers
        FROM budget_lines bl
@@ -94,13 +150,25 @@ export async function getBudgetById({ query, queryOne }, orgId, budgetId) {
        LEFT JOIN cost_centers cc ON cc.id = bl.cost_center_id
        LEFT JOIN funding_programs fp ON fp.id = bl.program_id
        LEFT JOIN (
-         SELECT budget_line_id, SUM(amount) AS total_committed
+         SELECT budget_line_id,
+                SUM(amount) AS total_committed,
+                SUM(CASE WHEN stage = 'pre_commitment' THEN amount ELSE 0 END) AS pre_committed_amount,
+                SUM(CASE WHEN stage = 'firm_commitment' THEN amount ELSE 0 END) AS firm_committed_amount,
+                SUM(CASE WHEN QUARTER(committed_date) = 1 THEN amount ELSE 0 END) AS q1_committed,
+                SUM(CASE WHEN QUARTER(committed_date) = 2 THEN amount ELSE 0 END) AS q2_committed,
+                SUM(CASE WHEN QUARTER(committed_date) = 3 THEN amount ELSE 0 END) AS q3_committed,
+                SUM(CASE WHEN QUARTER(committed_date) = 4 THEN amount ELSE 0 END) AS q4_committed
            FROM budget_commitments
           WHERE status IN ('approved', 'draft')
           GROUP BY budget_line_id
        ) comm ON comm.budget_line_id = bl.id
        LEFT JOIN (
-         SELECT jl.account_id, jl.cost_center_id, jl.program_id, SUM(jl.debit - jl.credit) AS total_actual
+         SELECT jl.account_id, jl.cost_center_id, jl.program_id,
+                SUM(jl.debit - jl.credit) AS total_actual,
+                SUM(CASE WHEN ap.period_no BETWEEN 1 AND 3 THEN jl.debit - jl.credit ELSE 0 END) AS q1_actual,
+                SUM(CASE WHEN ap.period_no BETWEEN 4 AND 6 THEN jl.debit - jl.credit ELSE 0 END) AS q2_actual,
+                SUM(CASE WHEN ap.period_no BETWEEN 7 AND 9 THEN jl.debit - jl.credit ELSE 0 END) AS q3_actual,
+                SUM(CASE WHEN ap.period_no BETWEEN 10 AND 12 THEN jl.debit - jl.credit ELSE 0 END) AS q4_actual
            FROM journal_lines jl
            JOIN journal_entries je ON je.id = jl.entry_id
            JOIN accounting_periods ap ON ap.id = je.period_id
@@ -122,6 +190,9 @@ export async function getBudgetById({ query, queryOne }, orgId, budgetId) {
     [orgId, budget.fiscal_year_id, budgetId]
   );
 
+  const budgetWarningPct = Number(budget.warning_threshold_pct ?? 80.0);
+  const budgetBlockPct = Number(budget.block_threshold_pct ?? 100.0);
+
   const formattedLines = lines.map((l) => {
     const initial = Number(l.initial_amount || l.amount || 0);
     const netTransfers = Number(l.net_transfers || 0);
@@ -133,6 +204,39 @@ export async function getBudgetById({ query, queryOne }, orgId, budgetId) {
     const overrun = consumed > revised ? consumed - revised : 0;
     const pctConsumed = revised > 0 ? Number(((consumed / revised) * 100).toFixed(1)) : 0;
 
+    // Progressive Availability Control (AVC) status
+    const lineWarningPct = l.warning_threshold_pct !== null && l.warning_threshold_pct !== undefined
+      ? Number(l.warning_threshold_pct)
+      : budgetWarningPct;
+
+    let avcStatus = 'normal';
+    if (consumed > revised || pctConsumed >= budgetBlockPct) {
+      avcStatus = 'breach';
+    } else if (pctConsumed >= lineWarningPct) {
+      avcStatus = 'warning';
+    }
+
+    // Quarterly Phasing amounts and consumption
+    const q1Amt = Number(l.q1_amount || 0);
+    const q2Amt = Number(l.q2_amount || 0);
+    const q3Amt = Number(l.q3_amount || 0);
+    const q4Amt = Number(l.q4_amount || 0);
+
+    const q1Spent = Number(l.q1_committed || 0) + Number(l.q1_actual || 0);
+    const q2Spent = Number(l.q2_committed || 0) + Number(l.q2_actual || 0);
+    const q3Spent = Number(l.q3_committed || 0) + Number(l.q3_actual || 0);
+    const q4Spent = Number(l.q4_committed || 0) + Number(l.q4_actual || 0);
+
+    const q1Avail = Math.max(0, q1Amt - q1Spent);
+    const q2Avail = Math.max(0, q2Amt - q2Spent);
+    const q3Avail = Math.max(0, q3Amt - q3Spent);
+    const q4Avail = Math.max(0, q4Amt - q4Spent);
+
+    const q1Rate = q1Amt > 0 ? Number(((q1Spent / q1Amt) * 100).toFixed(1)) : 0;
+    const q2Rate = q2Amt > 0 ? Number(((q2Spent / q2Amt) * 100).toFixed(1)) : 0;
+    const q3Rate = q3Amt > 0 ? Number(((q3Spent / q3Amt) * 100).toFixed(1)) : 0;
+    const q4Rate = q4Amt > 0 ? Number(((q4Spent / q4Amt) * 100).toFixed(1)) : 0;
+
     return {
       ...l,
       initial_amount: money(initial),
@@ -140,28 +244,91 @@ export async function getBudgetById({ query, queryOne }, orgId, budgetId) {
       net_transfers: money(netTransfers),
       revised_amount: money(revised),
       total_committed: money(committed),
+      pre_committed_amount: money(Number(l.pre_committed_amount || 0)),
+      firm_committed_amount: money(Number(l.firm_committed_amount || 0)),
       total_actual: money(actual),
       total_consumed: money(consumed),
       available_balance: money(available),
       overrun_amount: money(overrun),
       pct_consumed: pctConsumed,
       is_overspent: consumed > revised,
+
+      // Progressive AVC & tolerance thresholds
+      warning_threshold_pct: lineWarningPct,
+      block_threshold_pct: budgetBlockPct,
+      avc_status: avcStatus,
+
+      // Quarterly Phasing (T1-T4)
+      spread_curve: l.spread_curve || 'equal_quarterly',
+      q1_amount: money(q1Amt),
+      q2_amount: money(q2Amt),
+      q3_amount: money(q3Amt),
+      q4_amount: money(q4Amt),
+      q1_spent: money(q1Spent),
+      q2_spent: money(q2Spent),
+      q3_spent: money(q3Spent),
+      q4_spent: money(q4Spent),
+      q1_available: money(q1Avail),
+      q2_available: money(q2Avail),
+      q3_available: money(q3Avail),
+      q4_available: money(q4Avail),
+      q1_rate: q1Rate,
+      q2_rate: q2Rate,
+      q3_rate: q3Rate,
+      q4_rate: q4Rate,
     };
   });
 
   return {
     ...budget,
+    warning_threshold_pct: budgetWarningPct,
+    block_threshold_pct: budgetBlockPct,
     lines: formattedLines,
   };
 }
 
-export async function createBudget({ query, queryOne }, orgId, { fiscalYearId, code, name, notes = null, version = 1 }) {
+export async function createBudget(
+  { query, queryOne },
+  orgId,
+  { fiscalYearId, code, name, notes = null, version = 1, warningThresholdPct = 80.0, blockThresholdPct = 100.0 }
+) {
   const res = await query(
-    `INSERT INTO budgets (org_id, fiscal_year_id, code, name, version, status, notes)
-     VALUES (?, ?, ?, ?, ?, 'draft', ?)`,
-    [orgId, fiscalYearId, code, name, version, notes]
+    `INSERT INTO budgets (org_id, fiscal_year_id, code, name, version, status, warning_threshold_pct, block_threshold_pct, notes)
+     VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
+    [orgId, fiscalYearId, code, name, version, Number(warningThresholdPct || 80.0), Number(blockThresholdPct || 100.0), notes]
   );
-  return { id: res.insertId, code, name, status: 'draft' };
+  return { id: res.insertId, code, name, status: 'draft', warningThresholdPct, blockThresholdPct };
+}
+
+export async function updateBudget(
+  { query },
+  orgId,
+  budgetId,
+  { name, notes, warningThresholdPct, blockThresholdPct }
+) {
+  const updates = [];
+  const params = [];
+  if (name !== undefined) {
+    updates.push('name = ?');
+    params.push(name);
+  }
+  if (notes !== undefined) {
+    updates.push('notes = ?');
+    params.push(notes);
+  }
+  if (warningThresholdPct !== undefined && warningThresholdPct !== null) {
+    updates.push('warning_threshold_pct = ?');
+    params.push(Number(warningThresholdPct));
+  }
+  if (blockThresholdPct !== undefined && blockThresholdPct !== null) {
+    updates.push('block_threshold_pct = ?');
+    params.push(Number(blockThresholdPct));
+  }
+  if (updates.length > 0) {
+    params.push(orgId, budgetId);
+    await query(`UPDATE budgets SET ${updates.join(', ')} WHERE org_id = ? AND id = ?`, params);
+  }
+  return { ok: true };
 }
 
 export async function approveBudget({ query }, orgId, budgetId, userId) {
@@ -182,15 +349,137 @@ export async function addBudgetLine({ query, queryOne }, orgId, budgetId, payloa
     budgetType = 'opex',
     amount = 0,
     controlMode = 'strict_block',
+    spreadCurve = 'equal_quarterly',
+    warningThresholdPct = null,
+    q1Amount = null,
+    q2Amount = null,
+    q3Amount = null,
+    q4Amount = null,
     notes = null,
   } = payload;
 
+  const numAmount = Number(amount || 0);
+
+  // Calculate or accept quarterly spreading
+  let q1 = q1Amount !== null && q1Amount !== undefined ? Number(q1Amount) : null;
+  let q2 = q2Amount !== null && q2Amount !== undefined ? Number(q2Amount) : null;
+  let q3 = q3Amount !== null && q3Amount !== undefined ? Number(q3Amount) : null;
+  let q4 = q4Amount !== null && q4Amount !== undefined ? Number(q4Amount) : null;
+
+  if (q1 === null || q2 === null || q3 === null || q4 === null || spreadCurve !== 'custom') {
+    const spread = calculateSpreadQuarters(numAmount, spreadCurve);
+    q1 = spread.q1;
+    q2 = spread.q2;
+    q3 = spread.q3;
+    q4 = spread.q4;
+  }
+
   const res = await query(
-    `INSERT INTO budget_lines (budget_id, account_id, cost_center_id, program_id, budget_type, initial_amount, amount, control_mode, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [budgetId, accountId, costCenterId || null, programId || null, budgetType, amount, amount, controlMode, notes || null]
+    `INSERT INTO budget_lines 
+     (budget_id, account_id, cost_center_id, program_id, budget_type, initial_amount, amount, control_mode, spread_curve, warning_threshold_pct, q1_amount, q2_amount, q3_amount, q4_amount, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      budgetId,
+      accountId,
+      costCenterId || null,
+      programId || null,
+      budgetType,
+      numAmount,
+      numAmount,
+      controlMode,
+      spreadCurve,
+      warningThresholdPct !== null && warningThresholdPct !== undefined ? Number(warningThresholdPct) : null,
+      q1,
+      q2,
+      q3,
+      q4,
+      notes || null,
+    ]
   );
-  return { id: res.insertId, budgetId, amount };
+  return { id: res.insertId, budgetId, amount: numAmount, q1, q2, q3, q4, spreadCurve };
+}
+
+export async function updateBudgetLine({ query, queryOne }, orgId, budgetId, lineId, payload) {
+  const {
+    amount,
+    controlMode,
+    spreadCurve,
+    warningThresholdPct,
+    q1Amount,
+    q2Amount,
+    q3Amount,
+    q4Amount,
+    notes,
+  } = payload;
+
+  const line = await queryOne(
+    `SELECT bl.* FROM budget_lines bl JOIN budgets b ON b.id = bl.budget_id WHERE b.org_id = ? AND bl.budget_id = ? AND bl.id = ?`,
+    [orgId, budgetId, lineId]
+  );
+  if (!line) throw new Error('Budget line not found');
+
+  const newAmount = amount !== undefined ? Number(amount) : Number(line.amount);
+  const activeCurve = spreadCurve || line.spread_curve || 'equal_quarterly';
+
+  let q1 = q1Amount !== undefined && q1Amount !== null ? Number(q1Amount) : Number(line.q1_amount);
+  let q2 = q2Amount !== undefined && q2Amount !== null ? Number(q2Amount) : Number(line.q2_amount);
+  let q3 = q3Amount !== undefined && q3Amount !== null ? Number(q3Amount) : Number(line.q3_amount);
+  let q4 = q4Amount !== undefined && q4Amount !== null ? Number(q4Amount) : Number(line.q4_amount);
+
+  if (activeCurve !== 'custom' && (amount !== undefined || spreadCurve !== undefined)) {
+    const spread = calculateSpreadQuarters(newAmount, activeCurve);
+    q1 = spread.q1;
+    q2 = spread.q2;
+    q3 = spread.q3;
+    q4 = spread.q4;
+  }
+
+  await query(
+    `UPDATE budget_lines
+        SET amount = ?,
+            control_mode = COALESCE(?, control_mode),
+            spread_curve = ?,
+            warning_threshold_pct = ?,
+            q1_amount = ?,
+            q2_amount = ?,
+            q3_amount = ?,
+            q4_amount = ?,
+            notes = COALESCE(?, notes)
+      WHERE id = ?`,
+    [
+      newAmount,
+      controlMode || line.control_mode,
+      activeCurve,
+      warningThresholdPct !== undefined ? (warningThresholdPct === null ? null : Number(warningThresholdPct)) : line.warning_threshold_pct,
+      q1,
+      q2,
+      q3,
+      q4,
+      notes !== undefined ? notes : line.notes,
+      lineId,
+    ]
+  );
+
+  return { id: lineId, amount: newAmount, spreadCurve: activeCurve, q1, q2, q3, q4 };
+}
+
+export async function reSpreadBudget({ query }, orgId, budgetId, { spreadCurve = 'equal_quarterly' }) {
+  const lines = await query(
+    `SELECT bl.id, bl.amount FROM budget_lines bl JOIN budgets b ON b.id = bl.budget_id WHERE b.org_id = ? AND bl.budget_id = ?`,
+    [orgId, budgetId]
+  );
+
+  for (const l of lines) {
+    const spread = calculateSpreadQuarters(Number(l.amount || 0), spreadCurve);
+    await query(
+      `UPDATE budget_lines
+          SET spread_curve = ?, q1_amount = ?, q2_amount = ?, q3_amount = ?, q4_amount = ?
+        WHERE id = ?`,
+      [spreadCurve, spread.q1, spread.q2, spread.q3, spread.q4, l.id]
+    );
+  }
+
+  return { ok: true, linesUpdated: lines.length, spreadCurve };
 }
 
 export async function deleteBudgetLine({ query }, orgId, budgetId, lineId) {
@@ -207,7 +496,7 @@ export async function deleteBudgetLine({ query }, orgId, budgetId, lineId) {
 // 2. Budget Commitments (Engagements budgétaires)
 // -----------------------------------------------------------------------------
 
-export async function listCommitments({ query }, orgId, { budgetId = null, budgetLineId = null, status = null, assetId = null } = {}) {
+export async function listCommitments({ query }, orgId, { budgetId = null, budgetLineId = null, status = null, assetId = null, stage = null } = {}) {
   const params = [orgId];
   const conditions = [];
 
@@ -227,6 +516,10 @@ export async function listCommitments({ query }, orgId, { budgetId = null, budge
     conditions.push('bc.asset_id = ?');
     params.push(assetId);
   }
+  if (stage) {
+    conditions.push('bc.stage = ?');
+    params.push(stage);
+  }
 
   const whereClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
 
@@ -243,7 +536,9 @@ export async function listCommitments({ query }, orgId, { budgetId = null, budge
             v.name AS vendor_name,
             ast.asset_tag AS asset_tag,
             ast.name AS asset_name,
-            u.full_name AS approver_name
+            u.full_name AS approver_name,
+            pbc.commitment_number AS parent_commitment_number,
+            bo.ticket_number AS override_ticket_number
        FROM budget_commitments bc
        JOIN budget_lines bl ON bl.id = bc.budget_line_id
        JOIN accounts ac ON ac.id = bl.account_id
@@ -251,6 +546,8 @@ export async function listCommitments({ query }, orgId, { budgetId = null, budge
        LEFT JOIN suppliers v ON v.id = bc.vendor_id
        LEFT JOIN assets ast ON ast.id = bc.asset_id
        LEFT JOIN users u ON u.id = bc.approved_by
+       LEFT JOIN budget_commitments pbc ON pbc.id = bc.parent_commitment_id
+       LEFT JOIN budget_overrides bo ON bo.id = bc.override_id
       WHERE bc.org_id = ? ${whereClause}
       ORDER BY bc.committed_date DESC, bc.created_at DESC`,
     params
@@ -266,6 +563,11 @@ export async function createCommitment({ query, queryOne }, orgId, userId, paylo
     workOrderId = null,
     amount = 0,
     committedDate,
+    stage = 'firm_commitment',
+    parentCommitmentId = null,
+    overrideId = null,
+    overrideTicketNumber = null,
+    cofinancingKeyId = null,
     notes = null,
   } = payload;
 
@@ -276,7 +578,9 @@ export async function createCommitment({ query, queryOne }, orgId, userId, paylo
 
   // 1. Retrieve budget line, budget master and control mode
   const line = await queryOne(
-    `SELECT bl.*, b.id AS budget_id, b.status AS budget_status, b.fiscal_year_id
+    `SELECT bl.*, b.id AS budget_id, b.status AS budget_status, b.fiscal_year_id,
+            b.warning_threshold_pct AS budget_warning_threshold_pct,
+            b.block_threshold_pct AS budget_block_threshold_pct
        FROM budget_lines bl
        JOIN budgets b ON b.id = bl.budget_id
       WHERE b.org_id = ? AND bl.id = ? LIMIT 1`,
@@ -287,11 +591,21 @@ export async function createCommitment({ query, queryOne }, orgId, userId, paylo
     throw new Error('Budget line not found or does not belong to this organization.');
   }
 
-  // 2. Check current commitments on this line
+  // If converting/parent commitment specified, verify parent
+  let parentComm = null;
+  if (parentCommitmentId) {
+    parentComm = await queryOne(
+      `SELECT * FROM budget_commitments WHERE id = ? AND org_id = ? AND budget_line_id = ?`,
+      [parentCommitmentId, orgId, budgetLineId]
+    );
+  }
+
+  // 2. Check current commitments on this line (excluding parent if converting)
+  const parentFilter = parentCommitmentId ? `AND id != ${Number(parentCommitmentId)}` : '';
   const commRes = await queryOne(
     `SELECT COALESCE(SUM(amount), 0) AS total_committed
        FROM budget_commitments
-      WHERE budget_line_id = ? AND status IN ('approved', 'draft')`,
+      WHERE budget_line_id = ? AND status IN ('approved', 'draft') ${parentFilter}`,
     [budgetLineId]
   );
 
@@ -299,30 +613,81 @@ export async function createCommitment({ query, queryOne }, orgId, userId, paylo
   const alreadyConsumed = Number(commRes?.total_committed || 0);
   const available = budgetCap - alreadyConsumed;
 
-  if (line.control_mode === 'strict_block' && numAmount > available) {
-    throw new Error(
-      `Budget ceiling breach! Line has only ${money(Math.max(0, available))} XAF available. Proposed commitment: ${money(numAmount)} XAF.`
+  const warningPct = Number(line.warning_threshold_pct ?? line.budget_warning_threshold_pct ?? 80.0);
+  const blockPct = Number(line.budget_block_threshold_pct ?? 100.0);
+  const projectedConsumed = alreadyConsumed + numAmount;
+  const projectedPct = budgetCap > 0 ? (projectedConsumed / budgetCap) * 100 : 0;
+
+  let activeOverride = null;
+  let warningNotice = null;
+
+  // Check if an Emergency Controller Override Ticket is supplied OR if a breach occurs
+  if (overrideId || overrideTicketNumber) {
+    const ovrParams = [orgId, budgetLineId];
+    let ovrClause = '';
+    if (overrideId) {
+      ovrClause = 'bo.id = ?';
+      ovrParams.unshift(overrideId);
+    } else {
+      ovrClause = 'bo.ticket_number = ?';
+      ovrParams.unshift(overrideTicketNumber.trim());
+    }
+
+    activeOverride = await queryOne(
+      `SELECT bo.* FROM budget_overrides bo
+        WHERE ${ovrClause} AND bo.org_id = ? AND bo.budget_line_id = ? AND bo.status = 'approved' AND bo.expires_at >= NOW() LIMIT 1`,
+      ovrParams
     );
+
+    if (!activeOverride) {
+      throw new Error(
+        `Invalid or expired Controller Override Ticket. An active, approved override ticket for this budget line is required.`
+      );
+    }
+
+    const deficit = Math.max(0, numAmount - available);
+    if (deficit > 0 && Number(activeOverride.overrun_amount) < deficit) {
+      throw new Error(
+        `Override ticket ${activeOverride.ticket_number} ceiling (${money(activeOverride.overrun_amount)} XAF) is insufficient to cover the required deficit (${money(deficit)} XAF).`
+      );
+    }
+
+    warningNotice = `🛡️ Emergency Derogation Applied: Authorized by Controller (Ticket ${activeOverride.ticket_number}) for emergency overrun of ${money(deficit)} XAF.`;
+  } else if (line.control_mode === 'strict_block' && (numAmount > available || projectedPct > blockPct)) {
+    throw new Error(
+      `Budget ceiling breach! Line has only ${money(Math.max(0, available))} XAF available. Proposed commitment (${money(numAmount)} XAF) would consume ${projectedPct.toFixed(1)}% of total budget allocation, exceeding the hard stop limit of ${blockPct}%. (Emergency purchase? Request a Controller Override Ticket).`
+    );
+  } else if (projectedPct >= warningPct) {
+    warningNotice = `⚠️ Advisory AVC Notice: This commitment brings budget consumption to ${projectedPct.toFixed(1)}%, exceeding the ${warningPct}% warning threshold. Remaining available: ${money(Math.max(0, budgetCap - projectedConsumed))} XAF.`;
   }
 
-  // 3. Generate sequential commitment number ENG-YYYY-NNNN
+  // 3. Generate sequential commitment number
+  // Prefix: DA-YYYY-NNNN for Pre-Commitment (Demande d'Achat), BC-YYYY-NNNN for Firm Commitment (Bon de Commande)
+  const isPre = stage === 'pre_commitment';
+  const prefix = isPre ? 'DA' : 'BC';
   const yr = new Date(committedDate || Date.now()).getFullYear();
-  const countRow = await queryOne(
-    `SELECT COUNT(*) AS cnt FROM budget_commitments WHERE org_id = ? AND commitment_number LIKE ?`,
-    [orgId, `ENG-${yr}-%`]
+  const maxRow = await queryOne(
+    `SELECT MAX(CAST(SUBSTRING_INDEX(commitment_number, '-', -1) AS UNSIGNED)) AS max_seq
+       FROM budget_commitments
+      WHERE org_id = ? AND commitment_number LIKE ?`,
+    [orgId, `${prefix}-${yr}-%`]
   );
-  const seq = (countRow?.cnt || 0) + 1;
-  const commitmentNumber = `ENG-${yr}-${String(seq).padStart(4, '0')}`;
+  const seq = (maxRow?.max_seq || 0) + 1;
+  const commitmentNumber = `${prefix}-${yr}-${String(seq).padStart(4, '0')}`;
 
   const ins = await query(
     `INSERT INTO budget_commitments
-     (org_id, budget_id, budget_line_id, commitment_number, description, vendor_id, asset_id, work_order_id, amount, committed_date, status, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)`,
+     (org_id, budget_id, budget_line_id, cofinancing_key_id, commitment_number, stage, parent_commitment_id, override_id, description, vendor_id, asset_id, work_order_id, amount, committed_date, status, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)`,
     [
       orgId,
       line.budget_id,
       budgetLineId,
+      cofinancingKeyId ? Number(cofinancingKeyId) : null,
       commitmentNumber,
+      isPre ? 'pre_commitment' : 'firm_commitment',
+      parentCommitmentId || null,
+      activeOverride ? activeOverride.id : null,
       description,
       vendorId || null,
       assetId || null,
@@ -333,17 +698,121 @@ export async function createCommitment({ query, queryOne }, orgId, userId, paylo
     ]
   );
 
+  const newCommId = ins.insertId;
+
+  // If a co-financing key is selected, automatically prorate and materialize multi-donor splits
+  if (cofinancingKeyId) {
+    try {
+      await executeCofinancingSplit({ query, queryOne }, orgId, userId, {
+        keyId: Number(cofinancingKeyId),
+        sourceAmount: numAmount,
+        currency: 'XAF',
+        commitmentId: newCommId,
+        voucherRef: commitmentNumber,
+        stage: 'commitment',
+        notes: `Ventilation automatique co-financement pour engagement ${commitmentNumber}: ${description}`,
+      });
+    } catch (cofinErr) {
+      console.error('Automated co-financing split failed:', cofinErr.message);
+    }
+  }
+
+  // If override was used, mark ticket as used
+  if (activeOverride) {
+    await query(
+      `UPDATE budget_overrides SET status = 'used', used_at = NOW(), used_in_commitment_id = ? WHERE id = ?`,
+      [newCommId, activeOverride.id]
+    );
+  }
+
+  // If parent pre-commitment was converted, mark parent as 'converted'
+  if (parentCommitmentId) {
+    await query(
+      `UPDATE budget_commitments SET status = 'converted' WHERE id = ? AND org_id = ?`,
+      [parentCommitmentId, orgId]
+    );
+  }
+
   // If assetId is supplied, update asset with budget_line_id
   if (assetId) {
     await query(`UPDATE assets SET budget_line_id = ? WHERE org_id = ? AND id = ?`, [budgetLineId, orgId, assetId]);
   }
 
   return {
-    id: ins.insertId,
+    id: newCommId,
     commitmentNumber,
+    stage: isPre ? 'pre_commitment' : 'firm_commitment',
     amount: numAmount,
     availableRemaining: Math.max(0, available - numAmount),
+    projectedPctConsumed: Number(projectedPct.toFixed(1)),
+    warningNotice,
+    overrideApplied: !!activeOverride,
     status: 'draft',
+  };
+}
+
+export async function convertPreCommitment({ query, queryOne }, orgId, userId, preCommitmentId, payload = {}) {
+  const preComm = await queryOne(
+    `SELECT * FROM budget_commitments WHERE id = ? AND org_id = ? AND stage = 'pre_commitment'`,
+    [preCommitmentId, orgId]
+  );
+  if (!preComm) {
+    throw new Error('Pre-commitment (Demande d’achat) not found.');
+  }
+  if (preComm.status === 'converted') {
+    throw new Error('This pre-commitment has already been converted to a firm commitment.');
+  }
+  if (preComm.status === 'cancelled') {
+    throw new Error('Cannot convert a cancelled pre-commitment.');
+  }
+
+  const numAmount = payload.amount !== undefined ? Number(payload.amount) : Number(preComm.amount);
+  const vendorId = payload.vendorId !== undefined ? payload.vendorId : preComm.vendor_id;
+  const description = payload.description || preComm.description;
+  const yr = new Date(payload.committedDate || Date.now()).getFullYear();
+
+  const countRow = await queryOne(
+    `SELECT COUNT(*) AS cnt FROM budget_commitments WHERE org_id = ? AND commitment_number LIKE ?`,
+    [orgId, `BC-${yr}-%`]
+  );
+  const seq = (countRow?.cnt || 0) + 1;
+  const commitmentNumber = `BC-${yr}-${String(seq).padStart(4, '0')}`;
+
+  // 1. Mark pre-commitment as converted
+  await query(
+    `UPDATE budget_commitments SET status = 'converted' WHERE id = ?`,
+    [preCommitmentId]
+  );
+
+  // 2. Insert firm commitment
+  const ins = await query(
+    `INSERT INTO budget_commitments
+     (org_id, budget_id, budget_line_id, commitment_number, stage, parent_commitment_id, description, vendor_id, asset_id, work_order_id, amount, committed_date, status, approved_by, approved_at, notes)
+     VALUES (?, ?, ?, ?, 'firm_commitment', ?, ?, ?, ?, ?, ?, ?, 'approved', ?, NOW(), ?)`,
+    [
+      orgId,
+      preComm.budget_id,
+      preComm.budget_line_id,
+      commitmentNumber,
+      preCommitmentId,
+      description,
+      vendorId || null,
+      preComm.asset_id || null,
+      preComm.work_order_id || null,
+      numAmount,
+      payload.committedDate || new Date().toISOString().slice(0, 10),
+      userId,
+      payload.notes || `Converted from Pre-Commitment (DA) ${preComm.commitment_number}`,
+    ]
+  );
+
+  return {
+    id: ins.insertId,
+    commitmentNumber,
+    parentCommitmentNumber: preComm.commitment_number,
+    stage: 'firm_commitment',
+    status: 'approved',
+    amount: numAmount,
   };
 }
 
@@ -517,8 +986,11 @@ export async function checkBudgetCeiling({ query, queryOne }, orgId, { lines, en
     const ccId = line.costCenterId || null;
     const progId = line.programId || null;
 
-    const budgetLine = await queryOne(
-      `SELECT bl.id, bl.amount, bl.control_mode, b.code AS budget_code, b.name AS budget_name
+    let budgetLine = await queryOne(
+      `SELECT bl.id, bl.amount, bl.control_mode, bl.warning_threshold_pct AS line_warning_pct,
+              b.code AS budget_code, b.name AS budget_name,
+              b.warning_threshold_pct AS budget_warning_pct,
+              b.block_threshold_pct AS budget_block_pct
          FROM budget_lines bl
          JOIN budgets b ON b.id = bl.budget_id
         WHERE b.org_id = ? AND b.fiscal_year_id = ? AND b.status = 'approved'
@@ -529,6 +1001,40 @@ export async function checkBudgetCeiling({ query, queryOne }, orgId, { lines, en
         LIMIT 1`,
       [orgId, fyId, acct.id, ccId, progId]
     );
+
+    let derivationNotice = null;
+    if (!budgetLine) {
+      // Check derivation rule (FMDERIVE rollup)
+      const dRule = await queryOne(
+        `SELECT bdr.*, ac.id AS derived_account_id, ac.code AS derived_account_code, ac.name AS derived_account_name
+           FROM budget_derivation_rules bdr
+           JOIN accounts ac ON ac.id = bdr.target_account_id
+          WHERE bdr.org_id = ? AND bdr.dimension_type = 'account' AND bdr.is_active = 1
+            AND ? LIKE REPLACE(bdr.source_pattern, '*', '%')
+          ORDER BY bdr.priority ASC LIMIT 1`,
+        [orgId, acct.code]
+      );
+      if (dRule) {
+        budgetLine = await queryOne(
+          `SELECT bl.id, bl.amount, bl.control_mode, bl.warning_threshold_pct AS line_warning_pct,
+                  b.code AS budget_code, b.name AS budget_name,
+                  b.warning_threshold_pct AS budget_warning_pct,
+                  b.block_threshold_pct AS budget_block_pct
+             FROM budget_lines bl
+             JOIN budgets b ON b.id = bl.budget_id
+            WHERE b.org_id = ? AND b.fiscal_year_id = ? AND b.status = 'approved'
+              AND bl.account_id = ?
+              AND (bl.cost_center_id = ? OR bl.cost_center_id IS NULL)
+              AND (bl.program_id = ? OR bl.program_id IS NULL)
+            ORDER BY (bl.cost_center_id IS NOT NULL) DESC, (bl.program_id IS NOT NULL) DESC
+            LIMIT 1`,
+          [orgId, fyId, dRule.derived_account_id, ccId, progId]
+        );
+        if (budgetLine) {
+          derivationNotice = `Derived via Rule ${dRule.rule_code} -> Budget envelope ${dRule.derived_account_code}`;
+        }
+      }
+    }
 
     // Sum actual expenditures and active commitments
     const actualRes = await queryOne(
@@ -560,8 +1066,21 @@ export async function checkBudgetCeiling({ query, queryOne }, orgId, { lines, en
     const overrun = isExceeded ? projectedSpent - budgetAmount : 0;
     const pctConsumed = budgetAmount > 0 ? (projectedSpent / budgetAmount) * 100 : 0;
 
-    if (isExceeded) {
-      totalBreaches++;
+    const warnPct = Number(budgetLine?.line_warning_pct ?? budgetLine?.budget_warning_pct ?? 80.0);
+    const blkPct = Number(budgetLine?.budget_block_pct ?? 100.0);
+
+    let avcStatus = 'normal';
+    let statusMessage = 'Within authorized budget limits';
+
+    if (isExceeded || pctConsumed >= blkPct) {
+      avcStatus = 'hard_breach';
+      statusMessage = `Ceiling exceeded: projected spend reaches ${pctConsumed.toFixed(1)}% (Limit: ${blkPct}%)`;
+      if (budgetLine?.control_mode === 'strict_block') {
+        totalBreaches++;
+      }
+    } else if (pctConsumed >= warnPct) {
+      avcStatus = 'advisory_warning';
+      statusMessage = `Approaching ceiling: projected spend reaches ${pctConsumed.toFixed(1)}% (Warning threshold: ${warnPct}%)`;
     }
 
     results.push({
@@ -577,6 +1096,10 @@ export async function checkBudgetCeiling({ query, queryOne }, orgId, { lines, en
       remainingBudget: money(Math.max(0, budgetAmount - totalConsumed)),
       isExceeded,
       controlMode: budgetLine?.control_mode || 'warning',
+      warningThresholdPct: warnPct,
+      blockThresholdPct: blkPct,
+      avcStatus,
+      statusMessage,
       overrunAmount: money(overrun),
       pctConsumed: Number(pctConsumed.toFixed(1)),
       hasBudget: budgetAmount > 0,
@@ -681,11 +1204,27 @@ export async function getBudgetExecutionReport({ query, queryOne }, orgId, { fis
   let totalCommitted = 0;
   let totalSpent = 0;
 
-  for (const r of rows) {
-    totalBudget += Number(r.budget_amount || 0);
-    totalCommitted += Number(r.committed_amount || 0);
-    totalSpent += Number(r.actual_spent || 0);
-  }
+  const enrichedRows = rows.map((r) => {
+    const bAmt = Number(r.budget_amount || 0);
+    const cAmt = Number(r.committed_amount || 0);
+    const sAmt = Number(r.actual_spent || 0);
+    totalBudget += bAmt;
+    totalCommitted += cAmt;
+    totalSpent += sAmt;
+
+    const pct = Number(r.pct_consumed || 0);
+    let avcStatus = 'normal';
+    if (pct >= 100.0 || (bAmt > 0 && cAmt + sAmt > bAmt)) {
+      avcStatus = 'breach';
+    } else if (pct >= 80.0) {
+      avcStatus = 'warning';
+    }
+
+    return {
+      ...r,
+      avc_status: avcStatus,
+    };
+  });
 
   const totalConsumed = totalCommitted + totalSpent;
 
@@ -697,7 +1236,7 @@ export async function getBudgetExecutionReport({ query, queryOne }, orgId, { fis
     totalConsumed: money(totalConsumed),
     remainingBudget: money(totalBudget - totalConsumed),
     overallPctConsumed: totalBudget > 0 ? Number(((totalConsumed / totalBudget) * 100).toFixed(1)) : 0,
-    rows,
+    rows: enrichedRows,
   };
 }
 
@@ -934,4 +1473,270 @@ export async function listCarryforwards({ query }, orgId, { budgetId = null, fis
       ORDER BY cf.carried_at DESC`,
     params
   );
+}
+
+// -----------------------------------------------------------------------------
+// 6. Emergency Budget Overrides (Dérogations Budgétaires - SAP AVC Override)
+// -----------------------------------------------------------------------------
+
+export async function createOverrideTicket({ query, queryOne }, orgId, userId, payload) {
+  const {
+    budgetId,
+    budgetLineId,
+    overrunAmount,
+    justification,
+    validityDays = 14,
+  } = payload;
+
+  const numAmount = Number(overrunAmount);
+  if (numAmount <= 0) {
+    throw new Error('Authorized overrun amount must be strictly positive.');
+  }
+  if (!justification || !justification.trim()) {
+    throw new Error('Justification for emergency override is required.');
+  }
+
+  const line = await queryOne(
+    `SELECT bl.*, b.code AS budget_code FROM budget_lines bl JOIN budgets b ON b.id = bl.budget_id WHERE b.org_id = ? AND bl.id = ?`,
+    [orgId, budgetLineId]
+  );
+  if (!line) {
+    throw new Error('Budget line not found.');
+  }
+
+  const yr = new Date().getFullYear();
+  const countRow = await queryOne(
+    `SELECT COUNT(*) AS cnt FROM budget_overrides WHERE org_id = ? AND ticket_number LIKE ?`,
+    [orgId, `OVR-${yr}-%`]
+  );
+  const seq = (countRow?.cnt || 0) + 1;
+  const ticketNumber = `OVR-${yr}-${String(seq).padStart(4, '0')}`;
+
+  const expiresAt = new Date(Date.now() + validityDays * 24 * 3600 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+  const ins = await query(
+    `INSERT INTO budget_overrides
+     (org_id, budget_id, budget_line_id, ticket_number, requested_by, authorized_by, overrun_amount, justification, status, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?)`,
+    [orgId, line.budget_id, budgetLineId, ticketNumber, userId, userId, numAmount, justification.trim(), expiresAt]
+  );
+
+  return {
+    id: ins.insertId,
+    ticketNumber,
+    budgetLineId,
+    overrunAmount: numAmount,
+    justification: justification.trim(),
+    status: 'approved',
+    expiresAt,
+  };
+}
+
+export async function listOverrideTickets({ query }, orgId, { budgetId = null, status = null } = {}) {
+  const params = [orgId];
+  let filter = '';
+  if (budgetId) {
+    filter += ' AND bo.budget_id = ?';
+    params.push(budgetId);
+  }
+  if (status) {
+    filter += ' AND bo.status = ?';
+    params.push(status);
+  }
+
+  return query(
+    `SELECT bo.*,
+            ac.code AS account_code,
+            ac.name AS account_name,
+            ac.name_en AS account_name_en,
+            cc.code AS cost_center_code,
+            cc.name AS cost_center_name,
+            u_req.full_name AS requester_name,
+            u_auth.full_name AS authorizer_name,
+            bc.commitment_number AS used_in_commitment_number
+       FROM budget_overrides bo
+       JOIN budget_lines bl ON bl.id = bo.budget_line_id
+       JOIN accounts ac ON ac.id = bl.account_id
+       LEFT JOIN cost_centers cc ON cc.id = bl.cost_center_id
+       LEFT JOIN users u_req ON u_req.id = bo.requested_by
+       LEFT JOIN users u_auth ON u_auth.id = bo.authorized_by
+       LEFT JOIN budget_commitments bc ON bc.id = bo.used_in_commitment_id
+      WHERE bo.org_id = ? ${filter}
+      ORDER BY bo.created_at DESC`,
+    params
+  );
+}
+
+// -----------------------------------------------------------------------------
+// 7. Multi-Version Comparative Analysis (V0 Initial vs V1 Revised vs Real)
+// -----------------------------------------------------------------------------
+
+export async function getBudgetVersionComparison({ query, queryOne }, orgId, budgetId) {
+  const budget = await queryOne(
+    `SELECT b.*, fy.code AS fiscal_year_code, fy.name AS fiscal_year_name
+       FROM budgets b
+       JOIN fiscal_years fy ON fy.id = b.fiscal_year_id
+      WHERE b.org_id = ? AND b.id = ?`,
+    [orgId, budgetId]
+  );
+  if (!budget) {
+    throw new Error('Budget not found.');
+  }
+
+  const lines = await query(
+    `SELECT bl.*,
+            ac.code AS account_code,
+            ac.name AS account_name,
+            ac.name_en AS account_name_en,
+            ac.account_class,
+            cc.code AS cost_center_code,
+            cc.name AS cost_center_name,
+            cc.name_en AS cost_center_name_en,
+            fp.code AS program_code,
+            fp.name AS program_name,
+            -- Pre-commitments (DA)
+            COALESCE(da.pre_committed, 0) AS pre_committed_amount,
+            -- Firm commitments (BC)
+            COALESCE(bc.firm_committed, 0) AS firm_committed_amount,
+            -- Actual general ledger postings
+            COALESCE(act.actual_spent, 0) AS actual_spent,
+            -- Net transfers
+            COALESCE(tr_in.total_in, 0) - COALESCE(tr_out.total_out, 0) AS net_transfers
+       FROM budget_lines bl
+       JOIN accounts ac ON ac.id = bl.account_id
+       LEFT JOIN cost_centers cc ON cc.id = bl.cost_center_id
+       LEFT JOIN funding_programs fp ON fp.id = bl.program_id
+       LEFT JOIN (
+         SELECT budget_line_id, SUM(amount) AS pre_committed
+           FROM budget_commitments
+          WHERE status = 'approved' AND stage = 'pre_commitment'
+          GROUP BY budget_line_id
+       ) da ON da.budget_line_id = bl.id
+       LEFT JOIN (
+         SELECT budget_line_id, SUM(amount) AS firm_committed
+           FROM budget_commitments
+          WHERE status IN ('approved', 'draft') AND stage = 'firm_commitment'
+          GROUP BY budget_line_id
+       ) bc ON bc.budget_line_id = bl.id
+       LEFT JOIN (
+         SELECT jl.account_id, jl.cost_center_id, jl.program_id,
+                SUM(jl.debit - jl.credit) AS actual_spent
+           FROM journal_lines jl
+           JOIN journal_entries je ON je.id = jl.entry_id
+           JOIN accounting_periods ap ON ap.id = je.period_id
+          WHERE je.org_id = ? AND ap.fiscal_year_id = ? AND je.status = 'posted'
+          GROUP BY jl.account_id, jl.cost_center_id, jl.program_id
+       ) act ON act.account_id = bl.account_id
+            AND (bl.cost_center_id IS NULL OR act.cost_center_id = bl.cost_center_id)
+            AND (bl.program_id IS NULL OR act.program_id = bl.program_id)
+       LEFT JOIN (
+         SELECT target_line_id, SUM(amount) AS total_in
+           FROM budget_transfers WHERE status = 'approved' GROUP BY target_line_id
+       ) tr_in ON tr_in.target_line_id = bl.id
+       LEFT JOIN (
+         SELECT source_line_id, SUM(amount) AS total_out
+           FROM budget_transfers WHERE status = 'approved' GROUP BY source_line_id
+       ) tr_out ON tr_out.source_line_id = bl.id
+      WHERE bl.budget_id = ?
+      ORDER BY bl.budget_type ASC, ac.code ASC`,
+    [orgId, budget.fiscal_year_id, budgetId]
+  );
+
+  let totalV0 = 0;
+  let totalCarried = 0;
+  let totalTransfers = 0;
+  let totalV1 = 0;
+  let totalPreCommitted = 0;
+  let totalFirmCommitted = 0;
+  let totalSpent = 0;
+
+  const comparisonRows = lines.map((l) => {
+    const v0 = Number(l.initial_amount || l.amount || 0);
+    const carried = Number(l.carried_forward_amount || 0);
+    const transfers = Number(l.net_transfers || 0);
+    const v1 = Number(l.amount || 0); // revised
+    const delta = v1 - v0;
+    const deltaPct = v0 > 0 ? Number(((delta / v0) * 100).toFixed(1)) : 0;
+
+    const preComm = Number(l.pre_committed_amount || 0);
+    const firmComm = Number(l.firm_committed_amount || 0);
+    const spent = Number(l.actual_spent || 0);
+    const totalConsumed = preComm + firmComm + spent;
+    const available = Math.max(0, v1 - totalConsumed);
+
+    const execVsV0Pct = v0 > 0 ? Number(((totalConsumed / v0) * 100).toFixed(1)) : 0;
+    const execVsV1Pct = v1 > 0 ? Number(((totalConsumed / v1) * 100).toFixed(1)) : 0;
+
+    let avcStatus = 'normal';
+    if (totalConsumed > v1) {
+      avcStatus = 'breach';
+    } else if (execVsV1Pct >= Number(budget.warning_threshold_pct || 80.0)) {
+      avcStatus = 'warning';
+    }
+
+    totalV0 += v0;
+    totalCarried += carried;
+    totalTransfers += transfers;
+    totalV1 += v1;
+    totalPreCommitted += preComm;
+    totalFirmCommitted += firmComm;
+    totalSpent += spent;
+
+    return {
+      lineId: l.id,
+      accountId: l.account_id,
+      accountCode: l.account_code,
+      accountName: l.account_name,
+      accountNameEn: l.account_name_en,
+      budgetType: l.budget_type,
+      costCenterCode: l.cost_center_code,
+      costCenterName: l.cost_center_name,
+      costCenterNameEn: l.cost_center_name_en,
+      programCode: l.program_code,
+      programName: l.program_name,
+      v0Amount: money(v0),
+      carriedAmount: money(carried),
+      transfersAmount: money(transfers),
+      v1Amount: money(v1),
+      amendmentDelta: money(delta),
+      amendmentDeltaPct: deltaPct,
+      preCommittedAmount: money(preComm),
+      firmCommittedAmount: money(firmComm),
+      actualSpent: money(spent),
+      totalConsumed: money(totalConsumed),
+      availableBalance: money(available),
+      execVsV0Pct,
+      execVsV1Pct,
+      avcStatus,
+    };
+  });
+
+  const totalDelta = totalV1 - totalV0;
+  const totalConsumedAll = totalPreCommitted + totalFirmCommitted + totalSpent;
+  const totalAvailable = Math.max(0, totalV1 - totalConsumedAll);
+
+  return {
+    budgetId: budget.id,
+    budgetCode: budget.code,
+    budgetName: budget.name,
+    fiscalYearCode: budget.fiscal_year_code,
+    warningThresholdPct: Number(budget.warning_threshold_pct || 80.0),
+    blockThresholdPct: Number(budget.block_threshold_pct || 100.0),
+    summary: {
+      totalV0: money(totalV0),
+      totalCarried: money(totalCarried),
+      totalTransfers: money(totalTransfers),
+      totalV1: money(totalV1),
+      totalDelta: money(totalDelta),
+      totalDeltaPct: totalV0 > 0 ? Number(((totalDelta / totalV0) * 100).toFixed(1)) : 0,
+      totalPreCommitted: money(totalPreCommitted),
+      totalFirmCommitted: money(totalFirmCommitted),
+      totalSpent: money(totalSpent),
+      totalConsumed: money(totalConsumedAll),
+      totalAvailable: money(totalAvailable),
+      overallExecVsV0Pct: totalV0 > 0 ? Number(((totalConsumedAll / totalV0) * 100).toFixed(1)) : 0,
+      overallExecVsV1Pct: totalV1 > 0 ? Number(((totalConsumedAll / totalV1) * 100).toFixed(1)) : 0,
+    },
+    rows: comparisonRows,
+  };
 }

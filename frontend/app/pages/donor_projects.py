@@ -37,6 +37,48 @@ _T = {
     'tab_drf': {'en': 'Disbursement Requests (DRF / SOE)', 'fr': 'Demandes de Retrait de Fonds (DRF / SOE)'},
     'tab_cats': {'en': 'Budget Categories & Eligibility', 'fr': 'Catégories Budgétaires & Éligibilité'},
     'tab_all': {'en': 'Donor Conventions Directory', 'fr': 'Répertoire des Conventions Bailleurs'},
+    'tab_cofin': {'en': 'Co-Financing Keys & Proration', 'fr': 'Clés de Co-financement & Ventilation'},
+    'cofin_panel_title': {'en': 'Multi-Donor Financing Keys & Expense Proration', 'fr': 'Clés de Co-Financement & Ventilation Multi-Bailleurs'},
+    'cofin_panel_sub': {'en': 'Contractual cost-sharing matrix across international donor agreements and State counterpart funds (IDA, Global Fund, BIE)', 'fr': 'Matrice contractuelle de partage des dépenses entre partenaires financiers internationaux et fonds de contrepartie État'},
+    'cofin_keys_title': {'en': 'Multi-Donor Financing Keys Matrix', 'fr': 'Matrice des Clés de Co-Financement'},
+    'cofin_kpi_keys': {'en': 'Active Co-Financing Keys', 'fr': 'Clés de Co-Financement Actives'},
+    'cofin_kpi_total': {'en': 'Total Co-Financed Amount', 'fr': 'Montant Total Co-Financé'},
+    'cofin_kpi_comms': {'en': 'Co-Financed Commitments', 'fr': 'Engagements Co-Financés'},
+    'cofin_kpi_mandats': {'en': 'Co-Financed Mandats', 'fr': 'Mandats Co-Financés'},
+    'btn_new_key': {'en': 'New Co-Financing Key', 'fr': 'Nouvelle Clé de Co-Financement'},
+    'btn_simulate_split': {'en': 'Proration Simulator', 'fr': 'Simulateur de Ventilation'},
+    'cofin_splits_title': {'en': 'Co-Financing Splits Audit Ledger', 'fr': 'Grand Livre des Répartitions Multi-Bailleurs'},
+    'cofin_splits_sub': {'en': 'Real-time audit log of multi-donor expense allocations by commitment and payment voucher', 'fr': 'Journal d’audit des répartitions de dépenses par engagement et mandat'},
+    'col_split_id': {'en': 'ID', 'fr': 'ID'},
+    'col_key_code': {'en': 'Key Code', 'fr': 'Code Clé'},
+    'col_donor_proj': {'en': 'Donor & Convention', 'fr': 'Bailleur & Convention'},
+    'col_split_pct': {'en': 'Share %', 'fr': 'Quote-part %'},
+    'col_split_amt': {'en': 'Allocated Amount', 'fr': 'Montant Alloué'},
+    'col_split_stage': {'en': 'Stage', 'fr': 'Phase'},
+    'col_split_ref': {'en': 'Voucher / Order Ref', 'fr': 'Réf. Pièce / Bon'},
+    'col_split_date': {'en': 'Date', 'fr': 'Date'},
+    'modal_new_key_title': {'en': 'Create Multi-Donor Co-Financing Key', 'fr': 'Créer une Clé de Co-Financement Multi-Bailleurs'},
+    'modal_key_code': {'en': 'Key Code (e.g. COFIN-IDA-BIE-80-20)', 'fr': 'Code de la Clé (ex: COFIN-IDA-BIE-80-20)'},
+    'modal_key_name': {'en': 'Key Designation', 'fr': 'Libellé de la Clé'},
+    'modal_key_desc': {'en': 'Context / Eligible Expenditures', 'fr': 'Contexte / Dépenses Éligibles'},
+    'modal_key_lines_title': {'en': 'Donor Conventions & Percentage Shares (Must equal 100.00%)', 'fr': 'Conventions Bailleurs & Quotes-parts (Total obligatoire : 100.00%)'},
+    'btn_add_donor_line': {'en': 'Add Donor Convention', 'fr': 'Ajouter une Convention Bailleur'},
+    'modal_save_key': {'en': 'Save Co-Financing Key', 'fr': 'Enregistrer la Clé'},
+    'modal_key_saved': {'en': 'Co-financing key created successfully!', 'fr': 'Clé de co-financement enregistrée avec succès !'},
+    'sim_modal_title': {'en': 'Multi-Donor Expense Proration Simulator', 'fr': 'Simulateur de Ventilation des Dépenses Multi-Bailleurs'},
+    'sim_modal_sub': {'en': 'Simulate expenditure splitting across donor agreements with zero rounding loss', 'fr': 'Simulez la ventilation exacte des dépenses par bailleur avec garantie de zéro perte au centime'},
+    'sim_amount_label': {'en': 'Expenditure Amount to Prorate (XAF)', 'fr': 'Montant de la Dépense à Ventiler (XAF)'},
+    'btn_run_sim': {'en': 'Calculate Proration', 'fr': 'Calculer la Répartition'},
+    'sim_breakdown_title': {'en': 'Calculated Donor Conventions Breakdown', 'fr': 'Ventilation Calculée par Convention Bailleur'},
+    'sim_mat_title': {'en': 'Materialize this Allocation into Ledger', 'fr': 'Enregistrer & Matérialiser dans le Grand Livre'},
+    'sim_voucher_ref': {'en': 'Voucher / PO / Commitment Ref', 'fr': 'Réf. Pièce / Bon de Commande / Engagement'},
+    'sim_stage_label': {'en': 'Execution Stage', 'fr': 'Phase d’Exécution'},
+    'btn_execute_split': {'en': 'Materialize Split in Ledger', 'fr': 'Valider l’Enregistrement'},
+    'msg_split_materialized': {'en': 'Multi-donor split materialized successfully!', 'fr': 'Répartition multi-bailleurs enregistrée avec succès !'},
+    'lbl_notes': {'en': 'Notes & Observations', 'fr': 'Notes & Observations'},
+    'stage_commitment': {'en': 'Commitment (Engagement)', 'fr': 'Engagement'},
+    'stage_mandat': {'en': 'Payment Order (Mandatement)', 'fr': 'Mandatement'},
+    'stage_disbursed': {'en': 'Disbursed (Paiement Réalisé)', 'fr': 'Paiement Réalisé'},
     'drf_empty_title': {'en': 'No Withdrawal Application (DRF) created for this project.', 'fr': 'Aucune Demande de Retrait de Fonds (DRF) créée pour ce projet.'},
     'drf_empty_hint': {'en': 'Create a first DRF to justify expenditures to the donor and request replenishment.', 'fr': 'Créez une première DRF pour justifier vos dépenses auprès du bailleur et solliciter le réapprovisionnement.'},
     'drf_sheet_title': {'en': 'WITHDRAWAL APPLICATION (DRF) & STATEMENT OF EXPENDITURES (SOE)', 'fr': 'DEMANDE DE RETRAIT DE FONDS (DRF) & RELEVÉ DES DÉPENSES (SOE)'},
@@ -242,6 +284,7 @@ async def donor_projects_page() -> None:
             tab_drf = ui.tab('tab_drf', label=_loc('tab_drf'), icon='receipt_long')
             tab_cats = ui.tab('tab_cats', label=_loc('tab_cats'), icon='pie_chart')
             tab_all = ui.tab('tab_all', label=_loc('tab_all'), icon='handshake')
+            tab_cofin = ui.tab('tab_cofin', label=_loc('tab_cofin'), icon='pie_chart_outline')
 
         async def on_drf_select(drf_id: int):
             state['drf_id'] = drf_id
@@ -259,6 +302,10 @@ async def donor_projects_page() -> None:
             # --- TAB 3: Projects List ---
             with ui.tab_panel(tab_all).classes('p-0 gap-4'):
                 _render_projects_list(projects, currency)
+
+            # --- TAB 4: Co-Financing Keys & Expense Proration ---
+            with ui.tab_panel(tab_cofin).classes('p-0 gap-4'):
+                await _render_cofinancing_panel(projects, currency, reload_all)
 
     await render_view()
 
@@ -595,5 +642,328 @@ def _new_drf_modal(project_id: int, categories: list, on_success: callable) -> N
                     await on_success()
 
             ui.button(_loc('modal_drf_btn'), icon='check', on_click=do_create).props('unelevated color=primary')
+
+    dlg.open()
+
+
+# =============================================================================
+# Phase 7: Multi-Donor Co-Financing & Convention Proration UI Panels & Modals
+# =============================================================================
+
+async def _render_cofinancing_panel(projects: list, currency: str, on_change: callable) -> None:
+    # 1. Fetch keys, stats, and splits
+    keys_res = await api.safe(api.get('/donor-cofinancing/keys'), notify=False) or {'rows': []}
+    keys = keys_res.get('rows', [])
+    stats = await api.safe(api.get('/donor-cofinancing/stats'), notify=False) or {}
+    splits_res = await api.safe(api.get('/donor-cofinancing/splits'), notify=False) or {'rows': []}
+    splits = splits_res.get('rows', [])
+
+    # Header Card with title, subtitle, and action buttons
+    with ui.card().classes('w-full p-6 bg-white border border-slate-200 shadow-sm rounded-xl gap-4'):
+        with ui.row().classes('w-full items-center justify-between gap-4'):
+            with ui.column().classes('gap-1'):
+                with ui.row().classes('items-center gap-2'):
+                    ui.icon('pie_chart', size='24px', color='primary')
+                    ui.label(_loc('cofin_panel_title')).classes('text-lg font-black text-slate-900')
+                ui.label(_loc('cofin_panel_sub')).classes('text-xs text-slate-500 max-w-3xl')
+
+            with ui.row().classes('items-center gap-2'):
+                ui.button(
+                    _loc('btn_new_key'),
+                    icon='add_circle',
+                    on_click=lambda: _open_new_cofinancing_key_modal(projects, on_change)
+                ).props('unelevated color=primary size=sm')
+
+                ui.button(
+                    _loc('btn_simulate_split'),
+                    icon='calculate',
+                    on_click=lambda: _open_cofinancing_sim_modal(keys, projects, currency, on_change)
+                ).props('outline color=indigo size=sm')
+
+        # KPI Metric Strip
+        with ui.grid(columns=4).classes('w-full gap-4 pt-2 border-t border-slate-100'):
+            with ui.card().classes('p-3 bg-slate-50 border border-slate-200 rounded-lg'):
+                ui.label(_loc('cofin_kpi_keys')).classes('text-[11px] uppercase tracking-wider text-slate-500 font-bold')
+                ui.label(str(stats.get('total_active_keys', len(keys)))).classes('text-xl font-bold text-slate-900 font-mono')
+
+            with ui.card().classes('p-3 bg-indigo-50 border border-indigo-200 rounded-lg'):
+                ui.label(_loc('cofin_kpi_total')).classes('text-[11px] uppercase tracking-wider text-indigo-700 font-bold')
+                ui.label(f"{w.money(stats.get('total_cofinanced_amount', 0), currency)} {currency}").classes('text-xl font-bold text-indigo-900 font-mono')
+
+            with ui.card().classes('p-3 bg-emerald-50 border border-emerald-200 rounded-lg'):
+                ui.label(_loc('cofin_kpi_comms')).classes('text-[11px] uppercase tracking-wider text-emerald-700 font-bold')
+                ui.label(str(stats.get('total_commitments_cofinanced', 0))).classes('text-xl font-bold text-emerald-900 font-mono')
+
+            with ui.card().classes('p-3 bg-amber-50 border border-amber-200 rounded-lg'):
+                ui.label(_loc('cofin_kpi_mandats')).classes('text-[11px] uppercase tracking-wider text-amber-700 font-bold')
+                ui.label(str(stats.get('total_mandats_cofinanced', 0))).classes('text-xl font-bold text-amber-900 font-mono')
+
+    # Keys Directory (Cards Grid)
+    ui.label(_loc('cofin_keys_title')).classes('text-sm font-black text-slate-800 uppercase tracking-tight mt-2')
+    with ui.grid(columns=3).classes('w-full gap-4'):
+        for k in keys:
+            with ui.card().classes('p-5 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between gap-3'):
+                with ui.column().classes('gap-1'):
+                    with ui.row().classes('w-full items-center justify-between'):
+                        ui.chip(k.get('code', ''), color='indigo-1', text_color='indigo-9').props('dense font-bold font-mono')
+                        ui.chip('ACTIF' if k.get('is_active') else 'INACTIF', color='emerald-1' if k.get('is_active') else 'slate-2', text_color='emerald-9' if k.get('is_active') else 'slate-7').props('dense')
+                    ui.label(k.get('name', '')).classes('text-sm font-bold text-slate-900')
+                    if k.get('description'):
+                        ui.label(k.get('description', '')).classes('text-xs text-slate-500 line-clamp-2')
+
+                # Lines & Visual Shares
+                with ui.column().classes('w-full gap-2 pt-2 border-t border-slate-100'):
+                    ui.label('Quotes-parts contractuelles :').classes('text-[11px] font-semibold text-slate-600')
+                    for line in k.get('lines', []):
+                        with ui.row().classes('w-full items-center justify-between text-xs'):
+                            ui.label(f"{line.get('donor_name', 'Bailleur')} ({line.get('project_code', '')})").classes('text-slate-700 font-medium')
+                            ui.label(f"{line.get('percentage', 0):.1f}%").classes('font-bold font-mono text-primary')
+
+                    # Stacked Bar Visualizer
+                    with ui.row().classes('w-full h-2 rounded-full overflow-hidden bg-slate-100 mt-1 gap-0.5'):
+                        colors = ['bg-indigo-600', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500']
+                        for idx, line in enumerate(k.get('lines', [])):
+                            c = colors[idx % len(colors)]
+                            pct = line.get('percentage', 0)
+                            ui.element('div').classes(f"{c} h-full").style(f"width: {pct}%")
+
+                # Action Button on Card
+                with ui.row().classes('w-full justify-end pt-2 border-t border-slate-100'):
+                    ui.button(
+                        'Simuler / Ventiler',
+                        icon='calculate',
+                        on_click=lambda key_id=k['id']: _open_cofinancing_sim_modal(keys, projects, currency, on_change, preselected_key_id=key_id)
+                    ).props('flat dense size=sm color=primary')
+
+    # Grand Livre des Répartitions (Splits Audit Ledger)
+    with ui.card().classes('w-full p-6 bg-white border border-slate-200 shadow-sm rounded-xl gap-4 mt-2'):
+        with ui.column().classes('gap-1'):
+            ui.label(_loc('cofin_splits_title')).classes('text-base font-black text-slate-900')
+            ui.label(_loc('cofin_splits_sub')).classes('text-xs text-slate-500')
+
+        if not splits:
+            ui.label('Aucune répartition de dépenses enregistrée pour le moment. Utilisez le simulateur pour ventiler une dépense.').classes('text-xs text-slate-400 italic p-4 text-center')
+        else:
+            table_rows = [
+                {
+                    **s,
+                    'pct_formatted': f"{float(s.get('split_percentage', 0)):.2f}%",
+                    'amt_formatted': f"{w.money(float(s.get('split_amount', 0)), currency)} {currency}",
+                    'stage_label': _loc(f"stage_{s.get('stage', 'commitment')}"),
+                    'date_formatted': str(s.get('created_at', ''))[:10],
+                }
+                for s in splits
+            ]
+
+            columns = [
+                {'name': 'id', 'label': _loc('col_split_id'), 'field': 'id', 'align': 'center'},
+                {'name': 'key', 'label': _loc('col_key_code'), 'field': 'key_code', 'align': 'left'},
+                {'name': 'donor', 'label': _loc('col_donor_proj'), 'field': 'donor_name', 'align': 'left'},
+                {'name': 'ref', 'label': _loc('col_split_ref'), 'field': 'voucher_ref', 'align': 'left'},
+                {'name': 'pct', 'label': _loc('col_split_pct'), 'field': 'pct_formatted', 'align': 'center'},
+                {'name': 'amt', 'label': _loc('col_split_amt'), 'field': 'amt_formatted', 'align': 'right'},
+                {'name': 'stage', 'label': _loc('col_split_stage'), 'field': 'stage_label', 'align': 'center'},
+                {'name': 'date', 'label': _loc('col_split_date'), 'field': 'date_formatted', 'align': 'center'},
+            ]
+
+            ui.table(columns=columns, rows=table_rows, row_key='id').props('flat dense bordered').classes('w-full')
+
+
+def _open_new_cofinancing_key_modal(projects: list, on_success: callable) -> None:
+    if not projects:
+        ui.notify('Veuillez d’abord enregistrer au moins un projet bailleur.', type='warning')
+        return
+
+    proj_map = {p['id']: f"{p.get('donor_name')} ({p.get('project_code')})" for p in projects}
+
+    with ui.dialog() as dlg, ui.card().classes('w-[650px] p-6 gap-4'):
+        w.modal_header(_loc('modal_new_key_title'), emoji='🔑')
+
+        code_in = ui.input(label=_loc('modal_key_code'), value='COFIN-NOUV-2026').props('outlined dense').classes('w-full')
+        name_in = ui.input(label=_loc('modal_key_name'), value='Co-financement Travaux & Équipements').props('outlined dense').classes('w-full')
+        desc_in = ui.input(label=_loc('modal_key_desc'), value='Clé de répartition standard').props('outlined dense').classes('w-full')
+
+        ui.label(_loc('modal_key_lines_title')).classes('text-xs font-bold text-slate-700 uppercase tracking-wide mt-2')
+
+        lines_container = ui.column().classes('w-full gap-2')
+        line_records = []
+
+        # Real-time sum indicator
+        sum_label = ui.label('Total : 0.00%').classes('text-xs font-bold font-mono text-rose-600')
+
+        def calc_total_pct():
+            tot = 0.0
+            for r in line_records:
+                try:
+                    tot += float(r['pct_input'].value or 0)
+                except Exception:
+                    pass
+            tot = round(tot, 2)
+            if abs(tot - 100.0) < 0.001:
+                sum_label.text = f"Total Quotes-parts : {tot:.2f}% (✓ Conforme 100%)"
+                sum_label.classes('text-emerald-600', remove='text-rose-600 text-amber-600')
+            else:
+                sum_label.text = f"Total Quotes-parts : {tot:.2f}% (✕ Doit être exactement 100.00%)"
+                sum_label.classes('text-rose-600', remove='text-emerald-600 text-amber-600')
+            return tot
+
+        def add_line(default_proj_id=None, default_pct=50.0):
+            sel_pid = default_proj_id or list(proj_map.keys())[0]
+            with lines_container:
+                row = ui.row().classes('w-full items-center gap-2')
+                with row:
+                    p_sel = ui.select(proj_map, value=sel_pid, label='Bailleur / Projet').props('outlined dense options-dense').classes('flex-1')
+                    pct_inp = ui.number(label='% Quote-part', value=default_pct, min=0.01, max=100.0, format='%.2f').props('outlined dense').classes('w-32')
+                    pct_inp.on_value_change(calc_total_pct)
+                    note_inp = ui.input(label='Notes', placeholder='ex: Part État').props('outlined dense').classes('w-36')
+
+                    rec = {'row': row, 'p_sel': p_sel, 'pct_input': pct_inp, 'note_input': note_inp}
+                    def remove_this(r=rec):
+                        if len(line_records) > 1:
+                            lines_container.remove(r['row'])
+                            line_records.remove(r)
+                            calc_total_pct()
+                        else:
+                            ui.notify('Au moins une ligne de convention est requise.', type='warning')
+                    ui.button(icon='delete', on_click=remove_this).props('flat round dense size=sm color=rose')
+                    line_records.append(rec)
+            calc_total_pct()
+
+        # Seed 2 default rows
+        p_ids = list(proj_map.keys())
+        add_line(p_ids[0], 80.0)
+        if len(p_ids) > 1:
+            add_line(p_ids[1], 20.0)
+        else:
+            add_line(p_ids[0], 20.0)
+
+        with ui.row().classes('w-full justify-between items-center mt-2'):
+            ui.button(_loc('btn_add_donor_line'), icon='add', on_click=lambda: add_line(None, 0.0)).props('outline dense size=sm color=primary')
+            sum_label
+
+        with ui.row().classes('w-full justify-end gap-2 pt-4 border-t border-slate-100'):
+            ui.button(t('common.cancel'), on_click=dlg.close).props('flat')
+
+            async def do_save_key():
+                tot = calc_total_pct()
+                if abs(tot - 100.0) >= 0.01:
+                    ui.notify(f"Erreur : La somme des quotes-parts doit être exactement 100.00% (actuel: {tot:.2f}%).", type='negative')
+                    return
+
+                lines_payload = []
+                for r in line_records:
+                    lines_payload.append({
+                        'project_id': r['p_sel'].value,
+                        'percentage': float(r['pct_input'].value),
+                        'notes': r['note_input'].value.strip() if r['note_input'].value else None,
+                    })
+
+                payload = {
+                    'code': code_in.value.strip(),
+                    'name': name_in.value.strip(),
+                    'description': desc_in.value.strip() if desc_in.value else None,
+                    'lines': lines_payload,
+                }
+                res = await api.safe(api.post('/donor-cofinancing/keys', payload))
+                if res:
+                    ui.notify(_loc('modal_key_saved'), type='positive')
+                    dlg.close()
+                    await on_success()
+
+            ui.button(_loc('modal_save_key'), icon='check', on_click=do_save_key).props('unelevated color=primary')
+
+    dlg.open()
+
+
+def _open_cofinancing_sim_modal(keys: list, projects: list, currency: str, on_success: callable, preselected_key_id: int | None = None) -> None:
+    if not keys:
+        ui.notify('Veuillez d’abord créer au moins une clé de co-financement.', type='warning')
+        return
+
+    key_opts = {k['id']: f"[{k['code']}] {k['name']}" for k in keys}
+    default_key_id = preselected_key_id if preselected_key_id in key_opts else list(key_opts.keys())[0]
+
+    with ui.dialog() as dlg, ui.card().classes('w-[750px] p-6 gap-4'):
+        w.modal_header(_loc('sim_modal_title'), emoji='🧮')
+        ui.label(_loc('sim_modal_sub')).classes('text-xs text-slate-500')
+
+        with ui.row().classes('w-full gap-3 items-center'):
+            sel_key = ui.select(key_opts, value=default_key_id, label=_loc('lbl_sim_key')).props('outlined dense options-dense').classes('flex-1')
+            amt_inp = ui.number(label=_loc('sim_amount_label'), value=50000000, format='%.0f').props('outlined dense').classes('w-56')
+
+        sim_output_card = ui.card().classes('w-full p-4 bg-slate-50 border border-slate-200 rounded-lg gap-2')
+        sim_state = {'breakdown': [], 'total_amount': 0}
+
+        async def run_simulation():
+            sim_output_card.clear()
+            key_id = sel_key.value
+            amt = float(amt_inp.value or 0)
+            if amt <= 0:
+                ui.notify('Veuillez saisir un montant strictement positif.', type='warning')
+                return
+            sim_res = await api.safe(api.post('/donor-cofinancing/simulate', {'keyId': key_id, 'amount': amt, 'currency': currency}))
+            if not sim_res:
+                return
+            breakdown = sim_res.get('breakdown', [])
+            sim_state['breakdown'] = breakdown
+            sim_state['total_amount'] = sim_res.get('total_amount', amt)
+
+            with sim_output_card:
+                ui.label(_loc('sim_breakdown_title')).classes('text-xs font-black text-slate-800 uppercase')
+                tot_calc = 0
+                for b in breakdown:
+                    amt_b = b.get('split_amount', 0)
+                    tot_calc += amt_b
+                    with ui.row().classes('w-full items-center justify-between p-2 bg-white rounded border border-slate-200 text-xs'):
+                        with ui.column().classes('gap-0.5'):
+                            ui.label(f"{b.get('donor_name')} — {b.get('project_code')}").classes('font-bold text-slate-800')
+                            ui.label(b.get('project_name', '')).classes('text-[11px] text-slate-500')
+                        with ui.row().classes('items-center gap-3'):
+                            ui.chip(f"{b.get('percentage')}%", color='indigo-1', text_color='indigo-9').props('dense font-bold font-mono')
+                            ui.label(f"{w.money(amt_b, currency)} {currency}").classes('font-black text-slate-900 font-mono text-sm')
+
+                with ui.row().classes('w-full justify-between items-center pt-2 border-t border-slate-200 font-bold text-xs'):
+                    ui.label('Total réparti (Garantie 0 reliquat d’arrondi) :').classes('text-slate-700')
+                    ui.label(f"{w.money(tot_calc, currency)} {currency}").classes('text-emerald-700 font-mono text-sm')
+
+        with ui.row().classes('w-full justify-end'):
+            ui.button(_loc('btn_run_sim'), icon='play_arrow', on_click=run_simulation).props('unelevated color=indigo size=sm')
+
+        # Materialization Section
+        with ui.expansion(_loc('sim_mat_title'), icon='save').classes('w-full border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-700'):
+            with ui.column().classes('w-full gap-3 pt-2'):
+                with ui.row().classes('w-full gap-3'):
+                    v_ref = ui.input(label=_loc('sim_voucher_ref'), value='BC-2026-COFIN-01').props('outlined dense').classes('flex-1')
+                    stage_sel = ui.select(
+                        {'commitment': _loc('stage_commitment'), 'mandat': _loc('stage_mandat'), 'disbursed': _loc('stage_disbursed')},
+                        value='commitment',
+                        label=_loc('sim_stage_label')
+                    ).props('outlined dense options-dense').classes('w-48')
+
+                notes_inp = ui.input(label=_loc('lbl_notes'), placeholder='Acquisition sous co-financement IDA / BIE').props('outlined dense').classes('w-full')
+
+                async def do_materialize():
+                    if not sim_state.get('breakdown'):
+                        ui.notify('Veuillez d’abord lancer la simulation.', type='warning')
+                        return
+                    split_payload = {
+                        'keyId': sel_key.value,
+                        'sourceAmount': float(amt_inp.value or 0),
+                        'currency': currency,
+                        'voucherRef': v_ref.value.strip() if v_ref.value else None,
+                        'stage': stage_sel.value,
+                        'notes': notes_inp.value.strip() if notes_inp.value else None,
+                    }
+                    res = await api.safe(api.post('/donor-cofinancing/splits', split_payload))
+                    if res:
+                        ui.notify(_loc('msg_split_materialized'), type='positive')
+                        dlg.close()
+                        await on_success()
+
+                with ui.row().classes('w-full justify-end'):
+                    ui.button(_loc('btn_execute_split'), icon='check_circle', on_click=do_materialize).props('unelevated color=primary size=sm')
+
+        with ui.row().classes('w-full justify-end gap-2 pt-3 border-t border-slate-100'):
+            ui.button(t('common.close'), on_click=dlg.close).props('flat')
 
     dlg.open()
