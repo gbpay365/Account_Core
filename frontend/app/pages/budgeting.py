@@ -43,6 +43,7 @@ _T: dict[str, dict[str, str]] = {
     'tab_plans': {'en': 'Budget Plans & Lines', 'fr': 'Plans & Dotations Budgétaires'},
     'tab_comm': {'en': 'Commitments (Engagements)', 'fr': 'Engagements de Dépenses'},
     'tab_trans': {'en': 'Credit Transfers (Virements)', 'fr': 'Virements & Modifications'},
+    'tab_carry': {'en': 'Carryforwards (Reports)', 'fr': 'Reports de Crédits Non Consommés'},
 
     'lbl_comm_section_title': {
         'en': 'Budget Commitments & Credit Reservations',
@@ -57,6 +58,21 @@ _T: dict[str, dict[str, str]] = {
     'btn_new_line': {'en': 'Add Budget Line', 'fr': 'Ajouter une Ligne'},
     'btn_new_comm': {'en': 'New Commitment', 'fr': 'Nouvel Engagement'},
     'btn_new_transfer': {'en': 'New Credit Transfer', 'fr': 'Nouveau Virement'},
+    'btn_carryforward': {'en': 'Carryforward Unconsumed Budget', 'fr': 'Reporter les Crédits Non Consommés'},
+    'dialog_carryforward_title': {'en': 'Carryforward Unconsumed Budget to Next Fiscal Year', 'fr': 'Report des Crédits Budgétaires Non Consommés vers N+1'},
+    'carryforward_desc': {'en': 'Select the destination fiscal year and unconsumed budgetary allocations to carry forward. Funds are rolled over into the target fiscal year budget as statutory carried-forward appropriations.', 'fr': 'Sélectionnez l’exercice budgétaire de destination et les lignes budgétaires non consommées à reporter. Les disponibilités sont transférées vers le budget de l’exercice cible en crédits reportés.'},
+    'lbl_target_fy': {'en': 'Target Fiscal Year (N+1)', 'fr': 'Exercice Budgétaire Cible (N+1)'},
+    'lbl_target_budget': {'en': 'Target Budget Plan', 'fr': 'Plan Budgétaire de Destination'},
+    'col_carried': {'en': 'Carried Forward (N-1)', 'fr': 'Report N-1'},
+    'col_unconsumed': {'en': 'Unconsumed Available', 'fr': 'Disponible Non Consommé'},
+    'col_carry_amt': {'en': 'Carryforward Amount', 'fr': 'Montant à Reporter'},
+    'btn_execute_carryforward': {'en': 'Execute Carryforward', 'fr': 'Valider le Report Budgétaire'},
+    'msg_carryforward_success': {'en': 'Successfully carried forward {count} line(s) totaling {total} to target budget.', 'fr': 'Report budgétaire validé : {count} ligne(s) pour un total de {total} transférées.'},
+    'lbl_carryforward_history': {'en': 'Statutory Carryforward Ledger & Roll-over Audits', 'fr': 'Registre Historique des Reports de Crédits Budgétaires'},
+    'no_unconsumed_msg': {'en': 'No budget lines with unconsumed available balance found in this budget plan.', 'fr': 'Aucune ligne budgétaire avec un solde disponible non consommé dans ce budget.'},
+    'source_fy_label': {'en': 'Source Budget', 'fr': 'Budget Source'},
+    'target_fy_label': {'en': 'Target Budget', 'fr': 'Budget Cible'},
+    'carried_by_label': {'en': 'Executed by', 'fr': 'Exécuté par'},
     'btn_approve': {'en': 'Approve', 'fr': 'Approuver'},
     'btn_liquidate': {'en': 'Liquidate (Voucher)', 'fr': 'Liquider'},
     'btn_check': {'en': 'Check Availability', 'fr': 'Vérifier Disponibilité'},
@@ -321,6 +337,7 @@ async def budgeting_page() -> None:
         'budgets': [],
         'commitments': [],
         'transfers': [],
+        'carryforwards': [],
     }
 
     refreshers: dict[str, Any] = {}
@@ -353,6 +370,9 @@ async def budgeting_page() -> None:
 
         tr_resp = await api.safe(api.get('/budget-transfers', budgetId=b_id_param), default={'rows': []})
         state['transfers'] = tr_resp.get('rows', [])
+
+        cf_resp = await api.safe(api.get('/budget-carryforwards', fiscalYearId=state['fy_id']), default={'rows': []})
+        state['carryforwards'] = cf_resp.get('rows', [])
 
     await reload_data()
 
@@ -613,6 +633,124 @@ async def budgeting_page() -> None:
 
         dlg.open()
 
+    # --- Modal: Carryforward Unconsumed Budget
+    async def _open_carryforward_modal() -> None:
+        b = state['active_budget']
+        if not b:
+            ui.notify('No active budget to carry forward from.', type='warning')
+            return
+
+        unconsumed_resp = await api.safe(api.get(f"/budgets/{b['id']}/unconsumed-lines"), default={'lines': []})
+        unconsumed_lines = unconsumed_resp.get('lines', [])
+
+        if not unconsumed_lines:
+            ui.notify(_loc('no_unconsumed_msg'), type='info', position='top')
+            return
+
+        target_fy_options = {fy['id']: f"{fy['code']} ({fy['name']})" for fy in fiscal_years if fy['id'] != state['fy_id']}
+        if not target_fy_options:
+            target_fy_options = {fy['id']: f"{fy['code']} ({fy['name']})" for fy in fiscal_years}
+
+        default_target_fy = list(target_fy_options.keys())[0] if target_fy_options else state['fy_id']
+
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-4xl p-6 gap-4'):
+            with ui.row().classes('w-full items-center justify-between no-wrap border-b border-slate-200 pb-3'):
+                with ui.column().classes('gap-0'):
+                    ui.label(_loc('dialog_carryforward_title')).classes('text-lg font-bold text-slate-800')
+                    ui.label(_loc('carryforward_desc')).classes('text-xs text-slate-500 max-w-2xl')
+                ui.button(icon='close', on_click=dlg.close).props('flat dense round')
+
+            with ui.row().classes('w-full gap-4 items-center bg-slate-50 p-3 rounded-lg border border-slate-200'):
+                ui.label(f"{_loc('source_fy_label')}: {b.get('code')} ({b.get('fiscal_year_code')})").classes('text-xs font-bold text-slate-700')
+                target_fy_sel = ui.select(
+                    target_fy_options,
+                    value=default_target_fy,
+                    label=_loc('lbl_target_fy')
+                ).props('outlined dense bg-white options-dense').classes('w-72')
+
+                reason_in = ui.input(
+                    label=_loc('lbl_reason'),
+                    value=f"Report des crédits non consommés {b.get('fiscal_year_code', '')}"
+                ).props('outlined dense bg-white').classes('flex-1')
+
+            ui.label(_loc('lbl_select_line')).classes('text-xs font-bold uppercase tracking-wider text-slate-600 mt-1')
+
+            line_controls = []
+            with ui.column().classes('w-full gap-2 max-h-[360px] overflow-y-auto pr-1'):
+                for l in unconsumed_lines:
+                    avail_amt = float(l.get('unconsumedAvailable', 0))
+                    with ui.row().classes('w-full items-center justify-between p-2.5 rounded border border-slate-200 bg-white hover:bg-slate-50/80 gap-3 no-wrap'):
+                        cb = ui.checkbox(value=True).props('dense')
+                        with ui.column().classes('gap-0 min-w-[240px] flex-1'):
+                            acct_str = _tr_account(l.get('accountCode'), l.get('accountName'), l.get('accountNameEn'))
+                            ui.label(acct_str).classes('text-xs font-semibold text-slate-800 truncate')
+                            dept_str = _tr_dept(l.get('costCenterName'), l.get('costCenterNameEn'))
+                            ui.label(f"{_tr_type(l.get('budgetType'))} · {dept_str}").classes('text-[11px] text-slate-500')
+
+                        with ui.column().classes('gap-0 text-right min-w-[120px]'):
+                            ui.label(f"{_loc('col_unconsumed')}:").classes('text-[10px] text-slate-400')
+                            ui.label(w.money(avail_amt, currency)).classes('text-xs font-mono font-bold text-emerald-700')
+
+                        amt_input = ui.number(
+                            value=avail_amt,
+                            min=0,
+                            max=avail_amt,
+                            format='%.0f',
+                            label=_loc('col_carry_amt')
+                        ).props('outlined dense bg-white').classes('w-36')
+
+                        line_controls.append({
+                            'lineId': l['id'],
+                            'checkbox': cb,
+                            'input': amt_input,
+                            'avail': avail_amt,
+                        })
+
+            total_lbl = ui.label('').classes('text-sm font-bold text-slate-800')
+
+            def _update_total() -> None:
+                tot = sum(float(c['input'].value or 0) for c in line_controls if c['checkbox'].value)
+                total_lbl.set_text(f"Total Carryforward: {w.money(tot, currency)}")
+
+            for c in line_controls:
+                c['checkbox'].on_value_change(lambda _: _update_total())
+                c['input'].on_value_change(lambda _: _update_total())
+            _update_total()
+
+            with ui.row().classes('w-full justify-between items-center border-t border-slate-200 pt-3 mt-2'):
+                total_lbl
+                with ui.row().classes('gap-2'):
+                    ui.button(_loc('btn_cancel'), on_click=dlg.close).props('flat color=slate-600')
+
+                    async def _submit_carryforward() -> None:
+                        selected = [
+                            {'lineId': c['lineId'], 'amount': float(c['input'].value)}
+                            for c in line_controls
+                            if c['checkbox'].value and float(c['input'].value or 0) > 0
+                        ]
+                        if not selected:
+                            ui.notify('Please select at least one line with amount > 0.', type='warning')
+                            return
+
+                        payload = {
+                            'targetFiscalYearId': target_fy_sel.value,
+                            'lines': selected,
+                            'reason': reason_in.value or 'Report de crédits non consommés',
+                        }
+                        res = await api.safe(api.post(f"/budgets/{b['id']}/carryforward", payload))
+                        if res and res.get('success'):
+                            tot_amt = res.get('totalCarriedAmount', 0)
+                            count = res.get('linesCarried', len(selected))
+                            msg = _loc('msg_carryforward_success').format(count=count, total=w.money(tot_amt, currency))
+                            ui.notify(msg, type='positive', position='top')
+                            dlg.close()
+                            await reload_data()
+                            _refresh_all()
+
+                    ui.button(_loc('btn_execute_carryforward'), icon='move_up', on_click=_submit_carryforward).props('unelevated color=primary')
+
+        dlg.open()
+
     def _header_actions() -> None:
         with ui.row().classes('items-center gap-3'):
             fy_opts = {fy['id']: f"{fy['code']} ({fy['name']})" for fy in fiscal_years}
@@ -739,6 +877,7 @@ async def budgeting_page() -> None:
         t_plans = ui.tab('plans', label=_loc('tab_plans'), icon='table_chart')
         t_comm = ui.tab('comm', label=_loc('tab_comm'), icon='shopping_cart_checkout')
         t_trans = ui.tab('trans', label=_loc('tab_trans'), icon='sync_alt')
+        t_carry = ui.tab('carry', label=_loc('tab_carry'), icon='move_up')
 
     with ui.tab_panels(tabs, value=t_exec).classes('w-full p-0 bg-transparent'):
         # ---------------------------------------------------------------------
@@ -864,6 +1003,7 @@ async def budgeting_page() -> None:
                             if b and b.get('status') != 'approved':
                                 ui.button(_loc('btn_approve'), icon='check_circle', on_click=_handle_approve_budget).props('color=positive outline')
                             ui.button(_loc('btn_new_line'), icon='add', on_click=_open_add_line_modal).props('unelevated color=primary')
+                            ui.button(_loc('btn_carryforward'), icon='move_up', on_click=_open_carryforward_modal).props('outline color=amber-9')
                             ui.button(_loc('btn_new_budget'), icon='create_new_folder', on_click=_open_new_budget_modal).props('outline color=slate-700')
 
                     line_rows = []
@@ -882,6 +1022,7 @@ async def budgeting_page() -> None:
                             'dept': dept_str,
                             'program': prog_str,
                             'initial': w.money(l.get('initial_amount', 0), currency),
+                            'carried': w.money(l.get('carried_forward_amount', 0), currency),
                             'transfers': w.money(l.get('net_transfers', 0), currency),
                             'amount': w.money(l.get('revised_amount', 0), currency),
                             'control': ctrl_str,
@@ -894,6 +1035,7 @@ async def budgeting_page() -> None:
                         {'name': 'dept', 'label': _loc('col_dept'), 'field': 'dept', 'align': 'left'},
                         {'name': 'program', 'label': _loc('col_program'), 'field': 'program', 'align': 'left'},
                         {'name': 'initial', 'label': _loc('col_initial'), 'field': 'initial', 'align': 'right'},
+                        {'name': 'carried', 'label': _loc('col_carried'), 'field': 'carried', 'align': 'right'},
                         {'name': 'transfers', 'label': _loc('col_transfers'), 'field': 'transfers', 'align': 'right'},
                         {'name': 'amount', 'label': _loc('col_budget'), 'field': 'amount', 'align': 'right'},
                         {'name': 'control', 'label': _loc('col_control_mode'), 'field': 'control', 'align': 'center'},
@@ -1050,3 +1192,54 @@ async def budgeting_page() -> None:
 
             refreshers['trans'] = _render_trans_tab.refresh
             _render_trans_tab()
+
+        # ---------------------------------------------------------------------
+        # TAB 5: CARRYFORWARDS & ROLL-OVERS
+        # ---------------------------------------------------------------------
+        with ui.tab_panel(t_carry).classes('p-0 gap-4 flex flex-col'):
+            @ui.refreshable
+            def _render_carry_tab() -> None:
+                cfs = state['carryforwards']
+
+                with ui.card().classes('w-full p-4 gap-4'):
+                    with ui.row().classes('w-full items-center justify-between no-wrap'):
+                        with ui.column().classes('gap-0'):
+                            ui.label(_loc('lbl_carryforward_history')).classes('text-base font-bold text-slate-800')
+                            ui.label(_loc('carryforward_desc')).classes('text-xs text-slate-500 max-w-2xl')
+
+                        ui.button(_loc('btn_carryforward'), icon='move_up', on_click=_open_carryforward_modal).props('unelevated color=primary')
+
+                    cf_rows = []
+                    for cf in cfs:
+                        cf_rows.append({
+                            'id': cf.get('id'),
+                            'date': str(cf.get('carried_at', ''))[:16],
+                            'source': f"{cf.get('source_budget_code')} ({cf.get('source_fy_code')})",
+                            'target': f"{cf.get('target_budget_code')} ({cf.get('target_fy_code')})",
+                            'account': _tr_account(cf.get('account_code'), cf.get('account_name'), cf.get('account_name_en')),
+                            'dept': _tr_dept(cf.get('cost_center_name')),
+                            'amount': w.money(cf.get('amount', 0), currency),
+                            'reason': _tr_val(cf.get('reason') or ''),
+                            'user': cf.get('carried_by_name') or '—',
+                        })
+
+                    columns = [
+                        {'name': 'date', 'label': _loc('col_date'), 'field': 'date', 'align': 'left'},
+                        {'name': 'source', 'label': _loc('source_fy_label'), 'field': 'source', 'align': 'left'},
+                        {'name': 'target', 'label': _loc('target_fy_label'), 'field': 'target', 'align': 'left'},
+                        {'name': 'account', 'label': _loc('col_account'), 'field': 'account', 'align': 'left'},
+                        {'name': 'dept', 'label': _loc('col_dept'), 'field': 'dept', 'align': 'left'},
+                        {'name': 'amount', 'label': _loc('col_amount'), 'field': 'amount', 'align': 'right', 'sortable': True},
+                        {'name': 'reason', 'label': _loc('lbl_reason'), 'field': 'reason', 'align': 'left'},
+                        {'name': 'user', 'label': _loc('carried_by_label'), 'field': 'user', 'align': 'center'},
+                    ]
+
+                    cf_table = ui.table(columns=columns, rows=cf_rows, pagination=15).classes('w-full lc-table')
+                    cf_table.add_slot('body-cell-amount', '''
+                        <q-td :props="props" class="font-mono font-bold text-amber-800">
+                            {{ props.value }}
+                        </q-td>
+                    ''')
+
+            refreshers['carry'] = _render_carry_tab.refresh
+            _render_carry_tab()

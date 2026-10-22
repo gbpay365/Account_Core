@@ -30,12 +30,20 @@ def _type_options() -> dict[str, str]:
     )}
 
 
-@page('/accounts', title='Chart of accounts', permissions=('coa.view',))
+@page('/accounts', title='Chart of accounts & Cost centers', permissions=('coa.view',))
 async def accounts_page() -> None:
-    if framework() == 'ifrs':
-        await _ifrs_chart()
-        return
-    await _ohada_chart()
+    with ui.tabs().classes('w-full border-b border-slate-200 mb-4 lc-no-print') as tabs:
+        t_chart = ui.tab('chart', label=t('coa.tab_chart'), icon='account_tree')
+        t_cc = ui.tab('cost_centers', label=t('coa.tab_cost_centers'), icon='apartment')
+
+    with ui.tab_panels(tabs, value=t_chart).classes('w-full p-0 bg-transparent'):
+        with ui.tab_panel(t_chart).classes('p-0 gap-4 flex flex-col'):
+            if framework() == 'ifrs':
+                await _ifrs_chart()
+            else:
+                await _ohada_chart()
+        with ui.tab_panel(t_cc).classes('p-0 gap-4 flex flex-col'):
+            await _cost_centers_tab()
 
 
 async def _ohada_chart() -> None:
@@ -421,4 +429,232 @@ def _account_dialog(reload, existing: dict | None = None) -> None:
         with ui.row().classes('w-full justify-end gap-2 px-5 py-3 border-t border-slate-200'):
             ui.button(t('coa.cancel'), on_click=dialog.close).props('flat color=grey-8')
             ui.button(t('coa.save'), on_click=save).props('unelevated')
+    dialog.open()
+
+
+# =============================================================================
+# COST CENTERS & DEPARTMENTS MANAGEMENT
+# =============================================================================
+
+CC_TYPES = (
+    'department', 'administration', 'technical', 'support', 'project', 'clinical_service', 'ward'
+)
+
+
+def _cc_type_label(val: str) -> str:
+    return t(f'coa.cc_type_{val}') if val else ''
+
+
+async def _cost_centers_tab() -> None:
+    state = {'search': '', 'type': None, 'active_only': True}
+
+    def actions() -> None:
+        if api.can('coa.manage'):
+            ui.button(
+                t('coa.new_cost_center'),
+                icon='add_business',
+                on_click=lambda: _cost_center_dialog(reload_cc)
+            ).props('unelevated size=sm color=primary')
+
+    w.page_header(t('coa.cost_centers_title'), t('coa.cost_centers_sub'), actions=actions, emoji='🏢')
+
+    container = ui.column().classes('w-full gap-5')
+
+    async def reload_cc() -> None:
+        container.clear()
+        data = await api.safe(api.get('/cost-centers',
+                                      search=state['search'] or None,
+                                      type=state['type'] or None,
+                                      includeInactive=not state['active_only']))
+        if not data:
+            return
+        rows = data.get('rows') or []
+        with container:
+            _cc_summary(rows)
+            _cc_table(rows, reload_cc)
+
+    with ui.element('div').classes('lc-card p-4 w-full mb-1 lc-no-print'):
+        with w.toolbar():
+            search = ui.input(t('coa.cc_search'), placeholder='ADM or Maintenance') \
+                .props('outlined dense clearable debounce=350').classes('w-full sm:w-80')
+            search.bind_value(state, 'search')
+
+            type_opts = {None: t('coa.cc_all_types')}
+            for typ in CC_TYPES:
+                type_opts[typ] = _cc_type_label(typ)
+            typ_sel = ui.select(type_opts, value=None, label=t('coa.cc_type')) \
+                .props('outlined dense options-dense').classes('w-60')
+            typ_sel.bind_value(state, 'type')
+
+            active_sw = ui.switch(t('coa.active'), value=True).props('dense').bind_value(state, 'active_only')
+
+            for element in (search, typ_sel, active_sw):
+                element.on_value_change(reload_cc)
+
+    await reload_cc()
+
+
+def _cc_summary(rows: list[dict]) -> None:
+    total = len(rows)
+    active_count = sum(1 for r in rows if r.get('is_active'))
+    assets_assigned = sum(int(r.get('asset_count') or 0) for r in rows)
+    admin_count = sum(1 for r in rows if r.get('cc_type') in ('administration', 'support'))
+    ops_count = sum(1 for r in rows if r.get('cc_type') in ('department', 'technical', 'clinical_service', 'ward', 'project'))
+
+    with ui.row().classes('w-full gap-3 flex-wrap'):
+        with ui.element('div').classes('lc-card-flat px-4 py-2.5 min-w-[150px] border-l-4 border-l-sky-500'):
+            ui.label('TOTAL COST CENTERS').classes('text-[10px] font-bold uppercase tracking-wider text-slate-500')
+            ui.label(w.number(total)).classes('lc-num text-xl font-bold text-slate-900')
+            ui.label(f"{active_count} active units").classes('text-[11px] text-slate-500')
+
+        with ui.element('div').classes('lc-card-flat px-4 py-2.5 min-w-[150px] border-l-4 border-l-emerald-500'):
+            ui.label('OPERATIONAL DEPARTMENTS').classes('text-[10px] font-bold uppercase tracking-wider text-slate-500')
+            ui.label(w.number(ops_count)).classes('lc-num text-xl font-bold text-emerald-800')
+            ui.label('Field & operating units').classes('text-[11px] text-slate-500')
+
+        with ui.element('div').classes('lc-card-flat px-4 py-2.5 min-w-[150px] border-l-4 border-l-indigo-500'):
+            ui.label('GOVERNANCE & SUPPORT').classes('text-[10px] font-bold uppercase tracking-wider text-slate-500')
+            ui.label(w.number(admin_count)).classes('lc-num text-xl font-bold text-indigo-800')
+            ui.label('Admin & support services').classes('text-[11px] text-slate-500')
+
+        with ui.element('div').classes('lc-card-flat px-4 py-2.5 min-w-[150px] border-l-4 border-l-amber-500'):
+            ui.label('ASSIGNED ASSETS').classes('text-[10px] font-bold uppercase tracking-wider text-slate-500')
+            ui.label(w.number(assets_assigned)).classes('lc-num text-xl font-bold text-amber-800')
+            ui.label('Fixed assets tracking').classes('text-[11px] text-slate-500')
+
+
+def _cc_table(rows: list[dict], reload) -> None:
+    for row in rows:
+        row['shown_name'] = (row.get('name_en') if lang() == 'en' and row.get('name_en') else row.get('name')) or ''
+        row['type_label'] = _cc_type_label(row.get('cc_type')) or (row.get('cc_type') or '')
+        row['parent_label'] = f"{row['parent_code']} — {row.get('parent_name') or ''}" if row.get('parent_code') else '—'
+        row['manager_label'] = row.get('manager_name') or '—'
+        row['building_label'] = row.get('building') or '—'
+        row['status_label'] = t('coa.yes') if row.get('is_active') else t('coa.no')
+
+    body = w.section(f"{len(rows)} cost centers / services", "Operational analytical breakdown")
+    with body:
+        if not rows:
+            w.empty_state(t('coa.cc_none'), icon='search_off')
+            return
+
+        columns = [
+            w.column('code', t('coa.cc_code'), classes='lc-num font-bold text-sky-900'),
+            w.column('shown_name', t('coa.cc_name')),
+            w.column('type_label', t('coa.cc_type')),
+            w.column('parent_label', t('coa.cc_parent')),
+            w.column('manager_label', t('coa.cc_manager')),
+            w.column('building_label', t('coa.cc_building')),
+            w.column('asset_count', t('coa.cc_assets'), align='right'),
+            w.column('status_label', t('coa.cc_status'), align='center'),
+            {'name': 'actions', 'label': t('coa.cc_actions'), 'field': 'id', 'align': 'center'},
+        ]
+
+        table = ui.table(columns=columns, rows=rows, pagination=15).classes('w-full lc-table')
+        table.add_slot('body-cell-actions', '''
+            <q-td :props="props">
+                <q-btn flat dense round icon="edit" color="primary" size="sm" @click="$parent.$emit('edit_row', props.row)" />
+            </q-td>
+        ''')
+        table.on('edit_row', lambda e: _cost_center_dialog(reload, e.args))
+
+
+async def _cost_center_dialog(reload, existing: dict | None = None) -> None:
+    editing = existing is not None
+
+    # Load existing cost centers for parent selection
+    all_ccs = (await api.safe(api.get('/cost-centers'), default={'rows': []})).get('rows', [])
+    parent_opts = {None: t('coa.cc_no_parent')}
+    for cc in all_ccs:
+        if editing and cc['id'] == existing.get('id'):
+            continue
+        parent_opts[cc['id']] = f"{cc['code']} — {cc.get('name') or ''}"
+
+    # Load users for manager selection
+    users_resp = await api.safe(api.get('/admin/users'), default={'rows': []})
+    users_list = users_resp.get('rows', []) if isinstance(users_resp, dict) else (users_resp or [])
+    mgr_opts = {None: t('coa.cc_no_manager')}
+    for u in users_list:
+        mgr_opts[u['id']] = f"{u.get('full_name')} ({u.get('email')})"
+
+    with ui.dialog() as dialog, ui.element('div').classes('lc-card p-0 w-[600px] max-w-full'):
+        title_txt = t('coa.edit_cost_center_title') if editing else t('coa.new_cost_center_title')
+        ui.label(title_txt).classes('text-base font-semibold px-5 py-3 border-b border-slate-200 w-full')
+
+        with ui.column().classes('p-5 gap-3.5 w-full lc-scroll').style('max-height: 70vh'):
+            with ui.row().classes('w-full gap-3 no-wrap'):
+                code_in = ui.input(
+                    t('coa.cc_code'),
+                    value=existing.get('code') if editing else ''
+                ).props('outlined dense' + (' readonly' if editing else '')).classes('w-44')
+
+                type_opts = {typ: _cc_type_label(typ) for typ in CC_TYPES}
+                type_sel = ui.select(
+                    type_opts,
+                    value=existing.get('cc_type') if editing else 'department',
+                    label=t('coa.cc_type')
+                ).props('outlined dense options-dense').classes('flex-1')
+
+            name_fr = ui.input(
+                t('coa.cc_name'),
+                value=existing.get('name') if editing else ''
+            ).props('outlined dense').classes('w-full')
+
+            name_en = ui.input(
+                t('coa.cc_name_en'),
+                value=(existing.get('name_en') or '') if editing else ''
+            ).props('outlined dense').classes('w-full')
+
+            parent_sel = ui.select(
+                parent_opts,
+                value=existing.get('parent_id') if editing else None,
+                label=t('coa.cc_parent')
+            ).props('outlined dense options-dense').classes('w-full')
+
+            mgr_sel = ui.select(
+                mgr_opts,
+                value=existing.get('manager_user_id') if editing else None,
+                label=t('coa.cc_manager')
+            ).props('outlined dense options-dense').classes('w-full')
+
+            building_in = ui.input(
+                t('coa.cc_building'),
+                value=(existing.get('building') or '') if editing else ''
+            ).props('outlined dense').classes('w-full')
+
+            active_sw = ui.switch(
+                t('coa.active'),
+                value=bool(existing.get('is_active')) if editing else True
+            ).props('dense')
+
+        async def save_cc() -> None:
+            if not code_in.value or not name_fr.value:
+                ui.notify('Please provide at least a Code and a Name.', type='warning')
+                return
+
+            payload = {
+                'name': name_fr.value.strip(),
+                'name_en': name_en.value.strip() or None,
+                'cc_type': type_sel.value,
+                'parent_id': parent_sel.value if parent_sel.value else None,
+                'manager_user_id': mgr_sel.value if mgr_sel.value else None,
+                'building': building_in.value.strip() or None,
+                'is_active': active_sw.value,
+            }
+
+            if editing:
+                res = await api.safe(api.patch(f"/cost-centers/{existing['id']}", payload))
+            else:
+                payload['code'] = code_in.value.strip().upper()
+                res = await api.safe(api.post('/cost-centers', payload))
+
+            if res:
+                ui.notify(t('coa.cc_saved'), type='positive', position='top')
+                dialog.close()
+                await reload()
+
+        with ui.row().classes('w-full justify-end gap-2 px-5 py-3 border-t border-slate-200'):
+            ui.button(t('coa.cancel'), on_click=dialog.close).props('flat color=grey-8')
+            ui.button(t('coa.save'), on_click=save_cc).props('unelevated color=primary')
+
     dialog.open()

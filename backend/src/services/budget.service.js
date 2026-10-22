@@ -136,6 +136,7 @@ export async function getBudgetById({ query, queryOne }, orgId, budgetId) {
     return {
       ...l,
       initial_amount: money(initial),
+      carried_forward_amount: money(Number(l.carried_forward_amount || 0)),
       net_transfers: money(netTransfers),
       revised_amount: money(revised),
       total_committed: money(committed),
@@ -698,4 +699,239 @@ export async function getBudgetExecutionReport({ query, queryOne }, orgId, { fis
     overallPctConsumed: totalBudget > 0 ? Number(((totalConsumed / totalBudget) * 100).toFixed(1)) : 0,
     rows,
   };
+}
+
+// -----------------------------------------------------------------------------
+// 5. Budget Carryforward (Report à nouveau budgétaire)
+// -----------------------------------------------------------------------------
+
+export async function getUnconsumedBudgetLines(db, orgId, budgetId) {
+  const budget = await getBudgetById(db, orgId, budgetId);
+  if (!budget) return [];
+  return (budget.lines || [])
+    .filter((l) => l.available_balance > 0)
+    .map((l) => ({
+      id: l.id,
+      accountId: l.account_id,
+      accountCode: l.account_code,
+      accountName: l.account_name,
+      accountNameEn: l.account_name_en,
+      costCenterId: l.cost_center_id,
+      costCenterCode: l.cost_center_code,
+      costCenterName: l.cost_center_name,
+      costCenterNameEn: l.cost_center_name_en,
+      programId: l.program_id,
+      programCode: l.program_code,
+      programName: l.program_name,
+      budgetType: l.budget_type,
+      controlMode: l.control_mode,
+      initialAmount: l.initial_amount,
+      carriedForwardAmount: l.carried_forward_amount,
+      revisedAmount: l.revised_amount,
+      totalCommitted: l.total_committed,
+      totalActual: l.total_actual,
+      totalConsumed: l.total_consumed,
+      unconsumedAvailable: l.available_balance,
+    }));
+}
+
+export async function carryforwardBudget({ query, queryOne }, orgId, userId, {
+  sourceBudgetId,
+  targetFiscalYearId,
+  targetBudgetId = null,
+  lines = [],
+  reason = 'Report à nouveau des crédits budgétaires non consommés',
+}) {
+  const sourceBudget = await getBudgetById({ query, queryOne }, orgId, sourceBudgetId);
+  if (!sourceBudget) {
+    throw new Error('Source budget not found.');
+  }
+
+  const targetFy = await queryOne('SELECT * FROM fiscal_years WHERE id = ? AND org_id = ?', [targetFiscalYearId, orgId]);
+  if (!targetFy) {
+    throw new Error('Target fiscal year not found.');
+  }
+
+  let resolvedTargetBudgetId = targetBudgetId;
+  if (!resolvedTargetBudgetId) {
+    const existingBudget = await queryOne(
+      'SELECT id FROM budgets WHERE org_id = ? AND fiscal_year_id = ? ORDER BY version DESC, id ASC LIMIT 1',
+      [orgId, targetFiscalYearId]
+    );
+    if (existingBudget) {
+      resolvedTargetBudgetId = existingBudget.id;
+    } else {
+      const newCode = `BUD-${targetFy.code}`;
+      const newName = `Budget ${targetFy.name || targetFy.code}`;
+      const res = await query(
+        `INSERT INTO budgets (org_id, fiscal_year_id, code, name, version, status, notes)
+         VALUES (?, ?, ?, ?, 1, 'draft', ?)`,
+        [orgId, targetFiscalYearId, newCode, newName, `Budget initial avec reports de crédits de ${sourceBudget.code}`]
+      );
+      resolvedTargetBudgetId = res.insertId;
+    }
+  }
+
+  const targetBudget = await queryOne('SELECT * FROM budgets WHERE id = ? AND org_id = ?', [resolvedTargetBudgetId, orgId]);
+  if (!targetBudget) {
+    throw new Error('Target budget not found.');
+  }
+
+  const unconsumedLines = await getUnconsumedBudgetLines({ query, queryOne }, orgId, sourceBudgetId);
+  const unconsumedById = new Map(unconsumedLines.map((l) => [l.id, l]));
+
+  const linesToCarry = [];
+  if (Array.isArray(lines) && lines.length > 0) {
+    for (const item of lines) {
+      const src = unconsumedById.get(item.lineId);
+      if (!src) continue;
+      const carryAmt = item.amount !== undefined ? Number(item.amount) : src.unconsumedAvailable;
+      if (carryAmt <= 0) continue;
+      if (carryAmt > src.unconsumedAvailable + 0.01) {
+        throw new Error(`Carryforward amount for ${src.accountCode} exceeds unconsumed available balance.`);
+      }
+      linesToCarry.push({ src, amount: carryAmt });
+    }
+  } else {
+    for (const src of unconsumedLines) {
+      if (src.unconsumedAvailable > 0) {
+        linesToCarry.push({ src, amount: src.unconsumedAvailable });
+      }
+    }
+  }
+
+  if (linesToCarry.length === 0) {
+    throw new Error('No unconsumed budget balance available to carry forward.');
+  }
+
+  let totalCarried = 0;
+  const executedRecords = [];
+
+  for (const { src, amount } of linesToCarry) {
+    const existingTargetLine = await queryOne(
+      `SELECT * FROM budget_lines 
+        WHERE budget_id = ? 
+          AND account_id = ? 
+          AND ((cost_center_id IS NULL AND ? IS NULL) OR cost_center_id = ?)
+          AND ((program_id IS NULL AND ? IS NULL) OR program_id = ?)
+          AND budget_type = ?`,
+      [
+        resolvedTargetBudgetId,
+        src.accountId,
+        src.costCenterId,
+        src.costCenterId,
+        src.programId,
+        src.programId,
+        src.budgetType,
+      ]
+    );
+
+    let targetLineId;
+    if (existingTargetLine) {
+      targetLineId = existingTargetLine.id;
+      await query(
+        `UPDATE budget_lines 
+            SET amount = amount + ?, 
+                carried_forward_amount = carried_forward_amount + ?
+          WHERE id = ?`,
+        [amount, amount, targetLineId]
+      );
+    } else {
+      const ins = await query(
+        `INSERT INTO budget_lines (
+           budget_id, account_id, cost_center_id, program_id, budget_type,
+           initial_amount, carried_forward_amount, amount, control_mode, notes
+         ) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+        [
+          resolvedTargetBudgetId,
+          src.accountId,
+          src.costCenterId,
+          src.programId,
+          src.budgetType,
+          amount,
+          amount,
+          src.controlMode || 'strict_block',
+          `Report de crédits non consommés exercice ${sourceBudget.fiscal_year_code || ''}`,
+        ]
+      );
+      targetLineId = ins.insertId;
+    }
+
+    await query(
+      `INSERT INTO budget_carryforwards (
+         org_id, source_budget_id, target_budget_id, source_line_id, target_line_id,
+         amount, reason, carried_by
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        orgId,
+        sourceBudgetId,
+        resolvedTargetBudgetId,
+        src.id,
+        targetLineId,
+        amount,
+        reason,
+        userId,
+      ]
+    );
+
+    totalCarried += amount;
+    executedRecords.push({
+      sourceLineId: src.id,
+      targetLineId,
+      accountCode: src.accountCode,
+      accountName: src.accountName,
+      amount,
+    });
+  }
+
+  return {
+    success: true,
+    sourceBudgetId,
+    targetBudgetId: resolvedTargetBudgetId,
+    targetFiscalYearId,
+    linesCarried: executedRecords.length,
+    totalCarriedAmount: money(totalCarried),
+    records: executedRecords,
+  };
+}
+
+export async function listCarryforwards({ query }, orgId, { budgetId = null, fiscalYearId = null } = {}) {
+  const params = [orgId];
+  let filter = '';
+  if (budgetId) {
+    filter += ' AND (cf.source_budget_id = ? OR cf.target_budget_id = ?)';
+    params.push(budgetId, budgetId);
+  }
+  if (fiscalYearId) {
+    filter += ' AND (sb.fiscal_year_id = ? OR tb.fiscal_year_id = ?)';
+    params.push(fiscalYearId, fiscalYearId);
+  }
+
+  return query(
+    `SELECT cf.*,
+            sb.code AS source_budget_code,
+            sb.name AS source_budget_name,
+            sfy.code AS source_fy_code,
+            tb.code AS target_budget_code,
+            tb.name AS target_budget_name,
+            tfy.code AS target_fy_code,
+            ac.code AS account_code,
+            ac.name AS account_name,
+            ac.name_en AS account_name_en,
+            cc.code AS cost_center_code,
+            cc.name AS cost_center_name,
+            u.full_name AS carried_by_name
+       FROM budget_carryforwards cf
+       JOIN budgets sb ON sb.id = cf.source_budget_id
+       JOIN fiscal_years sfy ON sfy.id = sb.fiscal_year_id
+       JOIN budgets tb ON tb.id = cf.target_budget_id
+       JOIN fiscal_years tfy ON tfy.id = tb.fiscal_year_id
+       JOIN budget_lines sl ON sl.id = cf.source_line_id
+       JOIN accounts ac ON ac.id = sl.account_id
+       LEFT JOIN cost_centers cc ON cc.id = sl.cost_center_id
+       LEFT JOIN users u ON u.id = cf.carried_by
+      WHERE cf.org_id = ? ${filter}
+      ORDER BY cf.carried_at DESC`,
+    params
+  );
 }

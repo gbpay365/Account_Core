@@ -238,21 +238,253 @@ accountRoutes.patch(
   })
 );
 
-// --- cost centres: wards and departments (SRS 2.5) -------------------------
+// --- cost centres: wards, departments, and units (SRS 2.5) -----------------
 
 accountRoutes.get(
   '/cost-centers',
   requirePermission('coa.view', 'asset.view', 'budget.view'),
+  validate({
+    query: z.object({
+      search: z.string().trim().optional(),
+      includeInactive: boolish.optional(),
+      type: z.string().trim().optional(),
+    }),
+  }),
   handler(async (req, res) => {
+    const { search, includeInactive, type } = req.query;
+    const params = [req.orgId];
+    let filter = '';
+
+    if (!includeInactive) {
+      filter += ' AND c.is_active = 1';
+    }
+    if (type) {
+      filter += ' AND c.cc_type = ?';
+      params.push(type);
+    }
+    if (search) {
+      filter += ' AND (c.code LIKE ? OR c.name LIKE ? OR c.name_en LIKE ? OR c.building LIKE ?)';
+      const like = `%${search}%`;
+      params.push(like, like, like, like);
+    }
+
     const rows = await query(
-      `SELECT c.*, p.code AS parent_code,
+      `SELECT c.*, 
+              p.code AS parent_code,
+              p.name AS parent_name,
+              u.full_name AS manager_name,
               (SELECT COUNT(*) FROM assets a WHERE a.cost_center_id = c.id AND a.status <> 'disposed') AS asset_count
-         FROM cost_centers c LEFT JOIN cost_centers p ON p.id = c.parent_id
-        WHERE c.org_id = ? AND c.is_active = 1
+         FROM cost_centers c 
+         LEFT JOIN cost_centers p ON p.id = c.parent_id
+         LEFT JOIN users u ON u.id = c.manager_user_id
+        WHERE c.org_id = ?${filter}
         ORDER BY c.code`,
-      [req.orgId]
+      params
     );
     res.json({ rows, total: rows.length });
+  })
+);
+
+accountRoutes.post(
+  '/cost-centers',
+  requirePermission('coa.manage'),
+  validate({
+    body: z.object({
+      code: z.string().trim().min(1).max(20),
+      name: z.string().trim().min(2).max(150),
+      name_en: z.string().trim().max(150).optional().nullable(),
+      cc_type: z.enum(['ward', 'department', 'clinical_service', 'support', 'administration', 'project', 'technical']).default('department'),
+      parent_id: z.number().int().positive().optional().nullable(),
+      manager_user_id: z.number().int().positive().optional().nullable(),
+      building: z.string().trim().max(100).optional().nullable(),
+      is_active: boolish.default(true),
+    }),
+  }),
+  handler(async (req, res) => {
+    const codeUpper = req.body.code.trim().toUpperCase();
+    const existing = await queryOne(
+      'SELECT id FROM cost_centers WHERE org_id = ? AND code = ?',
+      [req.orgId, codeUpper]
+    );
+    if (existing) {
+      return res.status(422).json({ error: `Cost center with code ${codeUpper} already exists.` });
+    }
+
+    const result = await query(
+      `INSERT INTO cost_centers (org_id, code, name, name_en, cc_type, parent_id, manager_user_id, building, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        req.orgId,
+        codeUpper,
+        req.body.name.trim(),
+        req.body.name_en ? req.body.name_en.trim() : null,
+        req.body.cc_type || 'department',
+        req.body.parent_id || null,
+        req.body.manager_user_id || null,
+        req.body.building ? req.body.building.trim() : null,
+        req.body.is_active ? 1 : 0,
+      ]
+    );
+
+    await writeAudit({
+      orgId: req.orgId,
+      userId: req.user.id,
+      action: 'cost_center.create',
+      entity: 'cost_center',
+      entityId: result.insertId,
+      details: { code: codeUpper, name: req.body.name, cc_type: req.body.cc_type },
+    }).catch(() => {});
+
+    const created = await queryOne(
+      `SELECT c.*, 
+              p.code AS parent_code,
+              p.name AS parent_name,
+              u.full_name AS manager_name,
+              0 AS asset_count
+         FROM cost_centers c 
+         LEFT JOIN cost_centers p ON p.id = c.parent_id
+         LEFT JOIN users u ON u.id = c.manager_user_id
+        WHERE c.id = ?`,
+      [result.insertId]
+    );
+
+    res.status(201).json({ cost_center: created });
+  })
+);
+
+accountRoutes.patch(
+  '/cost-centers/:id',
+  requirePermission('coa.manage'),
+  validate({
+    body: z.object({
+      code: z.string().trim().min(1).max(20).optional(),
+      name: z.string().trim().min(2).max(150).optional(),
+      name_en: z.string().trim().max(150).optional().nullable(),
+      cc_type: z.enum(['ward', 'department', 'clinical_service', 'support', 'administration', 'project', 'technical']).optional(),
+      parent_id: z.number().int().positive().optional().nullable(),
+      manager_user_id: z.number().int().positive().optional().nullable(),
+      building: z.string().trim().max(100).optional().nullable(),
+      is_active: boolish.optional(),
+    }),
+  }),
+  handler(async (req, res) => {
+    const id = Number(req.params.id);
+    const cc = await queryOne('SELECT * FROM cost_centers WHERE id = ? AND org_id = ?', [id, req.orgId]);
+    if (!cc) throw notFound('Cost center not found.');
+
+    const updates = [];
+    const params = [];
+
+    if (req.body.code !== undefined) {
+      const codeUpper = req.body.code.trim().toUpperCase();
+      const dup = await queryOne(
+        'SELECT id FROM cost_centers WHERE org_id = ? AND code = ? AND id <> ?',
+        [req.orgId, codeUpper, id]
+      );
+      if (dup) {
+        return res.status(422).json({ error: `Cost center with code ${codeUpper} already exists.` });
+      }
+      updates.push('code = ?');
+      params.push(codeUpper);
+    }
+    if (req.body.name !== undefined) {
+      updates.push('name = ?');
+      params.push(req.body.name.trim());
+    }
+    if (req.body.name_en !== undefined) {
+      updates.push('name_en = ?');
+      params.push(req.body.name_en ? req.body.name_en.trim() : null);
+    }
+    if (req.body.cc_type !== undefined) {
+      updates.push('cc_type = ?');
+      params.push(req.body.cc_type);
+    }
+    if (req.body.parent_id !== undefined) {
+      // Prevent cyclical parent
+      if (req.body.parent_id === id) {
+        return res.status(422).json({ error: 'A cost center cannot be its own parent.' });
+      }
+      updates.push('parent_id = ?');
+      params.push(req.body.parent_id || null);
+    }
+    if (req.body.manager_user_id !== undefined) {
+      updates.push('manager_user_id = ?');
+      params.push(req.body.manager_user_id || null);
+    }
+    if (req.body.building !== undefined) {
+      updates.push('building = ?');
+      params.push(req.body.building ? req.body.building.trim() : null);
+    }
+    if (req.body.is_active !== undefined) {
+      updates.push('is_active = ?');
+      params.push(req.body.is_active ? 1 : 0);
+    }
+
+    if (updates.length > 0) {
+      params.push(id, req.orgId);
+      await query(`UPDATE cost_centers SET ${updates.join(', ')} WHERE id = ? AND org_id = ?`, params);
+    }
+
+    await writeAudit({
+      orgId: req.orgId,
+      userId: req.user.id,
+      action: 'cost_center.update',
+      entity: 'cost_center',
+      entityId: id,
+      details: req.body,
+    }).catch(() => {});
+
+    const updated = await queryOne(
+      `SELECT c.*, 
+              p.code AS parent_code,
+              p.name AS parent_name,
+              u.full_name AS manager_name,
+              (SELECT COUNT(*) FROM assets a WHERE a.cost_center_id = c.id AND a.status <> 'disposed') AS asset_count
+         FROM cost_centers c 
+         LEFT JOIN cost_centers p ON p.id = c.parent_id
+         LEFT JOIN users u ON u.id = c.manager_user_id
+        WHERE c.id = ?`,
+      [id]
+    );
+
+    res.json({ cost_center: updated });
+  })
+);
+
+accountRoutes.delete(
+  '/cost-centers/:id',
+  requirePermission('coa.manage'),
+  handler(async (req, res) => {
+    const id = Number(req.params.id);
+    const cc = await queryOne('SELECT * FROM cost_centers WHERE id = ? AND org_id = ?', [id, req.orgId]);
+    if (!cc) throw notFound('Cost center not found.');
+
+    const [assetsLinked, journalLinked] = await Promise.all([
+      queryOne('SELECT COUNT(*) AS count FROM assets WHERE cost_center_id = ?', [id]),
+      queryOne('SELECT COUNT(*) AS count FROM journal_lines WHERE cost_center_id = ?', [id]),
+    ]);
+
+    if ((assetsLinked?.count || 0) > 0 || (journalLinked?.count || 0) > 0) {
+      // Soft-deactivate if linked to existing operational or financial records
+      await query('UPDATE cost_centers SET is_active = 0 WHERE id = ? AND org_id = ?', [id, req.orgId]);
+      return res.json({
+        success: true,
+        deactivated: true,
+        message: 'Cost center has existing transactions or assets; it has been deactivated rather than deleted.',
+      });
+    }
+
+    await query('DELETE FROM cost_centers WHERE id = ? AND org_id = ?', [id, req.orgId]);
+    await writeAudit({
+      orgId: req.orgId,
+      userId: req.user.id,
+      action: 'cost_center.delete',
+      entity: 'cost_center',
+      entityId: id,
+      details: { code: cc.code, name: cc.name },
+    }).catch(() => {});
+
+    res.json({ success: true, message: `Cost center ${cc.code} deleted successfully.` });
   })
 );
 

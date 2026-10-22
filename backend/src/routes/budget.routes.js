@@ -18,6 +18,9 @@ import {
   approveTransfer,
   checkBudgetCeiling,
   getBudgetExecutionReport,
+  getUnconsumedBudgetLines,
+  carryforwardBudget,
+  listCarryforwards,
 } from '../services/budget.service.js';
 
 export const budgetRoutes = Router();
@@ -282,5 +285,64 @@ budgetRoutes.post(
     const db = getDb();
     const check = await checkBudgetCeiling(db, req.orgId, req.body);
     res.json(check);
+  })
+);
+
+// -----------------------------------------------------------------------------
+// 5. Budget Carryforward (Report à nouveau budgétaire)
+// -----------------------------------------------------------------------------
+
+budgetRoutes.get(
+  '/budgets/:id/unconsumed-lines',
+  requirePermission('budget.view', 'coa.view'),
+  handler(async (req, res) => {
+    const db = getDb();
+    const lines = await getUnconsumedBudgetLines(db, req.orgId, Number(req.params.id));
+    res.json({ lines, total: lines.length });
+  })
+);
+
+budgetRoutes.post(
+  '/budgets/:id/carryforward',
+  requirePermission('budget.manage'),
+  validate({
+    body: z.object({
+      targetFiscalYearId: z.number().int().positive(),
+      targetBudgetId: z.number().int().positive().optional().nullable(),
+      lines: z.array(
+        z.object({
+          lineId: z.number().int().positive(),
+          amount: z.number().min(0).optional(),
+        })
+      ).optional().default([]),
+      reason: z.string().trim().min(3).max(400).optional(),
+    }),
+  }),
+  handler(async (req, res) => {
+    const db = getDb();
+    try {
+      const result = await carryforwardBudget(db, req.orgId, req.user.id, {
+        sourceBudgetId: Number(req.params.id),
+        targetFiscalYearId: req.body.targetFiscalYearId,
+        targetBudgetId: req.body.targetBudgetId || null,
+        lines: req.body.lines || [],
+        reason: req.body.reason || 'Report à nouveau des crédits budgétaires non consommés',
+      });
+      res.status(201).json(result);
+    } catch (err) {
+      res.status(422).json({ error: err.message });
+    }
+  })
+);
+
+budgetRoutes.get(
+  '/budget-carryforwards',
+  requirePermission('budget.view', 'coa.view'),
+  handler(async (req, res) => {
+    const db = getDb();
+    const budgetId = req.query.budgetId ? Number(req.query.budgetId) : null;
+    const fiscalYearId = req.query.fiscalYearId ? Number(req.query.fiscalYearId) : null;
+    const rows = await listCarryforwards(db, req.orgId, { budgetId, fiscalYearId });
+    res.json({ rows, total: rows.length });
   })
 );
