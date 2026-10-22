@@ -21,15 +21,51 @@ async def ledger_page(account: str = '', subledger: str = '', view_mode: str = '
     default = next((y for y in years['rows'] if y.get('status') != 'closed'),
                    years['rows'][0] if years['rows'] else {})
 
-    # Available modes: 'trial' (Trial balance), 'general' (GL by account),
-    # 'sub_bal' (Auxiliary trial balance), 'sub_led' (Auxiliary ledger by third party)
-    initial_mode = view_mode or ('sub_led' if subledger else ('general' if account else 'trial'))
+    # Accounts options for General Ledger (load full chart so any selected or linked account can be inspected)
+    if view == 'ifrs':
+        accounts = await api.safe(api.get('/accounts', framework='ifrs'), notify=False) or {'rows': []}
+        account_options = {None: t('gl.select_account'),
+                           **{a['code']: f"{a['code']} — {account_label(a)}" for a in accounts['rows']}}
+        id_by_code = {a['code']: a['code'] for a in accounts['rows']}
+    else:
+        accounts = await api.safe(api.get('/accounts', framework='ohada'),
+                                  notify=False) or {'rows': []}
+        account_options = {None: t('gl.select_account'),
+                           **{a['id']: f"{a['code']} — {account_label(a)}" for a in accounts['rows']}}
+        id_by_code = {a['code']: a['id'] for a in accounts['rows']}
 
+    # Subledger accounts for Auxiliary Ledger
+    subledgers = await api.safe(api.get('/subledger/accounts'), notify=False) or {'rows': []}
+    subledger_options = {None: t('gl.select_subledger'),
+                         **{s['id']: f"{s['code']} — {s['name']}" for s in subledgers['rows']}}
+
+    # Safe resolution for account query param (supports numeric ID or account code; avoids ValueError in QSelect)
     selected_acct = None
     if account:
-        selected_acct = account if view == 'ifrs' else (int(account) if str(account).isdigit() else account)
+        if view == 'ifrs':
+            if account in account_options:
+                selected_acct = account
+            elif str(account) in id_by_code and id_by_code[str(account)] in account_options:
+                selected_acct = id_by_code[str(account)]
+        else:
+            if str(account).isdigit() and int(account) in account_options:
+                selected_acct = int(account)
+            elif str(account) in id_by_code and id_by_code[str(account)] in account_options:
+                selected_acct = id_by_code[str(account)]
+            elif account in account_options:
+                selected_acct = account
 
-    selected_sub = int(subledger) if str(subledger).isdigit() else None
+    # Safe resolution for subledger query param (avoids ValueError in QSelect)
+    selected_sub = None
+    if subledger:
+        if str(subledger).isdigit() and int(subledger) in subledger_options:
+            selected_sub = int(subledger)
+        elif subledger in subledger_options:
+            selected_sub = subledger
+
+    # Available modes: 'trial' (Trial balance), 'general' (GL by account),
+    # 'sub_bal' (Auxiliary trial balance), 'sub_led' (Auxiliary ledger by third party)
+    initial_mode = view_mode or ('sub_led' if selected_sub else ('general' if selected_acct else 'trial'))
 
     state = {
         'mode': initial_mode,
@@ -50,24 +86,6 @@ async def ledger_page(account: str = '', subledger: str = '', view_mode: str = '
 
     w.page_header(t('gl.title'), t('gl.sub_ifrs') if view == 'ifrs' else t('gl.sub_ohada'),
                   actions=actions, emoji=chrome.PAGE['gl.title'])
-
-    # Accounts options for General Ledger
-    if view == 'ifrs':
-        accounts = await api.safe(api.get('/accounts', framework='ifrs'), notify=False) or {'rows': []}
-        account_options = {None: t('gl.select_account'),
-                           **{a['code']: f"{a['code']} — {account_label(a)}" for a in accounts['rows']}}
-        id_by_code = {a['code']: a['code'] for a in accounts['rows']}
-    else:
-        accounts = await api.safe(api.get('/accounts', framework='ohada', postableOnly=True),
-                                  notify=False) or {'rows': []}
-        account_options = {None: t('gl.select_account'),
-                           **{a['id']: f"{a['code']} — {account_label(a)}" for a in accounts['rows']}}
-        id_by_code = {a['code']: a['id'] for a in accounts['rows']}
-
-    # Subledger accounts for Auxiliary Ledger
-    subledgers = await api.safe(api.get('/subledger/accounts'), notify=False) or {'rows': []}
-    subledger_options = {None: t('gl.select_subledger'),
-                         **{s['id']: f"{s['code']} — {s['name']}" for s in subledgers['rows']}}
 
     def drill_account(code: str) -> None:
         account_id = id_by_code.get(code)
