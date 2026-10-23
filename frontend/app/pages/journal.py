@@ -93,8 +93,6 @@ def _list(data: dict, currency: str, reload) -> None:
     total = data.get('total', len(rows))
     for row in rows:
         row['journal'] = f"{row['journal_code']}"
-        row['framework_label'] = {'both': t('je.both_fw'), 'ohada': t('je.ohada_only'), 'ifrs': t('je.ifrs_only')} \
-            .get(row.get('framework'), row.get('framework'))
         row['amount'] = row.get('total_debit')
 
     drafts = sum(1 for r in rows if r.get('status') == 'draft')
@@ -112,15 +110,12 @@ def _list(data: dict, currency: str, reload) -> None:
             w.column('description', t('je.description')),
             w.column('reference', t('je.reference')),
             w.column('period_code', t('je.period')),
-            w.column('framework_label', t('je.framework')),
             w.money_column('amount', f"{t('je.amount')} ({currency})", currency=currency),
             w.column('status', t('common.status')),
         ]
         table = w.table(columns, rows, on_row_click=lambda row: _entry_view(row['id'], reload),
                         pagination=25)
         w.add_badge_slot(table, 'status')
-        w.add_badge_slot(table, 'framework_label',
-                         tones={'both': 'teal', 'ohada': 'sky', 'ifrs': 'violet'})
 
 
 async def _entry_view(entry_id: int, reload) -> None:
