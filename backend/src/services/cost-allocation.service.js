@@ -422,16 +422,13 @@ export async function executeAllocationRun(
     throw new Error('Total allocated amount is zero. Check cycle segment sender pools and receiver weights.');
   }
 
-  // 2. Determine target accounting period
+  // 2. Determine target accounting period matching effectiveDate
   const effectiveDate = runDate || new Date().toISOString().slice(0, 10);
-  let effectivePeriodId = periodId;
-  if (!effectivePeriodId) {
-    const period = await queryOne(
-      `SELECT id FROM accounting_periods WHERE org_id = ? AND ? BETWEEN start_date AND end_date LIMIT 1`,
-      [orgId, effectiveDate]
-    );
-    effectivePeriodId = period?.id;
-  }
+  const periodForDate = await queryOne(
+    `SELECT id FROM accounting_periods WHERE org_id = ? AND ? BETWEEN start_date AND end_date LIMIT 1`,
+    [orgId, effectiveDate]
+  );
+  let effectivePeriodId = periodForDate?.id || periodId;
   if (!effectivePeriodId) {
     const period = await queryOne(
       `SELECT id FROM accounting_periods WHERE org_id = ? AND fiscal_year_id = ? AND is_closed = 0 ORDER BY start_date ASC LIMIT 1`,
@@ -452,22 +449,22 @@ export async function executeAllocationRun(
   const seq = (countRow?.cnt || 0) + 1;
   const runNumber = `CYCLE-${yr}-${String(seq).padStart(4, '0')}`;
 
-  // 4. Retrieve or ensure OHADA allocation accounts:
-  // Sender Credit: 781 (Transferts de charges d'exploitation)
-  // Receiver Debit: 658 (Charges diverses de gestion)
+  // 4. Retrieve or ensure postable OHADA allocation accounts:
+  // Sender Credit: 7811 (Transferts de charges d'exploitation, postable)
+  // Receiver Debit: 6581 (Charges diverses de gestion courante, postable)
   const creditAcct = await queryOne(
-    `SELECT id, code, name FROM accounts WHERE org_id = ? AND code = '781' LIMIT 1`,
+    `SELECT id, code, name FROM accounts WHERE org_id = ? AND code = '7811' AND is_postable = 1 LIMIT 1`,
     [orgId]
   ) || await queryOne(
-    `SELECT id, code, name FROM accounts WHERE org_id = ? AND code LIKE '78%' LIMIT 1`,
+    `SELECT id, code, name FROM accounts WHERE org_id = ? AND code LIKE '78%' AND is_postable = 1 LIMIT 1`,
     [orgId]
   );
 
   const debitAcct = await queryOne(
-    `SELECT id, code, name FROM accounts WHERE org_id = ? AND code = '658' LIMIT 1`,
+    `SELECT id, code, name FROM accounts WHERE org_id = ? AND code = '6581' AND is_postable = 1 LIMIT 1`,
     [orgId]
   ) || await queryOne(
-    `SELECT id, code, name FROM accounts WHERE org_id = ? AND code LIKE '65%' LIMIT 1`,
+    `SELECT id, code, name FROM accounts WHERE org_id = ? AND code LIKE '65%' AND is_postable = 1 LIMIT 1`,
     [orgId]
   );
 

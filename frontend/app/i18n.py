@@ -112,6 +112,7 @@ STRINGS: dict[str, dict[str, str]] = {
         'auth.take_back': 'Take me back',
 
         'common.cancel': 'Cancel',
+        'common.close': 'Close',
         'common.save': 'Save',
         'common.search': 'Search',
         'common.from': 'From',
@@ -127,6 +128,8 @@ STRINGS: dict[str, dict[str, str]] = {
         'common.no': 'No',
         'common.total': 'Total',
         'common.count': 'Count',
+        'common.items': 'Items',
+        'common.no_records': 'No records found.',
         'common.domain': 'Domain',
         'common.cost': 'Cost',
         'common.depreciation': 'Depreciation',
@@ -136,6 +139,9 @@ STRINGS: dict[str, dict[str, str]] = {
         'common.any_status': 'Any status',
         'common.as_at': 'As at',
         'common.entries': '{n} entries',
+
+        'ar.shown_hint': 'Matching current filters',
+        'ar.none': 'No asset matches those filters.',
 
         'dash.hello': 'Good day, {name}',
         'dash.fy_open': 'Fiscal year {year} · period {period} is open',
@@ -1328,6 +1334,7 @@ STRINGS: dict[str, dict[str, str]] = {
         'auth.take_back': 'Me ramener',
 
         'common.cancel': 'Annuler',
+        'common.close': 'Fermer',
         'common.save': 'Enregistrer',
         'common.search': 'Rechercher',
         'common.from': 'Du',
@@ -1343,6 +1350,8 @@ STRINGS: dict[str, dict[str, str]] = {
         'common.no': 'Non',
         'common.total': 'Total',
         'common.count': 'Nombre',
+        'common.items': 'Éléments',
+        'common.no_records': 'Aucun enregistrement trouvé.',
         'common.domain': 'Domaine',
         'common.cost': 'Coût',
         'common.depreciation': 'Amortissement',
@@ -1352,6 +1361,9 @@ STRINGS: dict[str, dict[str, str]] = {
         'common.any_status': 'Tous les statuts',
         'common.as_at': 'Au',
         'common.entries': '{n} écritures',
+
+        'ar.shown_hint': 'Correspondant aux filtres actifs',
+        'ar.none': 'Aucune immobilisation ne correspond à ces filtres.',
 
         'dash.hello': 'Bonjour, {name}',
         'dash.fy_open': 'Exercice {year} · la période {period} est ouverte',

@@ -132,7 +132,7 @@ const closedPeriod = periods.body?.rows?.find((p) => p.status === 'closed');
 const unbalanced = await call('POST', '/api/entries', {
   token: clerk,
   body: {
-    journalCode: 'OD', date: postingDate, description: 'Test desequilibre',
+    journalCode: 'OD', date: postingDate, description: 'Test desequilibre', reference: 'REF-UNBALANCED',
     lines: [
       { accountCode: '6042', costCenterId: 1, debit: 100000, credit: 0 },
       { accountCode: '4011', debit: 0, credit: 90000, partnerType: 'supplier', partnerId: 7 },
@@ -145,7 +145,7 @@ check('an out-of-balance entry is refused', unbalanced.status === 422 && /balanc
 const headingAccount = await call('POST', '/api/entries', {
   token: clerk,
   body: {
-    journalCode: 'OD', date: postingDate, description: 'Test compte collectif',
+    journalCode: 'OD', date: postingDate, description: 'Test compte collectif', reference: 'REF-HEADING',
     lines: [
       { accountCode: '60', debit: 50000, credit: 0 },
       { accountCode: '4011', debit: 0, credit: 50000, partnerType: 'supplier', partnerId: 7 },
@@ -159,7 +159,7 @@ check('posting to a heading account is refused',
 const missingAsset = await call('POST', '/api/entries', {
   token: clerk,
   body: {
-    journalCode: 'OD', date: postingDate, description: 'Maintenance sans immobilisation',
+    journalCode: 'OD', date: postingDate, description: 'Maintenance sans immobilisation', reference: 'REF-ASSET',
     lines: [
       { accountCode: '6243', costCenterId: 1, debit: 75000, credit: 0 },
       { accountCode: '4011', debit: 0, credit: 75000, partnerType: 'supplier', partnerId: 7 },
@@ -189,7 +189,7 @@ check('a clerk can capture a balanced draft entry',
 const selfPost = await call('POST', '/api/entries', {
   token: clerk,
   body: {
-    journalCode: 'OD', date: postingDate, description: 'Tentative de comptabilisation directe', autoPost: true,
+    journalCode: 'OD', date: postingDate, description: 'Tentative de comptabilisation directe', autoPost: true, reference: 'REF-SELFPOST',
     lines: [
       { accountCode: '6051', costCenterId: 1, debit: 1000, credit: 0 },
       { accountCode: '4011', debit: 0, credit: 1000, partnerType: 'supplier', partnerId: 7 },
@@ -210,7 +210,7 @@ const closedDate = `${closedPeriod.start_date.slice(0, 8)}15`;
 const closedPeriodEntry = await call('POST', '/api/entries', {
   token: cfo,
   body: {
-    journalCode: 'OD', date: closedDate, description: 'Ecriture sur periode cloturee', autoPost: true,
+    journalCode: 'OD', date: closedDate, description: 'Ecriture sur periode cloturee', autoPost: true, reference: 'REF-CLOSED',
     lines: [
       { accountCode: '6051', costCenterId: 1, debit: 5000, credit: 0 },
       { accountCode: '4011', debit: 0, credit: 5000, partnerType: 'supplier', partnerId: 7 },
@@ -224,7 +224,7 @@ check('posting into a closed period without an override reason is refused',
 const withOverride = await call('POST', '/api/entries', {
   token: cfo,
   body: {
-    journalCode: 'OD', date: closedDate, description: 'Regularisation sur periode cloturee', autoPost: true,
+    journalCode: 'OD', date: closedDate, description: 'Regularisation sur periode cloturee', autoPost: true, reference: 'REF-OVERRIDE',
     overrideReason: 'Regularisation demandee par le commissaire aux comptes sur exercice clos.',
     lines: [
       { accountCode: '6051', costCenterId: 1, debit: 5000, credit: 0 },
@@ -278,7 +278,7 @@ check('a clerk cannot close a period', clerkClose.status === 403, clerkClose.bod
 const blocker = await call('POST', '/api/entries', {
   token: clerk,
   body: {
-    journalCode: 'OD', date: postingDate, description: 'Brouillon bloquant la cloture',
+    journalCode: 'OD', date: postingDate, description: 'Brouillon bloquant la cloture', reference: 'REF-BLOCKER',
     lines: [
       { accountCode: '6051', costCenterId: 1, debit: 1000, credit: 0 },
       { accountCode: '4011', debit: 0, credit: 1000, partnerType: 'supplier', partnerId: 7 },
