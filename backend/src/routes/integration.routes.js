@@ -203,7 +203,7 @@ integrationRoutes.post(
 );
 
 // ============================================================================
-// PUBLIC INGESTION API (FOR EXTERNAL SYSTEMS LIKE HMS, POS, ERP)
+// PUBLIC INGESTION API (FOR EXTERNAL SYSTEMS: BILLING, POS, ERP, BANKING)
 // Mounted separately to handle API Key authentication
 // ============================================================================
 
@@ -230,9 +230,9 @@ integrationIngestRoutes.get(
   '/spec',
   handler(async (req, res) => {
     res.json({
-      service: 'LedgerCore External Journal Ingestion Gateway',
+      service: 'LedgerCore Universal External Systems Financial Gateway',
       version: '1.0.0',
-      description: 'API endpoint for external systems (HMS, Point of Sale, ERP, Billing) to post transactions as Draft or Posted entries into the general ledger.',
+      description: 'Universal API gateway for external systems (Billing, Point of Sale, ERP, Invoicing, Banking, HR/Payroll) to automatically ingest financial transactions as Draft entries for accounting verification prior to posting.',
       auth: {
         type: 'api_key',
         header: 'X-API-Key: lch_live_...',
@@ -243,32 +243,45 @@ integrationIngestRoutes.get(
       },
       sample_payloads: {
         event_based: {
-          description: 'High-level business event mapped to accounts & cost centers in Admin setup',
+          description: 'High-level financial business event mapped to accounts & cost centers in Admin setup',
           payload: {
-            event_type: 'CONSULTATION_FEE',
-            reference: 'HMS-CONS-2026-9901',
+            event_type: 'SALES_INVOICE',
+            reference: 'INV-2026-9901',
             date: '2026-10-23',
-            amount: 15000,
+            amount: 250000,
+            currency: 'XAF',
+            payment_method: 'BANK',
+            department_code: 'ADM',
+            customer_name: 'AfricTech Solutions SARL',
+            customer_id: 'CLI-4401',
+            notes: 'Annual software maintenance and support contract',
+          },
+        },
+        payment_collection: {
+          description: 'Cash / Bank receipt and customer payment collection',
+          payload: {
+            event_type: 'PAYMENT_COLLECTION',
+            reference: 'REC-2026-8802',
+            date: '2026-10-23',
+            amount: 75000,
             currency: 'XAF',
             payment_method: 'CASH',
-            department_code: 'URG',
-            patient_name: 'Marie Eboa',
-            patient_id: 'PAT-4401',
-            doctor: 'Dr. Kamga',
-            notes: 'General consultation fee collected at Main Admission desk',
+            department_code: 'ADM',
+            customer_name: 'Société Générale de Distribution',
+            notes: 'Cash payment on outstanding invoice settlement',
           },
         },
         direct_double_entry: {
-          description: 'Pre-balanced multi-line debit/credit transaction',
+          description: 'Pre-balanced multi-line direct debit/credit journal entry',
           payload: {
             journal_code: 'VTE',
             date: '2026-10-23',
-            reference: 'HMS-INV-2026-8802',
-            description: 'Pharmacy Medication Sales — Outpatient counter',
+            reference: 'ERP-SALES-2026-8802',
+            description: 'Daily Commercial Sales & Merchandise Revenue',
             currency: 'XAF',
             lines: [
-              { account_code: '5711', debit: 45000, credit: 0, cost_center_code: 'URG', description: 'Cash collected' },
-              { account_code: '7011', debit: 0, credit: 45000, cost_center_code: 'URG', description: 'Pharmaceutical sales' },
+              { account_code: '5711', debit: 120000, credit: 0, cost_center_code: 'ADM', description: 'Cash register collection' },
+              { account_code: '7011', debit: 0, credit: 120000, cost_center_code: 'ADM', description: 'Merchandise sales revenue' },
             ],
           },
         },

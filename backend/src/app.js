@@ -90,7 +90,7 @@ export function createApp() {
     res.json(result);
   }));
 
-  // Public / external gateway for systems like HMS, POS, Billing using API Key
+  // Public / external gateway for systems (Billing, POS, ERP, Invoicing, Banking) using API Key
   app.use('/api/integrations', integrationIngestRoutes);
 
   // Everything past this point requires a valid session.

@@ -59,18 +59,23 @@ CREATE TABLE IF NOT EXISTS integration_logs (
   INDEX idx_int_logs_ref (org_id, external_reference)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Seed default HMS integration client and standard healthcare mapping rules if not existing
+-- Seed default external financial integration client and standard accounting mapping rules if not existing
 INSERT IGNORE INTO integration_clients 
   (id, org_id, name, client_code, api_key, default_journal_id, default_status, description, is_active)
 VALUES 
-  (1, 1, 'Hospital Management System (HMS Core)', 'HMS_MAIN', 'lch_live_hms_77d2e8fa91024bc681f03aa4', 4, 'draft', 'Primary HMS gateway for outpatient, inpatient, consultation, and pharmacy collections', 1);
+  (1, 1, 'External Financial Systems Gateway (Billing, ERP, POS, Banking)', 'EXT_FINANCE', 'lch_live_ext_finance_77d2e8fa91024bc681f03aa4', 4, 'draft', 'Universal external financial gateway for ingesting sales, services, receipts, vendor expenses, and customer deposits into Draft journal entries', 1);
 
--- Default healthcare event mappings:
--- 1. CONSULTATION_FEE: Debit 5711 (Caisse) or Bank, Credit 7061 (Consultations et actes medicaux), Cost Center URG (Urgences / Soins)
+-- Default universal financial event mappings:
+-- 1. SALES_INVOICE: Debit 4111 (Clients), Credit 7011 (Ventes de marchandises)
+-- 2. SERVICE_BILLING: Debit 4111 (Clients), Credit 7061 (Prestations de services)
+-- 3. PAYMENT_COLLECTION: Debit 5711 (Caisse) or 5211 (Banque), Credit 4111 (Clients)
+-- 4. VENDOR_EXPENSE: Debit 6011 (Achats), Credit 4011 (Fournisseurs)
+-- 5. CUSTOMER_DEPOSIT: Debit 5711 (Caisse), Credit 4191 (Clients, avances et acomptes reçus)
 INSERT IGNORE INTO integration_mappings
   (id, org_id, client_id, event_code, name, default_journal_id, debit_account_id, credit_account_id, default_cost_center_id, description_template, is_active)
 VALUES
-  (1, 1, 1, 'CONSULTATION_FEE', 'Medical Consultation & Clinical Fees', 4, 821, 396, 3, 'Consultation fee — {patient_name} ({reference})', 1),
-  (2, 1, 1, 'HOSPITAL_BILLING', 'Inpatient Ward & Bed Day Billing', 4, 345, 396, 4, 'Hospitalisation billing — {patient_name} ({reference})', 1),
-  (3, 1, 1, 'PHARMACY_SALE', 'Hospital Dispensary & Pharmacy Medication Sales', 4, 821, 882, 3, 'Medication dispensary sale — {reference}', 1),
-  (4, 1, 1, 'PATIENT_DEPOSIT', 'Patient Advance Deposit / Caution hospitalière', 6, 821, 345, 1, 'Patient caution deposit — {patient_name} ({reference})', 1);
+  (1, 1, 1, 'SALES_INVOICE', 'Customer Sales Invoicing & Commercial Products', 4, 345, 882, 1, 'Sales invoice — {customer_name} ({reference})', 1),
+  (2, 1, 1, 'SERVICE_BILLING', 'Professional Services & Fees Invoiced', 4, 345, 396, 1, 'Service billing — {customer_name} ({reference})', 1),
+  (3, 1, 1, 'PAYMENT_COLLECTION', 'Customer Payment & Cash/Bank Receipt', 6, 821, 345, 1, 'Payment collection — {customer_name} ({reference})', 1),
+  (4, 1, 1, 'VENDOR_EXPENSE', 'Supplier Bill & Operating Expense', 3, 823, 770, 1, 'Vendor bill — {vendor_name} ({reference})', 1),
+  (5, 1, 1, 'CUSTOMER_DEPOSIT', 'Customer Advance & Caution Deposit', 6, 821, 791, 1, 'Advance deposit — {customer_name} ({reference})', 1);

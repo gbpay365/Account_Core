@@ -69,7 +69,7 @@ async def admin_page() -> None:
             with ui.tab_panel('taxes').classes('p-0 gap-6'):
                 await _render_taxes_tab(acct_options)
 
-            # TAB 5: EXTERNAL APIS & INTEGRATIONS (HMS / POS / ERP)
+            # TAB 5: EXTERNAL SYSTEMS & APIS GATEWAY (BILLING, ERP, POS, BANKING)
             with ui.tab_panel('integrations').classes('p-0 gap-6'):
                 await _render_integrations_tab(acct_options, cc_options, jnl_options)
 
@@ -1016,7 +1016,7 @@ def _tax_modal(tax: dict | None, acct_options: dict, refresh_callback) -> None:
 
 
 # ==============================================================================
-# TAB 5: EXTERNAL APIS & INTEGRATIONS GATEWAY (HMS / POS / ERP)
+# TAB 5: EXTERNAL SYSTEMS & APIS GATEWAY (BILLING, ERP, POS, BANKING)
 # ==============================================================================
 
 async def _render_integrations_tab(acct_options: dict, cc_options: dict, jnl_options: dict) -> None:
@@ -1077,14 +1077,14 @@ async def _render_integrations_tab(acct_options: dict, cc_options: dict, jnl_opt
                     with ui.tab_panel('clients').classes('p-0 gap-4'):
                         with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
                             with ui.column().classes('gap-0'):
-                                ui.label('Registered External Systems (HMS / Billing / POS)').classes('text-base font-bold text-slate-800')
+                                ui.label('Registered External Systems (Billing, ERP, POS, Banking)').classes('text-base font-bold text-slate-800')
                                 ui.label('Manage API credentials and default journal rules for each external application').classes('text-xs text-slate-500')
                             ui.button(t('admin.integ_btn_new_client'), icon='add',
                                       on_click=lambda: _client_dialog(reload_all, jnl_options)
                                       ).props('unelevated color=primary no-caps')
 
                         if not clients:
-                            w.empty_state('No external systems registered yet.', icon='hub', hint='Click the button above to register HMS or other systems.')
+                            w.empty_state('No external systems registered yet.', icon='hub', hint='Click the button above to register an external system.')
                         else:
                             for c in clients:
                                 with ui.card().classes('w-full p-4 rounded-xl border border-slate-200/90 bg-white hover:border-teal-400 transition-all shadow-none'):
@@ -1149,7 +1149,7 @@ async def _render_integrations_tab(acct_options: dict, cc_options: dict, jnl_opt
                         with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
                             with ui.column().classes('gap-0'):
                                 ui.label('Accounting & Cost Center Mapping Rules').classes('text-base font-bold text-slate-800')
-                                ui.label('Map incoming event types (e.g. CONSULTATION_FEE, PHARMACY_SALE) to specific debit/credit accounts and cost centers').classes('text-xs text-slate-500')
+                                ui.label('Map incoming event types (e.g. SALES_INVOICE, SERVICE_BILLING, PAYMENT_COLLECTION, VENDOR_EXPENSE) to specific debit/credit accounts and cost centers').classes('text-xs text-slate-500')
                             ui.button(t('admin.integ_btn_new_mapping'), icon='add',
                                       on_click=lambda: _mapping_dialog(reload_all, client_options, acct_options, cc_options, jnl_options)
                                       ).props('unelevated color=primary no-caps')
@@ -1206,7 +1206,7 @@ async def _render_integrations_tab(acct_options: dict, cc_options: dict, jnl_opt
                             ui.button('Refresh Logs', icon='refresh', on_click=reload_all).props('flat dense no-caps text-color=slate-700')
 
                         if not logs:
-                            w.empty_state('No API ingestion logs recorded yet.', icon='history', hint='Incoming transactions from HMS or other systems will appear here in real-time.')
+                            w.empty_state('No API ingestion logs recorded yet.', icon='history', hint='Incoming transactions from connected external systems will appear here in real-time.')
                         else:
                             log_columns = [
                                 w.column('created_at', 'Timestamp', classes='text-xs text-slate-500 font-mono'),
@@ -1260,8 +1260,8 @@ async def _render_integrations_tab(acct_options: dict, cc_options: dict, jnl_opt
                     with ui.tab_panel('docs').classes('p-0 gap-4'):
                         with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
                             with ui.column().classes('gap-0'):
-                                ui.label('External Ingestion API Guide for HMS & Third-Party Developers').classes('text-base font-bold text-slate-800')
-                                ui.label('Technical reference for connecting Hospital Information Systems (SIH/HMS), Pharmacy POS, and Billing software').classes('text-xs text-slate-500')
+                                ui.label('External Financial Systems API Specification & Integration Guide').classes('text-base font-bold text-slate-800')
+                                ui.label('Technical reference for connecting Invoicing, Billing, POS, ERP, Banking, and commercial systems to ingest financial transactions').classes('text-xs text-slate-500')
                             ui.button('Test Ingestion Simulator', icon='play_arrow',
                                       on_click=lambda: _simulator_dialog(reload_all, client_options, cc_options)
                                       ).props('unelevated color=teal no-caps')
@@ -1273,37 +1273,51 @@ async def _render_integrations_tab(acct_options: dict, cc_options: dict, jnl_opt
                                 ui.label('https://<your-domain>/api/integrations/entries')
                             with ui.row().classes('items-center gap-2 font-mono text-xs bg-slate-900 text-slate-200 p-3 rounded-lg w-full'):
                                 ui.label('Headers:').classes('text-slate-400')
-                                ui.label('X-API-Key: lch_live_hms_•••••••••••••••••••••')
+                                ui.label('X-API-Key: lch_live_ext_finance_•••••••••••••••••••••')
                                 ui.label('| Content-Type: application/json')
 
-                            ui.label('Format 1: High-Level Healthcare Business Event (Recommended for HMS)').classes('font-bold text-sm text-slate-800 mt-2')
+                            ui.label('Format 1: Universal Financial Business Event (Sales Invoicing, Services, Collections)').classes('font-bold text-sm text-slate-800 mt-2')
                             ui.markdown('''```json
 {
-  "event_type": "CONSULTATION_FEE",
-  "reference": "HMS-CONS-2026-00441",
+  "event_type": "SALES_INVOICE",
+  "reference": "INV-2026-00441",
   "date": "2026-10-23",
-  "amount": 15000,
+  "amount": 250000,
   "currency": "XAF",
-  "payment_method": "CASH",
-  "department_code": "URG",
-  "patient_name": "Samuel Eto'o",
-  "patient_id": "PAT-9912",
-  "doctor": "Dr. Kamga",
-  "notes": "Emergency outpatient consultation collection"
+  "payment_method": "BANK",
+  "department_code": "ADM",
+  "customer_name": "AfricTech Solutions SARL",
+  "customer_id": "CLI-8821",
+  "notes": "Commercial invoice for annual software & service delivery"
 }
 ```''').classes('w-full text-xs')
 
-                            ui.label('Format 2: Pre-Balanced Multi-Line Direct Journal Entry').classes('font-bold text-sm text-slate-800 mt-2')
+                            ui.label('Format 2: Customer Payment & Receipt Collection Event').classes('font-bold text-sm text-slate-800 mt-2')
+                            ui.markdown('''```json
+{
+  "event_type": "PAYMENT_COLLECTION",
+  "reference": "REC-2026-00812",
+  "date": "2026-10-23",
+  "amount": 75000,
+  "currency": "XAF",
+  "payment_method": "CASH",
+  "department_code": "ADM",
+  "customer_name": "Société Générale de Distribution",
+  "notes": "Cash settlement on commercial trade balance"
+}
+```''').classes('w-full text-xs')
+
+                            ui.label('Format 3: Pre-Balanced Multi-Line Direct Journal Entry').classes('font-bold text-sm text-slate-800 mt-2')
                             ui.markdown('''```json
 {
   "journal_code": "VTE",
-  "reference": "POS-PHARM-2026-0812",
+  "reference": "POS-COMM-2026-0812",
   "date": "2026-10-23",
-  "description": "Hospital Pharmacy Counter Dispensary Sales",
+  "description": "Daily Commercial POS Counter Sales & Operations",
   "currency": "XAF",
   "lines": [
-    { "account_code": "5711", "debit": 35000, "credit": 0, "cost_center_code": "URG", "description": "Cash collected" },
-    { "account_code": "7011", "debit": 0, "credit": 35000, "cost_center_code": "URG", "description": "Pharmacy medications" }
+    { "account_code": "5711", "debit": 150000, "credit": 0, "cost_center_code": "ADM", "description": "Cash collected" },
+    { "account_code": "7011", "debit": 0, "credit": 150000, "cost_center_code": "ADM", "description": "Merchandise sales revenue" }
   ]
 }
 ```''').classes('w-full text-xs')
@@ -1393,12 +1407,12 @@ def _mapping_dialog(refresh_fn, client_options: dict, acct_options: dict, cc_opt
                                   label='Apply to External System').props('outlined dense options-dense').classes('w-full')
 
             event_code_in = ui.input(t('admin.integ_event_code'), value=mapping.get('event_code', '') if is_edit else '',
-                                     placeholder='e.g. CONSULTATION_FEE, HOSPITAL_BILLING, PHARMACY_SALE').props('outlined dense').classes('w-full')
+                                     placeholder='e.g. SALES_INVOICE, SERVICE_BILLING, PAYMENT_COLLECTION, VENDOR_EXPENSE').props('outlined dense').classes('w-full')
             if is_edit:
                 event_code_in.disable()
 
             name_in = ui.input(t('admin.integ_event_name'), value=mapping.get('name', '') if is_edit else '',
-                               placeholder='e.g. Outpatient Medical Consultation Fees').props('outlined dense').classes('w-full')
+                               placeholder='e.g. Customer Sales Invoicing & Commercial Products').props('outlined dense').classes('w-full')
 
             jnl_in = ui.select(jnl_options, value=mapping.get('default_journal_id') if is_edit else list(jnl_options.keys())[0] if jnl_options else None,
                                label=t('admin.integ_default_journal')).props('outlined dense options-dense').classes('w-full')
@@ -1414,7 +1428,7 @@ def _mapping_dialog(refresh_fn, client_options: dict, acct_options: dict, cc_opt
                               label=t('admin.integ_cost_center'), with_input=True).props('outlined dense options-dense use-input').classes('w-full')
 
             tmpl_in = ui.input(t('admin.integ_tmpl'), value=mapping.get('description_template', '') if is_edit else '',
-                               placeholder='e.g. Consultation fee — {patient_name} ({reference})').props('outlined dense').classes('w-full')
+                               placeholder='e.g. Sales invoice — {customer_name} ({reference})').props('outlined dense').classes('w-full')
 
         async def _save():
             if not is_edit and (not event_code_in.value or not event_code_in.value.strip()):
@@ -1470,7 +1484,7 @@ def _simulator_dialog(refresh_fn, client_options: dict, cc_options: dict) -> Non
         ui.label(t('admin.integ_sim_desc')).classes('text-xs text-slate-500 mb-2')
 
         with ui.row().classes('w-full items-center gap-2 mb-3'):
-            ui.label('Quick Presets:').classes('text-xs font-bold text-slate-600')
+            ui.label('Financial Transaction Presets:').classes('text-xs font-bold text-slate-600')
 
         with ui.column().classes('w-full gap-3'):
             c_val = list(client_options.keys())[0] if client_options else None
@@ -1478,32 +1492,32 @@ def _simulator_dialog(refresh_fn, client_options: dict, cc_options: dict) -> Non
 
             with ui.row().classes('w-full gap-3'):
                 event_sel = ui.select({
-                    'CONSULTATION_FEE': 'Medical Consultation Fee (CONSULTATION_FEE)',
-                    'HOSPITAL_BILLING': 'Hospitalization / Bed Day Billing (HOSPITAL_BILLING)',
-                    'PHARMACY_SALE': 'Hospital Pharmacy Dispensary Sale (PHARMACY_SALE)',
-                    'PATIENT_DEPOSIT': 'Patient Advance Caution Deposit (PATIENT_DEPOSIT)',
-                }, value='CONSULTATION_FEE', label='Event Type').props('outlined dense options-dense').classes('flex-1')
+                    'SALES_INVOICE': 'Customer Sales Invoicing (SALES_INVOICE)',
+                    'SERVICE_BILLING': 'Professional Services & Fees (SERVICE_BILLING)',
+                    'PAYMENT_COLLECTION': 'Customer Payment & Cash/Bank Receipt (PAYMENT_COLLECTION)',
+                    'VENDOR_EXPENSE': 'Supplier Bill & Operating Expense (VENDOR_EXPENSE)',
+                    'CUSTOMER_DEPOSIT': 'Customer Advance & Caution Deposit (CUSTOMER_DEPOSIT)',
+                }, value='SALES_INVOICE', label='Financial Event Type').props('outlined dense options-dense').classes('flex-1')
 
-                ref_in = ui.input('External Reference #', value=f"HMS-SIM-{int(time.time())}").props('outlined dense').classes('flex-1')
-
-            with ui.row().classes('w-full gap-3'):
-                amount_in = ui.number('Amount (XAF)', value=15000, min=100).props('outlined dense').classes('w-44')
-                payment_sel = ui.select({'CASH': 'CASH (Caisse)', 'BANK': 'BANK (Virement/Banque)', 'MOMO': 'Mobile Money'}, value='CASH', label='Payment Method').props('outlined dense options-dense').classes('flex-1')
+                ref_in = ui.input('External Reference #', value=f"EXT-TRX-{int(time.time())}").props('outlined dense').classes('flex-1')
 
             with ui.row().classes('w-full gap-3'):
-                patient_in = ui.input('Patient Full Name', value='Aminatou Alhadji').props('outlined dense').classes('flex-1')
-                patient_id_in = ui.input('Patient ID / Card #', value='PAT-7721').props('outlined dense').classes('w-40')
+                amount_in = ui.number('Amount (XAF)', value=250000, min=100).props('outlined dense').classes('w-44')
+                payment_sel = ui.select({'BANK': 'BANK (Virement/Banque)', 'CASH': 'CASH (Caisse)', 'MOMO': 'Mobile Money'}, value='BANK', label='Payment Method').props('outlined dense options-dense').classes('flex-1')
 
             with ui.row().classes('w-full gap-3'):
-                doctor_in = ui.input('Attending Physician / Doctor', value='Dr. Ndongo').props('outlined dense').classes('flex-1')
+                party_in = ui.input('Customer / Vendor / Beneficiary Name', value='AfricTech Solutions SARL').props('outlined dense').classes('flex-1')
+                party_id_in = ui.input('Third-Party Code / ID', value='CLI-8821').props('outlined dense').classes('w-40')
+
+            with ui.row().classes('w-full gap-3'):
                 dept_sel = ui.select({
-                    'URG': 'Emergency Service (URG)',
-                    'ADM': 'Administration & Admission (ADM)',
-                    'CHIR': 'Surgery Block (CHIR)',
-                    'REA': 'Intensive Care (REA)',
-                }, value='URG', label='Hospital Ward / Department').props('outlined dense options-dense').classes('flex-1')
+                    'ADM': 'General Administration (ADM)',
+                    'FIN': 'Finance & Accounting (FIN)',
+                    'COM': 'Commercial & Sales (COM)',
+                    'OPS': 'Operations & Production (OPS)',
+                }, value='ADM', label='Cost Center / Department').props('outlined dense options-dense').classes('flex-1')
 
-            notes_in = ui.input('Clinical / Administrative Notes', value='Simulated external collection from Admission Desk').props('outlined dense').classes('w-full')
+            notes_in = ui.input('Transaction Description / Notes', value='Simulated external financial transaction for automated draft ingestion').props('outlined dense').classes('w-full')
 
         result_box = ui.column().classes('w-full mt-3')
 
@@ -1517,9 +1531,9 @@ def _simulator_dialog(refresh_fn, client_options: dict, cc_options: dict) -> Non
                 'currency': 'XAF',
                 'payment_method': payment_sel.value,
                 'department_code': dept_sel.value,
-                'patient_name': patient_in.value.strip(),
-                'patient_id': patient_id_in.value.strip(),
-                'doctor': doctor_in.value.strip(),
+                'customer_name': party_in.value.strip(),
+                'customer_id': party_id_in.value.strip(),
+                'vendor_name': party_in.value.strip(),
                 'notes': notes_in.value.strip(),
             }
 

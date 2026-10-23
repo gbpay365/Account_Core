@@ -377,15 +377,24 @@ export async function ingestExternalEntry(client, payload, requestInfo = {}) {
       }
 
       // Format description using template or fallback
+      const partyName = payload.customer_name || payload.client_name || payload.vendor_name || payload.supplier_name || payload.beneficiary || payload.patient_name || payload.third_party_name || '';
+      const partyId = payload.customer_id || payload.client_id || payload.vendor_id || payload.supplier_id || payload.patient_id || payload.third_party_id || '';
+
       if (mapping?.description_template && !payload.description) {
         description = mapping.description_template
-          .replace('{patient_name}', payload.patient_name || payload.customer_name || 'Patient')
-          .replace('{patient_id}', payload.patient_id || '')
+          .replace('{customer_name}', partyName || 'Customer/Client')
+          .replace('{vendor_name}', partyName || 'Supplier/Vendor')
+          .replace('{client_name}', partyName || 'Client')
+          .replace('{patient_name}', partyName || 'Third-Party')
+          .replace('{third_party_name}', partyName || 'Third-Party')
+          .replace('{customer_id}', partyId)
+          .replace('{vendor_id}', partyId)
+          .replace('{patient_id}', partyId)
           .replace('{reference}', reference)
           .replace('{doctor}', payload.doctor || payload.practitioner || '');
       }
       if (!description) {
-        description = `${mapping?.name || eventCode} — ${payload.patient_name || ''} (${reference})`.trim();
+        description = `${mapping?.name || eventCode}${partyName ? ` — ${partyName}` : ''} (${reference})`.trim();
       }
 
       // Cost center resolution: payload cost_center_id/code > department_code > mapping default
@@ -421,14 +430,14 @@ export async function ingestExternalEntry(client, payload, requestInfo = {}) {
           debit: amount,
           credit: 0,
           costCenterId: costCenterId,
-          description: `${description} [Encaissement]`,
+          description: description,
         },
         {
           accountId: mapping.credit_account_id,
           debit: 0,
           credit: amount,
           costCenterId: costCenterId,
-          description: `${description} [Prestation/Produit]`,
+          description: description,
         },
       ];
     } else if (Array.isArray(payload.lines) && payload.lines.length >= 2) {
