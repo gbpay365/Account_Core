@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LedgerCore — Budget Module & Commitment Control Manual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0d9488;
+      --primary-dark: #0f766e;
+      --primary-light: #ccfbf1;
+      --navy: #0f172a;
+      --navy-light: #1e293b;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --rose: #e11d48;
+      --rose-light: #ffe4e6;
+      --sky: #0284c7;
+      --sky-light: #e0f2fe;
+      --indigo: #4338ca;
+      --indigo-light: #e0e7ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--slate-800);
+      background-color: var(--slate-50);
+      line-height: 1.65;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navigation Bar */
+    .top-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      color: white;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.75rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .header-logo .badge {
+      background: var(--primary);
+      color: white;
+      font-size: 0.7rem;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary-dark);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1040px;
+      margin: 2rem auto;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--slate-200);
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+      padding: 3.5rem 4rem;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Outfit', sans-serif;
+      color: var(--slate-900);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      line-height: 1.2;
+      border-bottom: 2px solid var(--slate-200);
+      padding-bottom: 0.75rem;
+      margin-top: 0;
+      color: var(--navy);
+    }
+
+    h2 {
+      font-size: 1.65rem;
+      line-height: 1.3;
+      border-bottom: 1px solid var(--slate-200);
+      padding-bottom: 0.5rem;
+      margin-top: 2.75rem;
+      color: var(--slate-900);
+    }
+
+    h3 {
+      font-size: 1.3rem;
+      margin-top: 1.75rem;
+      color: var(--primary-dark);
+    }
+
+    h4 {
+      font-size: 1.1rem;
+      margin-top: 1.25rem;
+    }
+
+    p {
+      margin-bottom: 1.1rem;
+    }
+
+    ul, ol {
+      margin-bottom: 1.25rem;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--slate-200);
+      margin: 2.5rem 0;
+    }
+
+    strong {
+      color: var(--slate-900);
+    }
+
+    /* Code Blocks */
+    pre {
+      background: var(--navy);
+      color: #f8fafc;
+      padding: 1.25rem;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--navy-light);
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88em;
+      background: var(--slate-100);
+      color: var(--navy);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      border: 1px solid var(--slate-200);
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border: none;
+    }
+
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border-radius: 8px;
+      border: 1px solid var(--slate-200);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    th {
+      background: var(--slate-100);
+      color: var(--slate-900);
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid var(--slate-300);
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--slate-200);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background-color: var(--slate-50);
+    }
+
+    tr:hover td {
+      background-color: rgba(13, 148, 136, 0.04);
+    }
+
+    /* Callouts */
+    .callout {
+      padding: 1.1rem 1.4rem;
+      border-radius: 10px;
+      margin: 1.5rem 0;
+      border-left: 4px solid;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .callout-note {
+      background: #f0fdf4;
+      border-color: var(--primary);
+      color: #14532d;
+    }
+    .callout-note .callout-title { color: var(--primary-dark); }
+
+    .callout-tip {
+      background: #f0f9ff;
+      border-color: var(--sky);
+      color: #075985;
+    }
+    .callout-tip .callout-title { color: var(--sky); }
+
+    .callout-important {
+      background: #fefce8;
+      border-color: var(--amber);
+      color: #713f12;
+    }
+    .callout-important .callout-title { color: var(--amber); }
+
+    .callout-warning {
+      background: #fff1f2;
+      border-color: var(--rose);
+      color: #881337;
+    }
+    .callout-warning .callout-title { color: var(--rose); }
+
+    /* Print Formatting */
+    @media print {
+      .top-header {
+        display: none;
+      }
+      body {
+        background: white;
+        font-size: 11pt;
+      }
+      .container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+      }
+      h2 {
+        page-break-before: always;
+      }
+      pre, table, .callout {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-header">
+    <div class="header-logo">
+      <span>💰 LedgerCore</span>
+      <span class="badge">Budget Module</span>
+      <span style="font-size: 0.85rem; font-weight: 400; color: #94a3b8;">User Guide & Manual</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+      <a class="btn btn-primary" href="/budgeting">🚀 Open Budget Module</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1 id="ledgercore-budget-module-commitment-control-manual">📊 LedgerCore — Budget Module &amp; Commitment Control Manual</h1>
+
+<p><strong>Enterprise &amp; Institutional Budgetary Accounting, Commitment Control &amp; Execution Engine</strong><br />
+<em>Compliant with SYSCOHADA Revised, CEMAC/UEMOA Public &amp; Private Finance Standards, and IFRS Frameworks</em></p>
+
+<hr />
+
+<h2 id="table-of-contents">📑 Table of Contents</h2>
+
+<ol>
+<li><a href="#1-executive-overview--architectural-philosophy">🏛️ Executive Overview &amp; Architectural Philosophy</a></li>
+<li><a href="#2-module-navigation--interactive-ui-tour">🧭 Module Navigation &amp; Interactive UI Tour</a></li>
+<li><a href="#3-master-budget-planning--dotation-structure">📋 Master Budget Planning &amp; Dotation Structure</a></li>
+<li><a href="#4-multi-step-commitment-accounting-comptabilit%C3%A9-des-engagements">🔒 Multi-Step Commitment Accounting (Comptabilité des Engagements)</a></li>
+<li><a href="#5-credit-transfers-amendments--supplementary-appropriations">🔄 Credit Transfers, Amendments &amp; Supplementary Appropriations</a></li>
+<li><a href="#6-year-end-carryforward--roll-over-engine-report-de-cr%C3%A9dits-n1">⏳ Year-End Carryforward &amp; Roll-Over Engine (Report de Crédits N+1)</a></li>
+<li><a href="#7-deep-dive-practical-scenarios--worked-examples">💡 Deep-Dive Practical Scenarios &amp; Worked Examples</a>
+<ul>
+<li><a href="#example-1-formulating-the-2027-master-budget">Example 1: Formulating the 2027 Master Budget</a></li>
+<li><a href="#example-2-requisitioning--committing-a-capex-asset">Example 2: Requisitioning &amp; Committing a Capex Asset</a></li>
+<li><a href="#example-3-executing-an-internal-credit-transfer-virement-de-cr%C3%A9dit">Example 3: Executing an Internal Credit Transfer (Virement de Crédit)</a></li>
+<li><a href="#example-4-handling-an-unplanned-mid-year-project-the-mining--donor-contract-case-study">Example 4: Handling an Unplanned Mid-Year Project (The Mining / Donor Contract Case Study)</a></li>
+<li><a href="#example-5-year-end-unconsumed-budget-carryforward">Example 5: Year-End Unconsumed Budget Carryforward</a></li>
+</ul></li>
+<li><a href="#8-the-5-stage-public--institutional-expenditure-chain-ordonnancement--mandatement">📜 The 5-Stage Public &amp; Institutional Expenditure Chain (Ordonnancement &amp; Mandatement)</a></li>
+<li><a href="#9-procurement-planning-ppm-thresholds--donor-non-objection-ano">📦 Procurement Planning (PPM), Thresholds &amp; Donor Non-Objection (ANO)</a></li>
+<li><a href="#10-donor-grant-conventions--multi-bailleur-co-financing">🤝 Donor Grant Conventions &amp; Multi-Bailleur Co-Financing</a></li>
+<li><a href="#11-role-based-access-control-rbac--governance-matrix">🛡️ Role-Based Access Control (RBAC) &amp; Governance Matrix</a></li>
+<li><a href="#12-frequently-asked-questions-faq--troubleshooting">❓ Frequently Asked Questions (FAQ) &amp; Troubleshooting</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-executive-overview-architectural-philosophy">1. 🏛️ Executive Overview &amp; Architectural Philosophy</h2>
+
+<h3 id="11-the-golden-triad-of-budgetary-governance">1.1 The Golden Triad of Budgetary Governance</h3>
+
+<p>In modern enterprise management, healthcare institutions, and industrial corporations operating under <strong>SYSCOHADA</strong>, relying solely on General Ledger accounting means managing by looking in the rearview mirror. When an invoice lands on the Chief Accountant's desk, the statutory obligation has already occurred. </p>
+
+<p><strong>LedgerCore's Budget Module</strong> shifts financial control upstream by introducing <strong>Multi-Step Commitment Accounting (<em>Comptabilité des Engagements</em>)</strong>, enforcing the classical triad of statutory finance:</p>
+
+<pre><code>  ┌─────────────────────────────────┐
+  │ 1. ALLOCATION / DOTATION        │  Approved Budget voted by Board / Governance
+  │    (Budgets Votés &amp; Rectifiés)  │  Set per Account, Department, and Project
+  └────────────────┬────────────────┘
+                   │
+                   ▼
+  ┌─────────────────────────────────┐
+  │ 2. COMMITMENT / ENGAGEMENT      │  Purchase Orders, Contracts &amp; Work Orders
+  │    (Réservation de Crédits)     │  Locks budget BEFORE contracts are signed
+  └────────────────┬────────────────┘
+                   │
+                   ▼
+  ┌─────────────────────────────────┐
+  │ 3. LIQUIDATION &amp; PAYMENT        │  Invoice reception, delivery verification,
+  │    (Ordonnancement &amp; Règlement) │  General Ledger posting (Class 6/2), Treasury outflow
+  └─────────────────────────────────┘
+</code></pre>
+
+<div class="callout callout-note"><div class="callout-title">ℹ️ NOTE</div><p><strong>Unified Single-Ledger Harmony:</strong><br />
+  In LedgerCore, budget commitments do not float in an isolated spreadsheet. They tie directly to your <strong>General Ledger Chart of Accounts</strong> (SYSCOHADA leaf accounts), your <strong>Cost Centers / Departments</strong>, your <strong>Fixed Asset Register</strong> (for Capex), and your <strong>Maintenance Work Orders</strong> (for repairs).</p></div>
+
+<h3 id="12-the-available-budget-equation">1.2 The Available Budget Equation</h3>
+
+<p>At any fraction of a second, the system computes the exact <strong>Net Available Credit (<em>Disponible Budgétaire Net</em>)</strong> for every budget line using the formula:</p>
+
+<p>$$\mathbf{Available\ Balance} = (\mathbf{Initial\ Allocation} + \mathbf{Net\ Transfers}) - \mathbf{Committed\ Appropriations} - \mathbf{Actual\ GL\ Postings}$$</p>
+
+<p>Where:
+- <strong>Initial Allocation (<em>Dotation Initiale</em>)</strong>: Voted budget approved at the beginning of the fiscal period.
+- <strong>Net Transfers (<em>Virements Nets</em>)</strong>: Algebraic sum of budget transfers received $(+)$ or transferred out $(-)$.
+- <strong>Committed Appropriations (<em>Crédits Engagés</em>)</strong>: Active commitments in <code>approved</code> status reserving funds for pending purchase orders.
+- <strong>Actual GL Postings (<em>Réalisations Comptables</em>)</strong>: Posted journal entry lines in General Ledger Classes 6 (Expenses) and 2 (Fixed Assets).</p>
+
+<hr />
+
+<h2 id="2-module-navigation-interactive-ui-tour">2. 🧭 Module Navigation &amp; Interactive UI Tour</h2>
+
+<p>To access the Budget Module, log into LedgerCore and click <strong>Accounting ➔ Budgeting &amp; Commitments</strong> (<code>/budgeting</code>) on the left navigation rail.</p>
+
+<pre><code>┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 💰 Budgeting &amp; Commitment Accounting (SYSCOHADA / CEMAC)                                📘 User Guide  │
+│ Operating &amp; capital expenditure plans, multi-axial commitments, credit transfers, and real-time controls  │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ [📊 Approved Budget: 3,450,000,000] [🔒 Committed: 842,500,000] [💳 Actual: 1,620,300,000] [✅ Net Avail: 987,200,000] │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 📑 Tabs:  [📈 Execution Dashboard]  [📋 Plans &amp; Lines]  [🔒 Commitments]  [🔄 Transfers]  [⏳ Carryforwards]   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<h3 id="21-the-core-interactive-workspace-tabs">2.1 The Core Interactive Workspace Tabs</h3>
+
+<div class="table-container"><table>
+<thead>
+<tr>
+  <th style="text-align:left;">Tab Icon</th>
+  <th style="text-align:left;">Tab Title</th>
+  <th style="text-align:left;">Primary Function</th>
+  <th style="text-align:left;">Primary Users</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">📈</td>
+  <td style="text-align:left;"><strong>Execution Dashboard</strong></td>
+  <td style="text-align:left;">Real-time visual progress bars, department consumption, budget variance analysis</td>
+  <td style="text-align:left;">CFO, General Director, Internal Auditor</td>
+</tr>
+<tr>
+  <td style="text-align:left;">📋</td>
+  <td style="text-align:left;"><strong>Plans &amp; Lines</strong></td>
+  <td style="text-align:left;">Setting up annual budget master envelopes, quarterly phasing (T1-T4), spreading curves</td>
+  <td style="text-align:left;">CFO, Chief Accountant, Financial Controller</td>
+</tr>
+<tr>
+  <td style="text-align:left;">🔒</td>
+  <td style="text-align:left;"><strong>Commitments</strong></td>
+  <td style="text-align:left;">Issuing purchase requisitions (DA), firm purchase orders (BC), availability checks</td>
+  <td style="text-align:left;">Procurement Officer, Department Heads, CFO</td>
+</tr>
+<tr>
+  <td style="text-align:left;">🔄</td>
+  <td style="text-align:left;"><strong>Transfers &amp; Amendments</strong></td>
+  <td style="text-align:left;">Inter-departmental credit reallocations (<em>virements</em>) and supplementary budget decisions</td>
+  <td style="text-align:left;">CFO, Budget Committee, Board of Directors</td>
+</tr>
+<tr>
+  <td style="text-align:left;">⏳</td>
+  <td style="text-align:left;"><strong>Carryforwards</strong></td>
+  <td style="text-align:left;">Statutory rollover of unconsumed Capex/Opex appropriations from Year $N$ to $N+1$</td>
+  <td style="text-align:left;">Chief Accountant, CFO, Statutory Auditors</td>
+</tr>
+<tr>
+  <td style="text-align:left;">📜</td>
+  <td style="text-align:left;"><strong>Payment Orders</strong></td>
+  <td style="text-align:left;">Formal payment orders (<em>Mandats de Paiement</em>), Controller Visa, Tax AIR &amp; Warranty retentions</td>
+  <td style="text-align:left;">Authorizing Officer, Controller, Treasury</td>
+</tr>
+<tr>
+  <td style="text-align:left;">📦</td>
+  <td style="text-align:left;"><strong>Procurement Plans (PPM)</strong></td>
+  <td style="text-align:left;">Multi-year procurement plans, packaging (Lots), Donor No-Objection clearances (ANO)</td>
+  <td style="text-align:left;">Procurement Specialist, Project Coordinator</td>
+</tr>
+</tbody>
+</table></div>
+
+<h3 id="22-dynamic-color-coded-execution-indicators">2.2 Dynamic Color-Coded Execution Indicators</h3>
+
+<p>The module visually categorizes expenditure levels across all lines and departments:
+- 🟢 <strong>Green (0% – 74.9%)</strong>: <strong>Healthy Execution</strong> — Adequate headroom available.
+- 🟡 <strong>Amber (75% – 89.9%)</strong>: <strong>Prudent Zone</strong> — Consumption approaching target; require vigilance.
+- 🟠 <strong>Orange (90% – 99.9%)</strong>: <strong>Critical Threshold</strong> — Approaching full depletion; requires CFO review.
+- 🔴 <strong>Red (100%+)</strong>: <strong>Exhausted / Overspent</strong> — Blocked under strict policy; requires credit transfer or amendment.</p>
+
+<hr />
+
+<h2 id="3-master-budget-planning-dotation-structure">3. 📋 Master Budget Planning &amp; Dotation Structure</h2>
+
+<h3 id="31-multi-axial-budget-sections">3.1 Multi-Axial Budget Sections</h3>
+
+<p>LedgerCore structures every budget plan across four distinct operational sections:</p>
+
+<pre><code>                               ┌────────────────────────────────┐
+                               │   ANNUAL MASTER BUDGET PLAN    │
+                               └───────────────┬────────────────┘
+         ┌─────────────────────┬───────────────┴─────────────────────┬────────────────────┐
+         ▼                     ▼                                     ▼                    ▼
+┌──────────────────┐  ┌──────────────────┐                 ┌──────────────────┐  ┌──────────────────┐
+│ 💼 Operating     │  │ 🏗️ Capital       │                 │ 🛠️ Maintenance   │  │ 💰 Revenue       │
+│    (Opex)        │  │    (Capex)       │                 │    (Repairs)     │  │    (Inflows)     │
+├──────────────────┤  ├──────────────────┤                 ├──────────────────┤  ├──────────────────┤
+│ Class 6 Accounts │  │ Class 2 Accounts │                 │ Work Orders      │  │ Class 7 Accounts │
+│ Consumables      │  │ Medical Imaging  │                 │ Biomedical Tests │  │ Patient Fees     │
+│ Salaries, Travel │  │ Facilities, Fleet│                 │ Statutory Safety │  │ Donor Subsidies  │
+└──────────────────┘  └──────────────────┘                 └──────────────────┘  └──────────────────┘
+</code></pre>
+
+<ol>
+<li>💼 <strong>Operating Budget (Opex - Charges d'Exploitation)</strong>:
+<ul>
+<li>Targets SYSCOHADA <strong>Class 6</strong> accounts (e.g., <code>6011</code> Surgical Consumables, <code>6051</code> Water &amp; Electricity, <code>6221</code> Travel &amp; Missions).</li>
+<li>Tracks consumable recurrent supplies and operating costs.</li>
+</ul></li>
+<li>🏗️ <strong>Capital Investment Budget (Capex - Immobilisations)</strong>:
+<ul>
+<li>Targets SYSCOHADA <strong>Class 2</strong> accounts (e.g., <code>2411</code> Biomedical Equipment, <code>2451</code> Fleet Vehicles, <code>2211</code> Buildings).</li>
+<li>Integrates directly with the <strong>Fixed Asset Register</strong>, reserving tags and capitalizing upon receipt.</li>
+</ul></li>
+<li>🛠️ <strong>Maintenance Budget (Grosses Réparations &amp; Entretien)</strong>:
+<ul>
+<li>Targets asset-linked maintenance and servicing costs (<code>6241</code> Equipment Servicing, <code>6243</code> Biomedical Calibration).</li>
+<li>Directly links to <strong>CMMS Work Orders</strong> to enforce contract coverage.</li>
+</ul></li>
+<li>💰 <strong>Revenue &amp; Subsidy Budget (Recettes &amp; Produits)</strong>:
+<ul>
+<li>Targets SYSCOHADA <strong>Class 7</strong> accounts (e.g., <code>7011</code> Consultation Fees, <code>7111</code> Operating Grants, <code>7511</code> Project Contributions).</li>
+<li>Monitors target collections versus recognized bank inflows.</li>
+</ul></li>
+</ol>
+
+<h3 id="32-periodic-phasing-curves-spread-profiles">3.2 Periodic Phasing Curves &amp; Spread Profiles</h3>
+
+<p>Budget lines can be phased across the four quarters (T1–T4):
+- ⚖️ <strong>Equal Quarterly (25% / 25% / 25% / 25%)</strong>: Standard for stable recurrent expenses.
+- 📆 <strong>Even Monthly (1/12th per month)</strong>: Ideal for payroll and utility subscriptions.
+- ⚡ <strong>Front-Loaded (40% Q1, 30% Q2, 20% Q3, 10% Q4)</strong>: Standard for clinical supply bulk orders and early investments.
+- 📈 <strong>Back-Loaded (10% Q1, 20% Q2, 30% Q3, 40% Q4)</strong>: Common for end-of-year renovation works.</p>
+
+<h3 id="33-budget-control-policies">3.3 Budget Control Policies</h3>
+
+<p>When creating or editing a budget line, you assign one of two control policies:
+- 🛑 <strong>STRICT BLOCK (<code>strict</code>)</strong>: The system mathematically blocks any commitment or requisition that would cause the available balance to drop below zero.
+- ⚠️ <strong>WARNING (<code>warning</code>)</strong>: The system displays a clear warning modal indicating the overrun amount but permits authorized supervisors to proceed with an audited justification.</p>
+
+<hr />
+
+<h2 id="4-multi-step-commitment-accounting-comptabilite-des-engagements">4. 🔒 Multi-Step Commitment Accounting (Comptabilité des Engagements)</h2>
+
+<h3 id="41-the-4-stage-commitment-lifecycle">4.1 The 4-Stage Commitment Lifecycle</h3>
+
+<pre><code>  ┌────────────────────────────────────────────────────────────────────────┐
+  │                      COMMITMENT LIFECYCLE                              │
+  └────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+  [ 📝 DRAFT ] ──────────► [ ⏳ PENDING APPROVAL ] ────────► [ 🔒 APPROVED / RESERVED ] ─────► [ ✅ LIQUIDATED ]
+   Created by clerk          Submitted for sign-off             Credits frozen in budget          Invoice posted to GL
+   Can be modified           Balance checked automatically      PO can be dispatched              Commitment closed
+</code></pre>
+
+<ol>
+<li>📝 <strong>Draft (<code>draft</code>)</strong>:
+<ul>
+<li>Initiated by a department assistant or procurement officer.</li>
+<li>Line items, vendor, estimated cost, and target budget line are recorded. No budget is consumed yet.</li>
+</ul></li>
+<li>⏳ <strong>Pending Approval (<code>pending_approval</code>)</strong>:
+<ul>
+<li>Requisition submitted for departmental sign-off.</li>
+<li>The engine performs an automated <strong>real-time availability check</strong>. If funds are insufficient under <code>strict</code> control, submission is rejected.</li>
+</ul></li>
+<li>🔒 <strong>Approved (<code>approved</code>)</strong>:
+<ul>
+<li>Signed off by the Department Head or Financial Controller.</li>
+<li>Funds are <strong>statutorily reserved</strong> (<em>crédits engagés</em>). This amount is subtracted from the Available Balance, preventing other departments from spending it.</li>
+<li>The official Purchase Order (<code>BC-2027-XXXX</code>) can now be legally issued to the supplier.</li>
+</ul></li>
+<li>✅ <strong>Liquidated (<code>liquidated</code>)</strong>:
+<ul>
+<li>Goods are delivered alongside the supplier's commercial invoice.</li>
+<li>The accounting department records the General Ledger entry.</li>
+<li>The commitment is marked liquidated, releasing the temporary reservation as it transitions into an <strong>Actual Expenditure (<em>Réalisation</em>)</strong>.</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h2 id="5-credit-transfers-amendments-supplementary-appropriations">5. 🔄 Credit Transfers, Amendments &amp; Supplementary Appropriations</h2>
+
+<p>Budgets are living financial blueprints. During the course of a fiscal year, business priorities shift, prices fluctuate, and external opportunities arise. LedgerCore supports two mechanisms to alter budgetary appropriations:</p>
+
+<pre><code>                                  BUDGET ALTERATIONS
+                                          │
+                 ┌────────────────────────┴────────────────────────┐
+                 ▼                                                 ▼
+       [ 🔄 CREDIT TRANSFERS ]                        [ 📈 BUDGET AMENDMENTS ]
+       (Virements de Crédits)                         (Décisions Modificatives)
+       ──────────────────────                         ─────────────────────────
+       • Between existing lines                       • Increases total budget
+       • SENDER (-) ➔ RECEIVER (+)                    • Backed by new revenue/contracts
+       • Net Total Change = 0                         • Reallocates global envelope
+</code></pre>
+
+<h3 id="51-internal-credit-transfers-virements-de-credits">5.1 Internal Credit Transfers (<em>Virements de Crédits</em>)</h3>
+
+<ul>
+<li>Used when a department has surplus funds in one account and faces a deficit in another.</li>
+<li><strong>Rule of Fungibility:</strong> Sender Line is debited by $(-X)$ and Receiver Line is credited by $(+X)$. The net change to the organization's total approved budget is <strong>strictly zero</strong>.</li>
+</ul>
+
+<h3 id="52-budget-amendments-supplementary-decisions-decisions-modificatives">5.2 Budget Amendments &amp; Supplementary Decisions (<em>Décisions Modificatives</em>)</h3>
+
+<ul>
+<li>Used when the organization receives new funding, wins an unbudgeted project, or faces extraordinary statutory obligations.</li>
+<li>Increases the overall expenditure ceiling, justified by corresponding newly recognized revenue or grant conventions.</li>
+</ul>
+
+<hr />
+
+<h2 id="6-year-end-carryforward-roll-over-engine-report-de-credits-n1">6. ⏳ Year-End Carryforward &amp; Roll-Over Engine (Report de Crédits N+1)</h2>
+
+<h3 id="61-regulatory-context-business-need">6.1 Regulatory Context &amp; Business Need</h3>
+
+<p>In both corporate and public accounting, projects spanning across December 31st often have unconsumed investment credits (<em>crédits d'investissement non consommés</em>) or committed purchase orders awaiting delivery in January.</p>
+
+<p>Instead of losing these appropriations or artificially re-entering duplicate lines, LedgerCore provides an automated <strong>Statutory Carryforward Engine (<em>Moteur de Report des Crédits</em>)</strong>:</p>
+
+<pre><code> ┌────────────────────────────────────────────────────────┐
+ │   FISCAL YEAR N (2026)                                 │
+ │   Line: Modernization of Intensive Care Unit (Capex)   │
+ │   Approved: 80,000,000 XAF                             │
+ │   Spent/Committed: 62,000,000 XAF                      │
+ │   Remaining Unconsumed: 18,000,000 XAF                 │
+ └───────────────────────────┬────────────────────────────┘
+                             │
+                             ▼  [ ⏳ Execute Carryforward ]
+ ┌────────────────────────────────────────────────────────┐
+ │   FISCAL YEAR N+1 (2027)                               │
+ │   Target Line: Modernization of ICU (Capex)            │
+ │   Carried Forward (N-1): +18,000,000 XAF               │
+ │   New Adjusted Budget = Initial + 18,000,000 XAF       │
+ └────────────────────────────────────────────────────────┘
+</code></pre>
+
+<h3 id="62-step-by-step-procedure-executing-a-carryforward">6.2 Step-by-Step Procedure: Executing a Carryforward</h3>
+
+<ol>
+<li>📂 Navigate to <strong>Accounting ➔ Budgeting &amp; Commitments</strong>.</li>
+<li>⏳ Click the <strong>Carryforwards</strong> tab.</li>
+<li>🚀 Click the <strong>Carryforward Unconsumed Budget</strong> button.</li>
+<li>🎯 Select the <strong>Destination Fiscal Year (N+1)</strong> and the <strong>Target Budget Plan</strong>.</li>
+<li>🔍 The system lists all lines from Year $N$ with positive unconsumed available balance.</li>
+<li>✍️ Review or adjust the proposed carryforward amounts.</li>
+<li>💾 Click <strong>Execute Carryforward</strong>. The engine updates Year $N+1$ and records an indelible audit entry.</li>
+</ol>
+
+<hr />
+
+<h2 id="7-deep-dive-practical-scenarios-worked-examples">7. 💡 Deep-Dive Practical Scenarios &amp; Worked Examples</h2>
+
+<hr />
+
+<h3 id="example-1-formulating-the-2027-master-budget">Example 1: Formulating the 2027 Master Budget</h3>
+
+<h4 id="context-objective">🎯 Context &amp; Objective</h4>
+
+<p>The hospital Board has approved the <strong>2027 Annual Operating &amp; Investment Budget</strong> totaling <strong>2,500,000,000 XAF</strong>. As the Financial Controller, you must establish the master plan and endow key departmental budget lines.</p>
+
+<h4 id="step-by-step-execution">📝 Step-by-Step Execution</h4>
+
+<ol>
+<li>In the Budget module, click <strong>New Budget Plan</strong>.</li>
+<li>Fill the modal parameters:
+<ul>
+<li><strong>Plan Name:</strong> <code>Budget Principal d'Exploitation &amp; Investissement 2027</code></li>
+<li><strong>Fiscal Year:</strong> <code>2027</code></li>
+<li><strong>Status:</strong> <code>approved</code></li>
+<li><strong>Notes:</strong> <code>Adopté en Conseil d'Administration le 15 Décembre 2026.</code></li>
+</ul></li>
+<li>Click <strong>Save Budget Plan</strong>.</li>
+<li>Click <strong>Add Budget Line</strong> to create initial dotations:
+<ul>
+<li><strong>Line 1 (Opex - Surgical Reagents):</strong>
+<ul>
+<li>Section: <code>Operating (Opex)</code></li>
+<li>Account: <code>6011 - Matières premières et fournitures liées</code></li>
+<li>Department: <code>Bloc Opératoire &amp; Chirurgie</code></li>
+<li>Initial Allocation: <code>150,000,000 XAF</code></li>
+<li>Policy: <code>STRICT BLOCK</code></li>
+</ul></li>
+<li><strong>Line 2 (Capex - Diagnostic Imaging):</strong>
+<ul>
+<li>Section: <code>Capital Investment (Capex)</code></li>
+<li>Account: <code>2411 - Matériel médical et chirurgical</code></li>
+<li>Department: <code>Imagerie Médicale &amp; Radiologie</code></li>
+<li>Initial Allocation: <code>350,000,000 XAF</code></li>
+<li>Policy: <code>STRICT BLOCK</code></li>
+</ul></li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h3 id="example-2-requisitioning-committing-a-capex-asset">Example 2: Requisitioning &amp; Committing a Capex Asset</h3>
+
+<h4 id="context-objective-2">🎯 Context &amp; Objective</h4>
+
+<p>The Head of Radiology requests a <strong>High-Resolution Color Ultrasound Machine</strong> estimated at <strong>38,500,000 XAF</strong> from supplier <em>Siemens Healthineers</em>. You must create a commitment, verify availability, and obtain CFO approval.</p>
+
+<h4 id="step-by-step-execution-2">📝 Step-by-Step Execution</h4>
+
+<ol>
+<li>Navigate to the <strong>Commitments</strong> tab.</li>
+<li>Click <strong>New Commitment</strong>.</li>
+<li>Fill the requisition form:
+<ul>
+<li><strong>Budget Line:</strong> Select <code>2411 - Matériel médical (Imagerie Médicale)</code></li>
+<li><strong>Vendor:</strong> <code>Siemens Healthineers SARL</code></li>
+<li><strong>Object / Description:</strong> <code>Acquisition Échographe Doppler couleur haute définition service Radiologie</code></li>
+<li><strong>Committed Amount:</strong> <code>38,500,000 XAF</code></li>
+<li><strong>Reference / Purchase Requisition:</strong> <code>DA-2027-0104</code></li>
+</ul></li>
+<li>Click <strong>Check Availability</strong>:
+<ul>
+<li><em>System Response:</em> <code>🟢 Available Budget: 350,000,000 XAF. Sufficient headroom. Request is compliant.</code></li>
+</ul></li>
+<li>Click <strong>Create Commitment</strong>. Status is set to <code>pending_approval</code>.</li>
+<li>As CFO, review the requisition and click <strong>Approve</strong>:
+<ul>
+<li>The commitment status transitions to <code>approved</code>.</li>
+<li>The available balance of line <code>2411</code> automatically decreases from <code>350,000,000 XAF</code> to <code>311,500,000 XAF</code>.</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h3 id="example-3-executing-an-internal-credit-transfer-virement-de-credit">Example 3: Executing an Internal Credit Transfer (Virement de Crédit)</h3>
+
+<h4 id="context-objective-3">🎯 Context &amp; Objective</h4>
+
+<p>In April 2027, an unexpected price increase on specialized surgical suture kits threatens to exhaust the Operating Room's consumable budget. Meanwhile, the General Administration travel line has an unused surplus of <strong>12,000,000 XAF</strong>.</p>
+
+<h4 id="step-by-step-execution-3">📝 Step-by-Step Execution</h4>
+
+<ol>
+<li>Navigate to the <strong>Credit Transfers</strong> tab.</li>
+<li>Click <strong>New Credit Transfer</strong>.</li>
+<li>Fill the transfer voucher:
+<ul>
+<li><strong>Transfer Voucher Reference:</strong> <code>VIR-2027-004</code></li>
+<li><strong>Effective Date:</strong> <code>2027-04-18</code></li>
+<li><strong>Source Line (Sender - Dédotée):</strong> <code>6221 - Voyages et Déplacements (Direction Générale)</code>
+<ul>
+<li><em>Current Available Balance:</em> <code>18,500,000 XAF</code></li>
+</ul></li>
+<li><strong>Destination Line (Receiver - Abondée):</strong> <code>6011 - Consommables Chirurgicaux (Bloc Opératoire)</code>
+<ul>
+<li><em>Current Available Balance:</em> <code>2,100,000 XAF</code></li>
+</ul></li>
+<li><strong>Transfer Amount:</strong> <code>10,000,000 XAF</code></li>
+<li><strong>Justification / Board Resolution:</strong> <code>Régulation suite à hausse des tarifs fournisseurs sur fils de suture (Note DG/FIN/2027-042).</code></li>
+</ul></li>
+<li>Click <strong>Execute Transfer</strong>.
+<ul>
+<li><em>Instant Result:</em>
+<ul>
+<li>Line <code>6221</code> allocation decreases by <code>-10,000,000 XAF</code> (New Available: <code>8,500,000 XAF</code>).</li>
+<li>Line <code>6011</code> allocation increases by <code>+10,000,000 XAF</code> (New Available: <code>12,100,000 XAF</code>).</li>
+<li>Total organization budget remains exactly balanced with zero net variance.</li>
+</ul></li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h3 id="example-4-handling-an-unplanned-mid-year-project-the-mining-donor-contract-case-study">Example 4: Handling an Unplanned Mid-Year Project (The Mining / Donor Contract Case Study)</h3>
+
+<h4 id="the-business-challenge">🎯 The Business Challenge</h4>
+
+<blockquote>
+  <p><em>“Imagine that the budget for 2027 has been finalized and approved in December 2026. Then in July 2027, a mining enterprise or donor awards our organization a major health and safety contract worth 450,000,000 XAF. This project was completely unknown during the initial 2027 budget planning. How does LedgerCore handle this situation seamlessly?”</em></p>
+</blockquote>
+
+<h4 id="the-professional-solution-4-step-resolution-architecture">💡 The Professional Solution: 4-Step Resolution Architecture</h4>
+
+<pre><code> ┌────────────────────────────────────────────────────────────────────────┐
+ │            MID-YEAR UNPLANNED CONTRACT WORKFLOW                        │
+ └────────────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+ 1. REGISTER THE CONTRACT &amp; COST CENTER
+    • Open Cost Center: "Projet Minier Bauxite — Base Sanitaire"
+    • Link Donor/Client Convention &amp; Financing Terms
+     │
+     ▼
+ 2. ISSUE A BUDGET AMENDMENT (DÉCISION MODIFICATIVE)
+    • Pass Supplementary Budget Act: DM-2027-001 (+450,000,000 XAF)
+    • Recognize Projected Revenue: Account 7511 / 7061 (+450,000,000 XAF)
+     │
+     ▼
+ 3. ENDOW PROJECT-SPECIFIC EXPENDITURE LINES
+    • Capex: Specialized 4x4 Mobile Clinic (2451) -&gt; 85,000,000 XAF
+    • Opex: Mining Site Medical Supplies (6011) -&gt; 120,000,000 XAF
+    • Staff: Emergency Paramedic Contracts (6611) -&gt; 145,000,000 XAF
+    • Contingency / Overhead (6581) -&gt; 100,000,000 XAF
+     │
+     ▼
+ 4. ENGAGE &amp; EXECUTE WITH STRICT SEGREGATION
+    • All requisitions tag the Project Cost Center
+    • Real-time financial reports show 100% standalone accountability
+</code></pre>
+
+<h4 id="step-by-step-system-execution">🛠️ Step-by-Step System Execution</h4>
+
+<h5 id="step-41-register-the-cost-center">Step 4.1: Register the Cost Center</h5>
+
+<ol>
+<li>Navigate to <strong>Accounting ➔ Chart of Accounts ➔ Analytical Cost Centers</strong>.</li>
+<li>Click <strong>+ New Cost Center</strong>.</li>
+<li>Name: <code>PROJ-MINE-2027 - Base Sanitaire Bauxite &amp; Chantiers</code>.</li>
+<li>Domain: <code>Industrial &amp; Environmental Health</code>.</li>
+</ol>
+
+<h5 id="step-42-create-the-supplementary-budget-decision">Step 4.2: Create the Supplementary Budget Decision</h5>
+
+<ol>
+<li>Navigate to <strong>Accounting ➔ Budgeting &amp; Commitments ➔ Transfers &amp; Amendments</strong>.</li>
+<li>Click <strong>New Credit Transfer / Amendment</strong>.</li>
+<li>Set type to <strong>Budget Amendment / Decision Modificative (Rallonge Budgétaire)</strong>.</li>
+<li>Input Reference: <code>DM-2027-001 (Avenant Projet Minier)</code>.</li>
+<li>Enter Amount: <code>450,000,000 XAF</code>.</li>
+<li>Attach Justification: <code>Contrat de prestation médicale et de prise en charge sanitaire N° CTR-MIN-2027 signé le 02 Juillet 2027.</code></li>
+</ol>
+
+<h5 id="step-43-create-the-project-budget-lines">Step 4.3: Create the Project Budget Lines</h5>
+
+<p>Under the <strong>Plans &amp; Lines</strong> tab, click <strong>Add Budget Line</strong> and create the dedicated lines tagged to program <code>PROJ-MINE-2027</code>:
+- 🏗️ <strong>Line A (Capex):</strong> Account <code>2451 - Matériel de transport (Clinique Mobile 4x4)</code> — <code>85,000,000 XAF</code>
+- 💼 <strong>Line B (Opex):</strong> Account <code>6011 - Réactifs et consommables de traumatologie</code> — <code>120,000,000 XAF</code>
+- 👨‍⚕️ <strong>Line C (Staff):</strong> Account <code>6611 - Personnel contractuel médical de site</code> — <code>145,000,000 XAF</code>
+- 🛡️ <strong>Line D (Overhead):</strong> Account <code>6581 - Frais généraux et logistique de chantier</code> — <code>100,000,000 XAF</code></p>
+
+<h5 id="step-44-execution-isolated-donor-reporting">Step 4.4: Execution &amp; Isolated Donor Reporting</h5>
+
+<ul>
+<li>Project managers can now issue purchase requisitions strictly against these lines.</li>
+<li>The hospital's baseline core operational budget is <strong>never contaminated</strong> or compromised.</li>
+<li>Financial reports can be filtered by <code>Program: PROJ-MINE-2027</code> at any moment to produce the donor liquidation statement.</li>
+</ul>
+
+<hr />
+
+<h3 id="example-5-year-end-unconsumed-budget-carryforward">Example 5: Year-End Unconsumed Budget Carryforward</h3>
+
+<h4 id="context-objective-4">🎯 Context &amp; Objective</h4>
+
+<p>On December 31, 2026, the <strong>Modernization of Neonatal Unit (Capex)</strong> budget line had an approved dotation of <strong>60,000,000 XAF</strong>. Due to international maritime shipping delays, only <strong>38,000,000 XAF</strong> of equipment arrived before year-end. An unconsumed balance of <strong>22,000,000 XAF</strong> remains. You must carry this forward to the <strong>2027 Budget</strong>.</p>
+
+<h4 id="step-by-step-execution-4">📝 Step-by-Step Execution</h4>
+
+<ol>
+<li>Navigate to the <strong>Carryforwards</strong> tab.</li>
+<li>Click <strong>Carryforward Unconsumed Budget</strong>.</li>
+<li>In the modal:
+<ul>
+<li><strong>Source Budget Plan:</strong> <code>Budget Annuel 2026</code></li>
+<li><strong>Destination Fiscal Year (N+1):</strong> <code>2027</code></li>
+<li><strong>Target Budget Plan:</strong> <code>Budget Annuel d'Exploitation &amp; Investissement 2027</code></li>
+</ul></li>
+<li>The system presents the line:
+<ul>
+<li><em>Line:</em> <code>2411 - Matériel Médical (Service Néonatalogie)</code></li>
+<li><em>Unconsumed Available Balance:</em> <code>22,000,000 XAF</code></li>
+<li><em>Proposed Carryforward Amount:</em> <code>22,000,000 XAF</code></li>
+</ul></li>
+<li>Click <strong>Execute Carryforward</strong>.</li>
+<li>Navigate to the <strong>Plans &amp; Lines</strong> tab for Fiscal Year <code>2027</code>:
+<ul>
+<li>Inspect the Neonatal line.</li>
+<li>Column <strong>Carried Forward (N-1)</strong> displays: <code>+22,000,000 XAF</code>.</li>
+<li>Column <strong>Current Budget (Adjusted)</strong> displays: <code>Initial 2027 Dotation + 22,000,000 XAF</code>.</li>
+<li>The delayed incubator shipment can now be cleared and liquidated in 2027 without exceeding budget limits.</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h2 id="8-the-5-stage-public-institutional-expenditure-chain-ordonnancement-mandatement">8. 📜 The 5-Stage Public &amp; Institutional Expenditure Chain (Ordonnancement &amp; Mandatement)</h2>
+
+<p>LedgerCore fully digitizes the <strong>Five Statutory Milestones of Expenditure (<em>La Chaîne Complète de la Dépense</em>)</strong> as codified under CEMAC/UEMOA Public Finance Directives and International Public Sector Accounting Standards (IPSAS):</p>
+
+<pre><code>┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        THE 5-STAGE STATUTORY EXPENDITURE CHAIN                                         │
+├─────────────────┬─────────────────┬─────────────────┬─────────────────┬────────────────────────────────┤
+│ 1. ENGAGEMENT   │ 2. LIQUIDATION  │ 3. ORDONNANCEMENT│ 4. VISA         │ 5. RÈGLEMENT                   │
+│ (Commitment)    │ (Inspection PV) │ (Payment Order) │ (Clearance)     │ (Disbursement)                 │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┼────────────────────────────────┤
+│ • PR / PO       │ • Delivery Note │ • Mandat de     │ • Financial     │ • Bank Transfer / Check        │
+│ • Vendor choice │ • Works accept. │   Paiement      │   Controller    │ • Statutory Tax (AIR) deducted │
+│ • Budget frozen │ • Invoice audit │ • Gross Amount  │   Audit         │ • Warranty Retention deducted  │
+│ • Strict control│ • Conformity PV │ • Net calculated│ • Bon à Payer   │ • Treasury Balance debited     │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────┴────────────────────────────────┘
+</code></pre>
+
+<h3 id="81-detailed-step-by-step-breakdown-of-the-5-stages">8.1 Detailed Step-by-Step Breakdown of the 5 Stages</h3>
+
+<h4 id="1-stage-1-engagement-legal-obligation-budget-reservation">1️⃣ Stage 1: Engagement (Legal Obligation &amp; Budget Reservation)</h4>
+
+<ul>
+<li>Department raises a Purchase Requisition (<code>DA-2027-XXXX</code>), verified against budget line headroom.</li>
+<li>Upon approval, converts into a firm Purchase Order (<code>BC-2027-XXXX</code>).</li>
+<li><em>System Effect:</em> Budget Available Balance decreases immediately; funds are ring-fenced.</li>
+</ul>
+
+<h4 id="2-stage-2-liquidation-verification-of-service-rendered-technical-reception">2️⃣ Stage 2: Liquidation (Verification of Service Rendered &amp; Technical Reception)</h4>
+
+<ul>
+<li>Supplier delivers equipment or completes civil works on site.</li>
+<li>An official <strong>Acceptance Committee (<em>Commission de Réception</em>)</strong> inspects goods and files an Acceptance Report (<em>Procès-Verbal de Réception / PV</em>).</li>
+<li>The certified invoice amount cannot exceed the firm commitment ceiling.</li>
+</ul>
+
+<h4 id="3-stage-3-ordonnancement-issuing-the-mandat-de-paiement">3️⃣ Stage 3: Ordonnancement (Issuing the Mandat de Paiement)</h4>
+
+<ul>
+<li>The Authorizing Officer (<em>Ordonnateur</em>) issues the statutory <strong>Payment Order (<em>Mandat de Paiement</em>)</strong>.</li>
+<li>The system automatically breaks down the gross invoice into statutory components:
+$$\mathbf{Net\ Payable\ to\ Vendor} = \mathbf{Gross\ Invoice} - \mathbf{Tax\ Withholding\ (AIR)} - \mathbf{Warranty\ Retention} - \mathbf{Penalties}$$</li>
+</ul>
+
+<h4 id="4-stage-4-visa-du-controleur-financier-prior-statutory-audit">4️⃣ Stage 4: Visa du Contrôleur Financier (Prior Statutory Audit)</h4>
+
+<ul>
+<li>Independent Financial Controller examines:
+<ul>
+<li><ol>
+<li>Legitimacy of the original commitment and procurement method.</li>
+</ol></li>
+<li><ol start="2">
+<li>Exact arithmetic calculation of statutory tax retentions.</li>
+</ol></li>
+<li><ol start="3">
+<li>Authenticity of delivery notes and certified PVs.</li>
+</ol></li>
+</ul></li>
+<li><em>Outcome:</em> The Controller grants the <strong>Visa (Bon à Payer)</strong> or issues a documented refusal with remedial requirements.</li>
+</ul>
+
+<h4 id="5-stage-5-reglement-decaissement-treasury-settlement">5️⃣ Stage 5: Règlement &amp; Décaissement (Treasury Settlement)</h4>
+
+<ul>
+<li>Transmitted to the Chief Accountant / Treasury Desk.</li>
+<li>Treasury officer selects the paying bank account and payment method (Bank Wire Transfer, Certified Check).</li>
+<li><em>Accounting Effect:</em> LedgerCore executes the payment entry, credit Bank (<code>5211</code>), debit Supplier (<code>4011</code>), and holds the Warranty Retention in escrow account <code>4017</code> until final acceptance.</li>
+</ul>
+
+<hr />
+
+<h2 id="9-procurement-planning-ppm-thresholds-donor-non-objection-ano">9. 📦 Procurement Planning (PPM), Thresholds &amp; Donor Non-Objection (ANO)</h2>
+
+<p>In large-scale healthcare systems, mining projects, and donor-funded programs, procurement cannot happen ad-hoc. LedgerCore embeds a dedicated <strong>Procurement Planning &amp; Milestone Engine (<em>Plan de Passation des Marchés - PPM</em>)</strong>:</p>
+
+<pre><code>                              PROCUREMENT PLAN (PPM) LIFECYCLE
+                                             │
+      ┌──────────────────────────────────────┴──────────────────────────────────────┐
+      ▼                                                                             ▼
+[ 📋 PPM Preparation &amp; Budget Tagging ]                             [ ⚖️ Regulatory Threshold Check ]
+• Consolidated list of packages / lots                               • Goods: RFQ &lt; 25M | Open Tender &gt; 25M
+• Cost estimation and source budget line                             • Works: RFQ &lt; 50M | Open Tender &gt; 50M
+      │                                                                             │
+      └──────────────────────────────────────┬──────────────────────────────────────┘
+                                             │
+                                             ▼
+                             [ 🕊️ Donor Clearance (ANO) ]
+                             • Prior Review for high-value lots
+                             • Official Non-Objection Notice recorded
+                                             │
+                                             ▼
+                             [ 🏁 Tender ➔ Award ➔ PO ]
+                             • Launch Tender ➔ Evaluate Bids ➔ Award
+                             • Generates firm commitment automatically
+</code></pre>
+
+<h3 id="91-procurement-methods-supported">9.1 Procurement Methods Supported</h3>
+
+<div class="table-container"><table>
+<thead>
+<tr>
+  <th style="text-align:left;">Method Code</th>
+  <th style="text-align:left;">Method Title</th>
+  <th style="text-align:left;">Description</th>
+  <th style="text-align:left;">Standard Threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;"><strong>AON</strong></td>
+  <td style="text-align:left;">National Competitive Bidding</td>
+  <td style="text-align:left;">Open public competitive tender in national gazettes</td>
+  <td style="text-align:left;">Above statutory threshold</td>
+</tr>
+<tr>
+  <td style="text-align:left;"><strong>AOI</strong></td>
+  <td style="text-align:left;">International Competitive Bidding</td>
+  <td style="text-align:left;">Global tender for high-tech biomedical or plant equipment</td>
+  <td style="text-align:left;">Multi-billion projects</td>
+</tr>
+<tr>
+  <td style="text-align:left;"><strong>DC / RFQ</strong></td>
+  <td style="text-align:left;">Request for Quotations</td>
+  <td style="text-align:left;">Comparison of at least 3 sealed competitive price bids</td>
+  <td style="text-align:left;">Below tender ceiling</td>
+</tr>
+<tr>
+  <td style="text-align:left;"><strong>ED</strong></td>
+  <td style="text-align:left;">Direct Contracting (<em>Gré à Gré</em>)</td>
+  <td style="text-align:left;">Single-source negotiated contract (exceptional emergency)</td>
+  <td style="text-align:left;">Requires Board / Ministry Visa</td>
+</tr>
+<tr>
+  <td style="text-align:left;"><strong>SFQ / QCBS</strong></td>
+  <td style="text-align:left;">Quality &amp; Cost Selection</td>
+  <td style="text-align:left;">Consultancy firms, architectural engineering, statutory audit</td>
+  <td style="text-align:left;">Technical + Financial scoring</td>
+</tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<h2 id="10-donor-grant-conventions-multi-bailleur-co-financing">10. 🤝 Donor Grant Conventions &amp; Multi-Bailleur Co-Financing</h2>
+
+<p>When operating with international partners (World Bank / IDA, Global Fund, USAID, AfDB, European Union, or Corporate Social Responsibility / Mining Conventions), projects frequently involve <strong>Co-Financing (<em>Co-financement</em>)</strong>:</p>
+
+<ul>
+<li><strong>Donor Share (Part Bailleur):</strong> 80% funded via international grant convention.</li>
+<li><strong>National / Counterpart Share (Part État / Entreprise):</strong> 20% funded via local treasury.</li>
+</ul>
+
+<p>LedgerCore's analytical derivation engine tags every budget line and commitment with the exact financing convention (<code>CONV-IDA-6890</code>, <code>FM-PALU-2027</code>), automatically generating donor financial monitoring reports (IFR / FMR) with zero manual consolidation.</p>
+
+<hr />
+
+<h2 id="11-role-based-access-control-rbac-governance-matrix">11. 🛡️ Role-Based Access Control (RBAC) &amp; Governance Matrix</h2>
+
+<p>LedgerCore strictly enforces the <strong>Four-Eyes Principle (<em>Principe des Quatre Yeux</em>)</strong> and statutory segregation of duties:</p>
+
+<div class="table-container"><table>
+<thead>
+<tr>
+  <th style="text-align:left;">Role Title</th>
+  <th style="text-align:center;">View Dashboards</th>
+  <th style="text-align:center;">Create Requisitions</th>
+  <th style="text-align:center;">Approve Commitments</th>
+  <th style="text-align:center;">Liquidate Invoices</th>
+  <th style="text-align:center;">Issue Mandats</th>
+  <th style="text-align:center;">Grant Visa</th>
+  <th style="text-align:center;">Disburse Treasury</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">👑 <strong>Chief Financial Officer (CFO)</strong></td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+</tr>
+<tr>
+  <td style="text-align:left;">🧑‍⚖️ <strong>Financial Controller</strong></td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">❌</td>
+</tr>
+<tr>
+  <td style="text-align:left;">🧑‍💼 <strong>Chief Accountant</strong></td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">✅</td>
+</tr>
+<tr>
+  <td style="text-align:left;">📝 <strong>Accounting Clerk</strong></td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+</tr>
+<tr>
+  <td style="text-align:left;">🏥 <strong>Department Head / Ward Chief</strong></td>
+  <td style="text-align:center;">✅ (Own Dept)</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">⚠️ (Limit: &lt;5M)</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+</tr>
+<tr>
+  <td style="text-align:left;">🔬 <strong>Biomedical &amp; Asset Manager</strong></td>
+  <td style="text-align:center;">✅ (Assets)</td>
+  <td style="text-align:center;">✅</td>
+  <td style="text-align:center;">⚠️ (Capex &lt;10M)</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+</tr>
+<tr>
+  <td style="text-align:left;">🕵️ <strong>Internal Auditor / Board Member</strong></td>
+  <td style="text-align:center;">✅ (Read-Only)</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+  <td style="text-align:center;">❌</td>
+</tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<h2 id="12-frequently-asked-questions-faq-troubleshooting">12. ❓ Frequently Asked Questions (FAQ) &amp; Troubleshooting</h2>
+
+<h3 id="q1-what-happens-if-an-emergency-expenditure-must-be-approved-but-the-budget-line-has-zero-balance">Q1: What happens if an emergency expenditure must be approved, but the budget line has zero balance?</h3>
+
+<blockquote>
+  <p><strong>Answer:</strong><br />
+  If the line is configured with policy <code>warning</code>, authorized managers may approve the commitment after inputting a mandatory audit rationale. If the line is configured with <code>strict</code>, the engine will block the approval. You must first execute a <strong>Credit Transfer (<em>Virement de Crédit</em>)</strong> from a line with available surplus, or pass a <strong>Budget Amendment (<em>Décision Modificative</em>)</strong>.</p>
+</blockquote>
+
+<h3 id="q2-does-a-commitment-create-entries-in-the-general-ledger-journal-entries">Q2: Does a Commitment create entries in the General Ledger (Journal Entries)?</h3>
+
+<blockquote>
+  <p><strong>Answer:</strong><br />
+  <strong>No.</strong> A commitment is a budgetary credit reservation (<em>engagement juridique / réservation de crédits</em>). It does not affect Balance Sheet accounts or Cash/Bank accounts. The General Ledger entry is posted during the <strong>Liquidation / Mandatement</strong> phase when physical goods are received and the vendor invoice is validated.</p>
+</blockquote>
+
+<h3 id="q3-can-a-liquidated-commitment-be-cancelled">Q3: Can a liquidated commitment be cancelled?</h3>
+
+<blockquote>
+  <p><strong>Answer:</strong><br />
+  Once a commitment is liquidated into a posted General Ledger journal entry, it cannot be arbitrarily deleted. To cancel the transaction, the corresponding GL journal entry must be reversed (<em>contre-passation</em>), which re-opens the commitment line or credit balance with full audit traceability.</p>
+</blockquote>
+
+<h3 id="q4-how-does-capex-commitment-link-to-the-asset-register">Q4: How does Capex commitment link to the Asset Register?</h3>
+
+<blockquote>
+  <p><strong>Answer:</strong><br />
+  When creating a commitment on a Class 2 account (e.g. <code>2411</code>), you can select <strong>Linked Asset Tag</strong> or pre-reserve a new asset code. Once liquidated, LedgerCore automatically links the acquisition invoice to the asset's historical acquisition cost, ensuring that <strong>Asset Register NBV ties to the General Ledger with 0 variance</strong>.</p>
+</blockquote>
+
+<h3 id="q5-how-do-warranty-retentions-retenues-de-garantie-work-in-payment-orders">Q5: How do Warranty Retentions (<em>Retenues de Garantie</em>) work in payment orders?</h3>
+
+<blockquote>
+  <p><strong>Answer:</strong><br />
+  In public works and equipment procurement, 5% to 10% of the invoice is withheld as guarantee against defects. LedgerCore deducts this amount from the net payment to the contractor and credits account <code>4017 - Fournisseurs, Retenues de garantie</code>. After the one-year warranty expiration and technical clearance, a final release payment order is issued to clear account <code>4017</code>.</p>
+</blockquote>
+
+<hr />
+
+<p><em>LedgerCore Health &amp; Enterprise Financial Suite — Certified Dual-Standard OHADA / IFRS.</em><br />
+<em>Official Documentation &amp; In-App Operational Manual.</em></p>
+
+  </main>
+</body>
+</html>

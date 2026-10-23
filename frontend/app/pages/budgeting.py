@@ -11,8 +11,9 @@ Provides:
 from __future__ import annotations
 
 import datetime
+from pathlib import Path
 from typing import Any
-from nicegui import ui
+from nicegui import app, ui
 
 from .. import api
 from ..i18n import lang, t
@@ -3256,8 +3257,39 @@ async def budgeting_page() -> None:
 
         dlg.open()
 
+    def _open_budget_manual_dialog() -> None:
+        docs_dir = Path(__file__).resolve().parent.parent.parent.parent / 'docs'
+        md_file = docs_dir / 'BUDGET_MODULE_USER_GUIDE.md'
+        raw_md = md_file.read_text(encoding='utf-8') if md_file.exists() else "Budget User Guide not found."
+        with ui.dialog().classes('w-full') as dlg, ui.card().classes('w-full max-w-5xl h-[88vh] p-6 flex flex-col gap-3'):
+            with ui.row().classes('w-full items-center justify-between border-b border-slate-200 pb-3 no-wrap'):
+                with ui.row().classes('items-center gap-2'):
+                    ui.icon('menu_book').classes('text-teal-700 text-2xl')
+                    with ui.column().classes('gap-0'):
+                        ui.label('💰 LedgerCore — Budget Module & Commitment Control Manual').classes('text-lg font-bold text-slate-800')
+                        ui.label('Official comprehensive manual, commitment workflows, carryforwards & practical examples').classes('text-xs text-slate-500')
+                with ui.row().classes('items-center gap-2'):
+                    def _go_full_guide():
+                        app.storage.user['guide_selected_doc'] = 'BUDGET_MODULE_USER_GUIDE.md'
+                        ui.navigate.to('/user-guide')
+                    ui.button('Full Screen Guide', icon='open_in_new', on_click=_go_full_guide).props('outline color=teal-8 dense size=sm')
+                    ui.button('HTML Manual', icon='description', on_click=lambda: ui.open('/docs-static/BUDGET_MODULE_USER_GUIDE.html', new_tab=True)).props('outline color=slate-7 dense size=sm')
+                    ui.button('Download PDF', icon='picture_as_pdf', on_click=lambda: ui.download('/docs-static/BUDGET_MODULE_USER_GUIDE.pdf')).props('unelevated color=teal dense size=sm')
+                    ui.button(icon='close', on_click=dlg.close).props('flat round dense text-color=grey-7')
+
+            with ui.scroll_area().classes('w-full flex-1 p-5 bg-slate-50/50 rounded-xl border border-slate-200'):
+                ui.markdown(raw_md).classes('prose max-w-none w-full text-slate-800')
+
+        dlg.open()
+
     def _header_actions() -> None:
         with ui.row().classes('items-center gap-3'):
+            ui.button(
+                '📘 User Guide & Manual' if lang() == 'en' else '📘 Guide & Manuel Utilisateur',
+                icon='menu_book',
+                on_click=_open_budget_manual_dialog,
+            ).props('unelevated color=teal-8 text-white dense no-caps shadow-sm')
+
             fy_opts = {fy['id']: f"{fy['code']} ({fy['name']})" for fy in fiscal_years}
             ui.select(
                 fy_opts,

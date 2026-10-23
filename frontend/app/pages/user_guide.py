@@ -34,6 +34,7 @@ def user_guide_page() -> None:
 
     doc_options = {
         'USER_GUIDE.md': '📖 Master User Guide (All Modules)',
+        'BUDGET_MODULE_USER_GUIDE.md': '📊 Budget Module & Commitment Control Manual',
         'roles/CFO_AND_CHIEF_ACCOUNTANT_GUIDE.md': '💼 Role Guide: CFO & Chief Accountant',
         'roles/ACCOUNTING_CLERK_GUIDE.md': '📝 Role Guide: Accounting Clerk',
         'roles/BIOMEDICAL_AND_ASSET_MANAGER_GUIDE.md': '🔬 Role Guide: Biomedical & Asset Manager',
@@ -41,7 +42,10 @@ def user_guide_page() -> None:
         'roles/SYSTEM_ADMINISTRATOR_GUIDE.md': '⚙️ Role Guide: System Administrator',
     }
 
-    state = {'selected_doc': 'USER_GUIDE.md'}
+    initial_doc = app.storage.user.get('guide_selected_doc') or 'USER_GUIDE.md'
+    if initial_doc not in doc_options:
+        initial_doc = 'USER_GUIDE.md'
+    state = {'selected_doc': initial_doc}
 
     with ui.row().classes('w-full items-center justify-between gap-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm'):
         with ui.row().classes('items-center gap-3 flex-1'):
