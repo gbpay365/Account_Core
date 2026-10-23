@@ -9,6 +9,7 @@ Comprehensive Administration Module:
 from __future__ import annotations
 
 from typing import Any
+import datetime
 from nicegui import app, ui
 
 from .. import api
@@ -30,6 +31,9 @@ async def admin_page() -> None:
     accts_res = await api.safe(api.get('/accounts', postableOnly=True, activeOnly=True), notify=False) or {'rows': []}
     acct_options = {a['id']: f"{a['code']} — {a.get('name_en' if framework() == 'ifrs' else 'name') or a['name']}" for a in accts_res.get('rows', [])}
 
+    jnls_res = await api.safe(api.get('/journals'), notify=False) or {'rows': []}
+    jnl_options = {j['id']: f"{j['code']} — {j['name']}" for j in jnls_res.get('rows', [])}
+
     perms_res = await api.safe(api.get('/admin/permissions'), notify=False) or {'rows': [], 'modules': {}}
     all_perms = perms_res.get('rows', [])
     perm_modules = perms_res.get('modules', {})
@@ -46,6 +50,7 @@ async def admin_page() -> None:
             tab_groups = ui.tab('groups', label=t('admin.tab_groups'), icon='admin_panel_settings')
             tab_entity = ui.tab('entity', label=t('admin.tab_entity'), icon='business')
             tab_taxes = ui.tab('taxes', label=t('admin.tab_taxes'), icon='receipt_long')
+            tab_integrations = ui.tab('integrations', label=t('admin.tab_integrations'), icon='hub')
 
         with ui.tab_panels(tabs, value='users').classes('w-full p-6 bg-white'):
             # TAB 1: USERS & PROFILES
@@ -63,6 +68,10 @@ async def admin_page() -> None:
             # TAB 4: VAT, TVA & TAX PARAMETERS
             with ui.tab_panel('taxes').classes('p-0 gap-6'):
                 await _render_taxes_tab(acct_options)
+
+            # TAB 5: EXTERNAL APIS & INTEGRATIONS (HMS / POS / ERP)
+            with ui.tab_panel('integrations').classes('p-0 gap-6'):
+                await _render_integrations_tab(acct_options, cc_options, jnl_options)
 
 
 # ==============================================================================
@@ -1004,6 +1013,560 @@ def _tax_modal(tax: dict | None, acct_options: dict, refresh_callback) -> None:
             ui.button(t('common.save'), on_click=_save).props('unelevated color=primary no-caps')
 
         dialog.open()
+
+
+# ==============================================================================
+# TAB 5: EXTERNAL APIS & INTEGRATIONS GATEWAY (HMS / POS / ERP)
+# ==============================================================================
+
+async def _render_integrations_tab(acct_options: dict, cc_options: dict, jnl_options: dict) -> None:
+    container = ui.column().classes('w-full gap-5')
+
+    async def reload_all():
+        container.clear()
+        with container:
+            spinner = ui.spinner(size='lg').classes('self-center my-8')
+
+        clients_res = await api.safe(api.get('/admin/integrations/clients')) or {'rows': [], 'total': 0}
+        mappings_res = await api.safe(api.get('/admin/integrations/mappings')) or {'rows': [], 'total': 0}
+        logs_res = await api.safe(api.get('/admin/integrations/logs', limit=50)) or {'rows': [], 'total': 0}
+
+        clients = clients_res.get('rows', [])
+        mappings = mappings_res.get('rows', [])
+        logs = logs_res.get('rows', [])
+
+        active_clients = sum(1 for c in clients if c.get('is_active'))
+        active_mappings = sum(1 for m in mappings if m.get('is_active'))
+        pending_drafts = sum(1 for l in logs if l.get('status') == 'draft_created' and l.get('journal_entry_status') == 'draft')
+
+        client_options = {c['id']: f"{c['name']} ({c['client_code']})" for c in clients}
+
+        container.clear()
+        with container:
+            # Executive Banner
+            with ui.card().classes('w-full p-5 rounded-2xl bg-gradient-to-r from-teal-900 via-slate-900 to-indigo-950 text-white shadow-md'):
+                with ui.row().classes('w-full items-center justify-between no-wrap'):
+                    with ui.column().classes('gap-1 max-w-2xl'):
+                        with ui.row().classes('items-center gap-2'):
+                            ui.icon('hub', size='24px').classes('text-teal-400')
+                            ui.label(t('admin.integ_title')).classes('text-lg font-bold tracking-tight text-white')
+                            ui.badge('API v1 Active', color='teal').props('dense')
+                        ui.label(t('admin.integ_sub')).classes('text-xs text-slate-300 leading-relaxed')
+                    with ui.row().classes('gap-2 items-center'):
+                        ui.button(t('admin.integ_btn_simulator'), icon='play_arrow',
+                                  on_click=lambda: _simulator_dialog(reload_all, client_options, cc_options)
+                                  ).props('unelevated color=teal-6 text-color=white no-caps').classes('font-bold shadow-sm')
+
+            # Quick KPIs
+            with ui.row().classes('w-full gap-4'):
+                _kpi_card(t('admin.integ_kpi_clients'), str(active_clients), 'devices', 'sky')
+                _kpi_card(t('admin.integ_kpi_mappings'), str(active_mappings), 'alt_route', 'indigo')
+                _kpi_card(t('admin.integ_kpi_ingested'), str(len(logs)), 'receipt_long', 'violet')
+                _kpi_card(t('admin.integ_kpi_pending'), str(pending_drafts), 'hourglass_top', 'amber')
+
+            # Sub-tab Navigation
+            with ui.card().classes('w-full p-0 rounded-2xl border border-slate-200 shadow-sm overflow-hidden'):
+                with ui.tabs().classes('w-full bg-slate-50 border-b border-slate-200 text-slate-700 px-4') as sub_tabs:
+                    sub_tab_clients = ui.tab('clients', label='API Clients & Keys', icon='key')
+                    sub_tab_mappings = ui.tab('mappings', label='Event Mapping Rules', icon='sync_alt')
+                    sub_tab_logs = ui.tab('logs', label='Ingestion Ledger & Logs', icon='history')
+                    sub_tab_docs = ui.tab('docs', label='Developer API Spec', icon='code')
+
+                with ui.tab_panels(sub_tabs, value='clients').classes('w-full p-5 bg-white'):
+                    # SUB-TAB 1: API CLIENTS
+                    with ui.tab_panel('clients').classes('p-0 gap-4'):
+                        with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
+                            with ui.column().classes('gap-0'):
+                                ui.label('Registered External Systems (HMS / Billing / POS)').classes('text-base font-bold text-slate-800')
+                                ui.label('Manage API credentials and default journal rules for each external application').classes('text-xs text-slate-500')
+                            ui.button(t('admin.integ_btn_new_client'), icon='add',
+                                      on_click=lambda: _client_dialog(reload_all, jnl_options)
+                                      ).props('unelevated color=primary no-caps')
+
+                        if not clients:
+                            w.empty_state('No external systems registered yet.', icon='hub', hint='Click the button above to register HMS or other systems.')
+                        else:
+                            for c in clients:
+                                with ui.card().classes('w-full p-4 rounded-xl border border-slate-200/90 bg-white hover:border-teal-400 transition-all shadow-none'):
+                                    with ui.row().classes('w-full items-center justify-between no-wrap'):
+                                        with ui.column().classes('gap-1 flex-1'):
+                                            with ui.row().classes('items-center gap-2'):
+                                                ui.label(c['name']).classes('text-base font-bold text-slate-900')
+                                                ui.badge(c['client_code'], color='slate-7').props('dense outline')
+                                                status_color = 'positive' if c['is_active'] else 'grey'
+                                                status_txt = 'Active' if c['is_active'] else 'Inactive'
+                                                ui.badge(status_txt, color=status_color).props('dense')
+                                                mode_txt = t('admin.integ_mode_draft') if c['default_status'] == 'draft' else t('admin.integ_mode_posted')
+                                                ui.badge(mode_txt, color='teal' if c['default_status'] == 'draft' else 'purple').props('dense')
+
+                                            if c.get('description'):
+                                                ui.label(c['description']).classes('text-xs text-slate-500')
+
+                                            with ui.row().classes('items-center gap-4 mt-2 text-xs text-slate-600'):
+                                                with ui.row().classes('items-center gap-1'):
+                                                    ui.icon('book', size='14px').classes('text-slate-400')
+                                                    ui.label(f"Target Journal: {c.get('journal_code', 'VTE')} ({c.get('journal_name', 'Ventes')})")
+                                                with ui.row().classes('items-center gap-1'):
+                                                    ui.icon('alt_route', size='14px').classes('text-slate-400')
+                                                    ui.label(f"Mappings: {c.get('mapping_count', 0)} active")
+                                                with ui.row().classes('items-center gap-1'):
+                                                    ui.icon('receipt_long', size='14px').classes('text-slate-400')
+                                                    ui.label(f"Ingested entries: {c.get('log_count', 0)}")
+
+                                            # API Key display with copy
+                                            api_key = c.get('api_key', '')
+                                            with ui.row().classes('items-center gap-2 mt-2 p-2 bg-slate-50 rounded-lg border border-slate-200 w-full max-w-xl'):
+                                                ui.icon('key', size='16px').classes('text-amber-600')
+                                                key_lbl = ui.label(f"{api_key[:12]}••••••••••••••••{api_key[-6:]}").classes('font-mono text-xs text-slate-700 flex-1')
+                                                show_key = {'shown': False}
+
+                                                def _toggle_key(lbl=key_lbl, k=api_key, state=show_key):
+                                                    state['shown'] = not state['shown']
+                                                    lbl.text = k if state['shown'] else f"{k[:12]}••••••••••••••••{k[-6:]}"
+
+                                                ui.button(icon='visibility', on_click=_toggle_key).props('flat dense round size=xs text-color=slate-600')
+                                                ui.button(icon='content_copy', on_click=lambda k=api_key: (
+                                                    ui.run_javascript(f'navigator.clipboard.writeText("{k}")'),
+                                                    ui.notify('API key copied to clipboard!', type='positive', position='top')
+                                                )).props('flat dense round size=xs color=primary')
+
+                                        with ui.row().classes('items-center gap-1 shrink-0'):
+                                            async def _regen(cid=c['id']):
+                                                res = await api.safe(api.post(f'/admin/integrations/clients/{cid}/regenerate-key'))
+                                                if res:
+                                                    ui.notify('New API key generated successfully.', type='positive')
+                                                    await reload_all()
+
+                                            ui.button(icon='refresh', on_click=_regen).props('flat dense round text-color=amber-8').tooltip(t('admin.integ_btn_regen_key'))
+                                            ui.button(icon='edit', on_click=lambda cl=c: _client_dialog(reload_all, jnl_options, client=cl)).props('flat dense round text-color=primary')
+                                            async def _toggle_active(cid=c['id'], cur=c['is_active']):
+                                                await api.safe(api.put(f'/admin/integrations/clients/{cid}', {'isActive': not cur}))
+                                                await reload_all()
+                                            ui.button(icon='power_settings_new', on_click=_toggle_active).props('flat dense round ' + ('text-color=positive' if c['is_active'] else 'text-color=grey-5')).tooltip('Enable / Disable')
+
+                    # SUB-TAB 2: EVENT MAPPINGS
+                    with ui.tab_panel('mappings').classes('p-0 gap-4'):
+                        with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
+                            with ui.column().classes('gap-0'):
+                                ui.label('Accounting & Cost Center Mapping Rules').classes('text-base font-bold text-slate-800')
+                                ui.label('Map incoming event types (e.g. CONSULTATION_FEE, PHARMACY_SALE) to specific debit/credit accounts and cost centers').classes('text-xs text-slate-500')
+                            ui.button(t('admin.integ_btn_new_mapping'), icon='add',
+                                      on_click=lambda: _mapping_dialog(reload_all, client_options, acct_options, cc_options, jnl_options)
+                                      ).props('unelevated color=primary no-caps')
+
+                        if not mappings:
+                            w.empty_state('No event mappings configured yet.', icon='sync_alt', hint='Add mapping rules so incoming transactions map to the right accounts.')
+                        else:
+                            columns = [
+                                w.column('event_code', t('admin.integ_event_code'), classes='font-mono font-bold text-teal-900'),
+                                w.column('name', t('admin.integ_event_name')),
+                                w.column('client_name', 'Applied Client'),
+                                w.column('debit_display', t('admin.integ_debit_acct'), classes='font-mono text-xs'),
+                                w.column('credit_display', t('admin.integ_credit_acct'), classes='font-mono text-xs'),
+                                w.column('cost_center_name', t('admin.integ_cost_center'), classes='text-xs'),
+                                w.column('journal_code', 'Journal', classes='font-bold'),
+                                w.column('actions', '', classes='w-20 text-right'),
+                            ]
+
+                            map_rows = []
+                            for m in mappings:
+                                map_rows.append({
+                                    **m,
+                                    'client_name': m.get('client_name') or 'All Systems (Global)',
+                                    'debit_display': f"{m.get('debit_account_code', '')} — {m.get('debit_account_name', '')[:20]}",
+                                    'credit_display': f"{m.get('credit_account_code', '')} — {m.get('credit_account_name', '')[:20]}",
+                                    'cost_center_name': f"{m.get('cost_center_code', '')} — {m.get('cost_center_name', '')}" if m.get('cost_center_code') else '—',
+                                    'journal_code': m.get('journal_code', 'VTE'),
+                                })
+
+                            table = w.table(columns, map_rows, pagination=15)
+                            table.add_slot('body-cell-actions', '''
+                                <q-td :props="props">
+                                    <q-btn flat round dense size="sm" icon="edit" color="primary" @click="$parent.$emit('edit_map', props.row)" />
+                                    <q-btn flat round dense size="sm" icon="delete" color="negative" @click="$parent.$emit('del_map', props.row)" />
+                                </q-td>
+                            ''')
+
+                            table.on('edit_map', lambda e: _mapping_dialog(reload_all, client_options, acct_options, cc_options, jnl_options, mapping=e.args))
+                            async def _del_map(e):
+                                mid = e.args.get('id')
+                                if mid:
+                                    res = await api.safe(api.delete(f'/admin/integrations/mappings/{mid}'))
+                                    if res:
+                                        ui.notify('Mapping deleted successfully.', type='positive')
+                                        await reload_all()
+                            table.on('del_map', _del_map)
+
+                    # SUB-TAB 3: INGESTION LOGS & AUDIT LEDGER
+                    with ui.tab_panel('logs').classes('p-0 gap-4'):
+                        with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
+                            with ui.column().classes('gap-0'):
+                                ui.label(t('admin.integ_logs_title')).classes('text-base font-bold text-slate-800')
+                                ui.label(t('admin.integ_logs_sub')).classes('text-xs text-slate-500')
+                            ui.button('Refresh Logs', icon='refresh', on_click=reload_all).props('flat dense no-caps text-color=slate-700')
+
+                        if not logs:
+                            w.empty_state('No API ingestion logs recorded yet.', icon='history', hint='Incoming transactions from HMS or other systems will appear here in real-time.')
+                        else:
+                            log_columns = [
+                                w.column('created_at', 'Timestamp', classes='text-xs text-slate-500 font-mono'),
+                                w.column('client_name', 'Source System', classes='font-medium'),
+                                w.column('event_code', 'Event Type', classes='font-mono text-xs font-bold'),
+                                w.column('external_reference', 'Transaction Ref', classes='font-mono font-semibold text-slate-800'),
+                                w.column('amount_display', 'Amount', classes='font-mono font-bold text-slate-900'),
+                                w.column('entry_no', 'Journal Entry #', classes='font-mono font-bold text-teal-800'),
+                                w.column('status_badge', 'Ingestion Status'),
+                                w.column('actions', '', classes='w-24 text-right'),
+                            ]
+
+                            log_rows = []
+                            for l in logs:
+                                status = l.get('status', '')
+                                log_rows.append({
+                                    **l,
+                                    'created_at': str(l.get('created_at', ''))[:19].replace('T', ' '),
+                                    'client_name': l.get('client_name') or 'External API',
+                                    'event_code': l.get('event_code') or 'Direct Lines',
+                                    'amount_display': w.money(l.get('total_amount', 0), l.get('currency', 'XAF')),
+                                    'entry_no': l.get('entry_no') or '—',
+                                    'status_badge': status,
+                                })
+
+                            log_table = w.table(log_columns, log_rows, pagination=20)
+                            log_table.add_slot('body-cell-status_badge', '''
+                                <q-td :props="props">
+                                    <q-badge v-if="props.value === 'draft_created'" color="teal" text-color="white" label="Draft Created (Pending Review)" />
+                                    <q-badge v-else-if="props.value === 'auto_posted'" color="positive" text-color="white" label="Auto-Posted" />
+                                    <q-badge v-else-if="props.value === 'duplicate'" color="amber-8" text-color="white" label="Duplicate Ignored" />
+                                    <q-badge v-else color="negative" text-color="white" :label="'Rejected: ' + (props.row.error_message || 'Error')" />
+                                </q-td>
+                            ''')
+                            log_table.add_slot('body-cell-entry_no', '''
+                                <q-td :props="props">
+                                    <span v-if="props.value !== '—'" class="px-2 py-0.5 rounded font-mono font-bold text-xs bg-teal-50 text-teal-900 border border-teal-200">
+                                        {{ props.value }}
+                                    </span>
+                                    <span v-else class="text-slate-400">—</span>
+                                </q-td>
+                            ''')
+                            log_table.add_slot('body-cell-actions', '''
+                                <q-td :props="props">
+                                    <q-btn flat round dense size="sm" icon="data_object" color="slate-7" @click="$parent.$emit('view_payload', props.row)" title="View JSON Payload" />
+                                </q-td>
+                            ''')
+                            log_table.on('view_payload', lambda e: _payload_dialog(e.args.get('payload')))
+
+                    # SUB-TAB 4: DEVELOPER API SPECIFICATION & INTEGRATION GUIDE
+                    with ui.tab_panel('docs').classes('p-0 gap-4'):
+                        with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
+                            with ui.column().classes('gap-0'):
+                                ui.label('External Ingestion API Guide for HMS & Third-Party Developers').classes('text-base font-bold text-slate-800')
+                                ui.label('Technical reference for connecting Hospital Information Systems (SIH/HMS), Pharmacy POS, and Billing software').classes('text-xs text-slate-500')
+                            ui.button('Test Ingestion Simulator', icon='play_arrow',
+                                      on_click=lambda: _simulator_dialog(reload_all, client_options, cc_options)
+                                      ).props('unelevated color=teal no-caps')
+
+                        with ui.column().classes('w-full gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200'):
+                            ui.label('Endpoint URL & Authentication').classes('font-bold text-sm text-slate-800')
+                            with ui.row().classes('items-center gap-2 font-mono text-xs bg-slate-900 text-teal-300 p-3 rounded-lg w-full'):
+                                ui.label('POST').classes('text-amber-400 font-bold')
+                                ui.label('https://<your-domain>/api/integrations/entries')
+                            with ui.row().classes('items-center gap-2 font-mono text-xs bg-slate-900 text-slate-200 p-3 rounded-lg w-full'):
+                                ui.label('Headers:').classes('text-slate-400')
+                                ui.label('X-API-Key: lch_live_hms_•••••••••••••••••••••')
+                                ui.label('| Content-Type: application/json')
+
+                            ui.label('Format 1: High-Level Healthcare Business Event (Recommended for HMS)').classes('font-bold text-sm text-slate-800 mt-2')
+                            ui.markdown('''```json
+{
+  "event_type": "CONSULTATION_FEE",
+  "reference": "HMS-CONS-2026-00441",
+  "date": "2026-10-23",
+  "amount": 15000,
+  "currency": "XAF",
+  "payment_method": "CASH",
+  "department_code": "URG",
+  "patient_name": "Samuel Eto'o",
+  "patient_id": "PAT-9912",
+  "doctor": "Dr. Kamga",
+  "notes": "Emergency outpatient consultation collection"
+}
+```''').classes('w-full text-xs')
+
+                            ui.label('Format 2: Pre-Balanced Multi-Line Direct Journal Entry').classes('font-bold text-sm text-slate-800 mt-2')
+                            ui.markdown('''```json
+{
+  "journal_code": "VTE",
+  "reference": "POS-PHARM-2026-0812",
+  "date": "2026-10-23",
+  "description": "Hospital Pharmacy Counter Dispensary Sales",
+  "currency": "XAF",
+  "lines": [
+    { "account_code": "5711", "debit": 35000, "credit": 0, "cost_center_code": "URG", "description": "Cash collected" },
+    { "account_code": "7011", "debit": 0, "credit": 35000, "cost_center_code": "URG", "description": "Pharmacy medications" }
+  ]
+}
+```''').classes('w-full text-xs')
+
+    await reload_all()
+
+
+# ==============================================================================
+# INTEGRATION DIALOGS & SIMULATOR
+# ==============================================================================
+
+def _client_dialog(refresh_fn, jnl_options: dict, client: dict | None = None) -> None:
+    is_edit = client is not None
+    title = 'Edit External System Client' if is_edit else t('admin.integ_btn_new_client')
+
+    with ui.dialog() as dialog, ui.card().classes('w-[560px] max-w-full p-6 rounded-2xl'):
+        with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
+            with ui.row().classes('items-center gap-2'):
+                ui.icon('hub', size='22px').classes('text-teal-600')
+                ui.label(title).classes('text-base font-bold text-slate-800')
+            ui.button(icon='close', on_click=dialog.close).props('flat dense round')
+
+        with ui.column().classes('w-full gap-3 mt-2'):
+            name_in = ui.input(t('admin.integ_client_name'), value=client.get('name', '') if is_edit else '').props('outlined dense').classes('w-full')
+            code_in = ui.input(t('admin.integ_client_code'), value=client.get('client_code', '') if is_edit else '').props('outlined dense').classes('w-full')
+            if is_edit:
+                code_in.disable()
+
+            jnl_in = ui.select(jnl_options, value=client.get('default_journal_id') if is_edit else list(jnl_options.keys())[0] if jnl_options else None,
+                               label=t('admin.integ_default_journal')).props('outlined dense options-dense').classes('w-full')
+
+            status_options = {'draft': t('admin.integ_mode_draft'), 'posted': t('admin.integ_mode_posted')}
+            status_in = ui.select(status_options, value=client.get('default_status', 'draft') if is_edit else 'draft',
+                                  label=t('admin.integ_default_status')).props('outlined dense options-dense').classes('w-full')
+
+            ip_in = ui.input('IP Whitelist (Optional, comma-separated e.g. 192.168.1.50)', value=client.get('ip_whitelist', '') if is_edit else '').props('outlined dense').classes('w-full')
+            desc_in = ui.input('Description / Notes', value=client.get('description', '') if is_edit else '').props('outlined dense').classes('w-full')
+
+        async def _save():
+            if not name_in.value or not name_in.value.strip():
+                ui.notify('System name is required.', type='warning')
+                return
+            if not is_edit and (not code_in.value or not code_in.value.strip()):
+                ui.notify('System code is required.', type='warning')
+                return
+
+            payload = {
+                'name': name_in.value.strip(),
+                'defaultJournalId': jnl_in.value,
+                'defaultStatus': status_in.value,
+                'ipWhitelist': (ip_in.value or '').strip() or None,
+                'description': (desc_in.value or '').strip() or None,
+            }
+
+            if not is_edit:
+                payload['clientCode'] = code_in.value.strip()
+                res = await api.safe(api.post('/admin/integrations/clients', payload))
+            else:
+                res = await api.safe(api.put(f"/admin/integrations/clients/{client['id']}", payload))
+
+            if res:
+                ui.notify('Integration client saved successfully.', type='positive')
+                dialog.close()
+                await refresh_fn()
+
+        with ui.row().classes('w-full justify-end gap-2 mt-4'):
+            ui.button(t('common.cancel'), on_click=dialog.close).props('flat no-caps')
+            ui.button(t('common.save'), on_click=_save).props('unelevated color=primary no-caps')
+
+    dialog.open()
+
+
+def _mapping_dialog(refresh_fn, client_options: dict, acct_options: dict, cc_options: dict, jnl_options: dict, mapping: dict | None = None) -> None:
+    is_edit = mapping is not None
+    title = 'Edit Event Mapping Rule' if is_edit else t('admin.integ_btn_new_mapping')
+
+    with ui.dialog() as dialog, ui.card().classes('w-[620px] max-w-full p-6 rounded-2xl'):
+        with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
+            with ui.row().classes('items-center gap-2'):
+                ui.icon('sync_alt', size='22px').classes('text-teal-600')
+                ui.label(title).classes('text-base font-bold text-slate-800')
+            ui.button(icon='close', on_click=dialog.close).props('flat dense round')
+
+        with ui.column().classes('w-full gap-3 mt-2'):
+            c_opts = {None: 'All Connected Systems (Global)', **client_options}
+            client_in = ui.select(c_opts, value=mapping.get('client_id') if is_edit else None,
+                                  label='Apply to External System').props('outlined dense options-dense').classes('w-full')
+
+            event_code_in = ui.input(t('admin.integ_event_code'), value=mapping.get('event_code', '') if is_edit else '',
+                                     placeholder='e.g. CONSULTATION_FEE, HOSPITAL_BILLING, PHARMACY_SALE').props('outlined dense').classes('w-full')
+            if is_edit:
+                event_code_in.disable()
+
+            name_in = ui.input(t('admin.integ_event_name'), value=mapping.get('name', '') if is_edit else '',
+                               placeholder='e.g. Outpatient Medical Consultation Fees').props('outlined dense').classes('w-full')
+
+            jnl_in = ui.select(jnl_options, value=mapping.get('default_journal_id') if is_edit else list(jnl_options.keys())[0] if jnl_options else None,
+                               label=t('admin.integ_default_journal')).props('outlined dense options-dense').classes('w-full')
+
+            debit_in = ui.select(acct_options, value=mapping.get('debit_account_id') if is_edit else None,
+                                 label=t('admin.integ_debit_acct'), with_input=True).props('outlined dense options-dense use-input').classes('w-full')
+
+            credit_in = ui.select(acct_options, value=mapping.get('credit_account_id') if is_edit else None,
+                                  label=t('admin.integ_credit_acct'), with_input=True).props('outlined dense options-dense use-input').classes('w-full')
+
+            cc_opts = {None: 'No Default Cost Center (Resolve from Department Code)', **cc_options}
+            cc_in = ui.select(cc_opts, value=mapping.get('default_cost_center_id') if is_edit else None,
+                              label=t('admin.integ_cost_center'), with_input=True).props('outlined dense options-dense use-input').classes('w-full')
+
+            tmpl_in = ui.input(t('admin.integ_tmpl'), value=mapping.get('description_template', '') if is_edit else '',
+                               placeholder='e.g. Consultation fee — {patient_name} ({reference})').props('outlined dense').classes('w-full')
+
+        async def _save():
+            if not is_edit and (not event_code_in.value or not event_code_in.value.strip()):
+                ui.notify('Event code is required.', type='warning')
+                return
+            if not name_in.value or not name_in.value.strip():
+                ui.notify('Event name is required.', type='warning')
+                return
+            if not debit_in.value:
+                ui.notify('Debit account is required.', type='warning')
+                return
+            if not credit_in.value:
+                ui.notify('Credit account is required.', type='warning')
+                return
+
+            payload = {
+                'clientId': client_in.value,
+                'name': name_in.value.strip(),
+                'defaultJournalId': jnl_in.value,
+                'debitAccountId': debit_in.value,
+                'creditAccountId': credit_in.value,
+                'defaultCostCenterId': cc_in.value,
+                'descriptionTemplate': (tmpl_in.value or '').strip() or None,
+            }
+
+            if not is_edit:
+                payload['eventCode'] = event_code_in.value.strip().upper()
+                res = await api.safe(api.post('/admin/integrations/mappings', payload))
+            else:
+                res = await api.safe(api.put(f"/admin/integrations/mappings/{mapping['id']}", payload))
+
+            if res:
+                ui.notify('Event mapping saved successfully.', type='positive')
+                dialog.close()
+                await refresh_fn()
+
+        with ui.row().classes('w-full justify-end gap-2 mt-4'):
+            ui.button(t('common.cancel'), on_click=dialog.close).props('flat no-caps')
+            ui.button(t('common.save'), on_click=_save).props('unelevated color=primary no-caps')
+
+    dialog.open()
+
+
+def _simulator_dialog(refresh_fn, client_options: dict, cc_options: dict) -> None:
+    import time
+    with ui.dialog() as dialog, ui.card().classes('w-[680px] max-w-full p-6 rounded-2xl'):
+        with ui.row().classes('w-full items-center justify-between pb-3 border-b border-slate-100'):
+            with ui.row().classes('items-center gap-2'):
+                ui.icon('science', size='22px').classes('text-teal-600')
+                ui.label(t('admin.integ_sim_title')).classes('text-base font-bold text-slate-800')
+            ui.button(icon='close', on_click=dialog.close).props('flat dense round')
+
+        ui.label(t('admin.integ_sim_desc')).classes('text-xs text-slate-500 mb-2')
+
+        with ui.row().classes('w-full items-center gap-2 mb-3'):
+            ui.label('Quick Presets:').classes('text-xs font-bold text-slate-600')
+
+        with ui.column().classes('w-full gap-3'):
+            c_val = list(client_options.keys())[0] if client_options else None
+            client_sel = ui.select(client_options, value=c_val, label='External System Client').props('outlined dense options-dense').classes('w-full')
+
+            with ui.row().classes('w-full gap-3'):
+                event_sel = ui.select({
+                    'CONSULTATION_FEE': 'Medical Consultation Fee (CONSULTATION_FEE)',
+                    'HOSPITAL_BILLING': 'Hospitalization / Bed Day Billing (HOSPITAL_BILLING)',
+                    'PHARMACY_SALE': 'Hospital Pharmacy Dispensary Sale (PHARMACY_SALE)',
+                    'PATIENT_DEPOSIT': 'Patient Advance Caution Deposit (PATIENT_DEPOSIT)',
+                }, value='CONSULTATION_FEE', label='Event Type').props('outlined dense options-dense').classes('flex-1')
+
+                ref_in = ui.input('External Reference #', value=f"HMS-SIM-{int(time.time())}").props('outlined dense').classes('flex-1')
+
+            with ui.row().classes('w-full gap-3'):
+                amount_in = ui.number('Amount (XAF)', value=15000, min=100).props('outlined dense').classes('w-44')
+                payment_sel = ui.select({'CASH': 'CASH (Caisse)', 'BANK': 'BANK (Virement/Banque)', 'MOMO': 'Mobile Money'}, value='CASH', label='Payment Method').props('outlined dense options-dense').classes('flex-1')
+
+            with ui.row().classes('w-full gap-3'):
+                patient_in = ui.input('Patient Full Name', value='Aminatou Alhadji').props('outlined dense').classes('flex-1')
+                patient_id_in = ui.input('Patient ID / Card #', value='PAT-7721').props('outlined dense').classes('w-40')
+
+            with ui.row().classes('w-full gap-3'):
+                doctor_in = ui.input('Attending Physician / Doctor', value='Dr. Ndongo').props('outlined dense').classes('flex-1')
+                dept_sel = ui.select({
+                    'URG': 'Emergency Service (URG)',
+                    'ADM': 'Administration & Admission (ADM)',
+                    'CHIR': 'Surgery Block (CHIR)',
+                    'REA': 'Intensive Care (REA)',
+                }, value='URG', label='Hospital Ward / Department').props('outlined dense options-dense').classes('flex-1')
+
+            notes_in = ui.input('Clinical / Administrative Notes', value='Simulated external collection from Admission Desk').props('outlined dense').classes('w-full')
+
+        result_box = ui.column().classes('w-full mt-3')
+
+        async def _execute_simulation():
+            result_box.clear()
+            payload = {
+                'event_type': event_sel.value,
+                'reference': ref_in.value.strip(),
+                'date': datetime.date.today().isoformat(),
+                'amount': amount_in.value,
+                'currency': 'XAF',
+                'payment_method': payment_sel.value,
+                'department_code': dept_sel.value,
+                'patient_name': patient_in.value.strip(),
+                'patient_id': patient_id_in.value.strip(),
+                'doctor': doctor_in.value.strip(),
+                'notes': notes_in.value.strip(),
+            }
+
+            res = await api.safe(api.post('/admin/integrations/test-ingest', {
+                'clientId': client_sel.value,
+                'payload': payload,
+            }))
+
+            if res:
+                entry_no = res.get('entry_no')
+                entry_status = res.get('entry_status')
+                with result_box:
+                    with ui.card().classes('w-full p-4 rounded-xl bg-teal-50 border border-teal-300 gap-2'):
+                        with ui.row().classes('items-center gap-2'):
+                            ui.icon('verified', size='22px').classes('text-teal-700')
+                            ui.label(t('admin.integ_sim_success', entry=entry_no)).classes('text-sm font-bold text-teal-950')
+                        ui.label(res.get('message', '')).classes('text-xs text-teal-800')
+
+                        with ui.row().classes('items-center gap-3 mt-1'):
+                            ui.badge(f"Status: {entry_status.upper()}", color='teal').props('dense font-bold')
+                            ui.badge(f"Ref: {ref_in.value}", color='slate-7').props('dense outline')
+                            ui.button(t('admin.integ_view_entry'), icon='launch',
+                                      on_click=lambda: ui.navigate.to('/journal')
+                                      ).props('unelevated size=sm color=teal-8 no-caps').classes('font-bold')
+
+                ui.notify(f"Draft {entry_no} created successfully in Journal!", type='positive', position='top')
+                await refresh_fn()
+
+        with ui.row().classes('w-full justify-end gap-2 mt-4'):
+            ui.button(t('common.cancel'), on_click=dialog.close).props('flat no-caps')
+            ui.button(t('admin.integ_sim_send'), icon='bolt', on_click=_execute_simulation).props('unelevated color=teal-8 no-caps').classes('font-bold')
+
+    dialog.open()
+
+
+def _payload_dialog(payload) -> None:
+    import json
+    with ui.dialog() as dialog, ui.card().classes('w-[580px] max-w-full p-5 rounded-2xl'):
+        with ui.row().classes('w-full items-center justify-between pb-2 border-b border-slate-100'):
+            ui.label('Raw JSON Payload from External System').classes('text-sm font-bold text-slate-800')
+            ui.button(icon='close', on_click=dialog.close).props('flat dense round')
+
+        formatted = json.dumps(payload, indent=2) if isinstance(payload, (dict, list)) else str(payload)
+        with ui.column().classes('w-full p-3 bg-slate-900 rounded-xl text-teal-300 font-mono text-xs overflow-x-auto max-h-96'):
+            ui.label(formatted).classes('whitespace-pre')
+
+    dialog.open()
 
 
 # ==============================================================================

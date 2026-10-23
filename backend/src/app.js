@@ -33,6 +33,7 @@ import { interbranchRoutes } from './routes/interbranch.routes.js';
 import { leaseRoutes } from './routes/lease.routes.js';
 import { adminRoutes } from './routes/admin.routes.js';
 import { budgetRoutes } from './routes/budget.routes.js';
+import { integrationRoutes, integrationIngestRoutes } from './routes/integration.routes.js';
 import * as dfeService from './services/dfe.service.js';
 import { renderLandingPage } from './views/landing.js';
 
@@ -89,6 +90,9 @@ export function createApp() {
     res.json(result);
   }));
 
+  // Public / external gateway for systems like HMS, POS, Billing using API Key
+  app.use('/api/integrations', integrationIngestRoutes);
+
   // Everything past this point requires a valid session.
   const api = express.Router();
   api.use(authenticate);
@@ -117,6 +121,7 @@ export function createApp() {
   api.use(interbranchRoutes);
   api.use(leaseRoutes);
   api.use(adminRoutes);
+  api.use(integrationRoutes);
   api.use(reportRoutes);
   app.use('/api', api);
 
