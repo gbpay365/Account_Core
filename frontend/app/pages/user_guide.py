@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from nicegui import ui
+from nicegui import app, ui
 
 from ..i18n import t, lang
 from ..ui.shell import page
