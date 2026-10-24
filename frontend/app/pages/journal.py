@@ -742,8 +742,14 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
                     if t_item.get('journal_code') and t_item['journal_code'] in journal.options:
                         journal.value = t_item['journal_code']
                         last_journal_val[0] = t_item['journal_code']
-                    if not description.value and (t_item.get('name_en') or t_item.get('name')):
-                        description.value = t_item.get('name_en') if auto_framework == 'ifrs' else (t_item.get('name') or t_item.get('name_en'))
+                    t_name = t_item.get('name_en') if auto_framework == 'ifrs' else (t_item.get('name') or t_item.get('name_en'))
+                    if t_name:
+                        description.value = t_name
+                elif not val:
+                    all_tpl_names = {t.get('name_en') for t in tpl_by_type.values()} | {t.get('name') for t in tpl_by_type.values()}
+                    all_tpl_names.discard(None)
+                    if description.value in all_tpl_names:
+                        description.value = ''
                 draw_lines()
             txn.on_value_change(_on_txn_change)
 
