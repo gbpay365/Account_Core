@@ -822,37 +822,6 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
                         and len(first_line_accts) < len(accounts)
                     )
 
-                    if cur_txn and filter_badge_label:
-                        with ui.row().classes('w-full items-center justify-between px-3 py-1.5 rounded-lg '
-                                              'bg-teal-50 border border-teal-200 text-xs text-teal-950 mb-1'):
-                            with ui.row().classes('items-center gap-2'):
-                                ui.icon('filter_alt' if is_filtered else 'tune', size='18px').classes(
-                                    'text-teal-700' if is_filtered else 'text-slate-500'
-                                )
-                                if is_filtered:
-                                    ui.html(
-                                        f"<span>Line 1 account filtered for <b>{filter_badge_label}</b> "
-                                        f"<span class='text-teal-700 font-semibold'>({len(first_line_accts)} accounts)</span></span>"
-                                    )
-                                else:
-                                    ui.html(
-                                        "<span class='text-slate-700'>Line 1 showing <b>all accounts</b> (filter paused)</span>"
-                                    )
-
-                            def _toggle_filter():
-                                show_all_line0[0] = not show_all_line0[0]
-                                draw_lines()
-
-                            if is_filtered:
-                                ui.button('Show all accounts', on_click=_toggle_filter).props(
-                                    'flat dense size=xs color=primary'
-                                ).classes('text-xs underline cursor-pointer')
-                            else:
-                                ui.button(f"Re-filter for {filter_badge_label.split('(')[0].strip() or 'transaction'}",
-                                          on_click=_toggle_filter).props(
-                                    'flat dense size=xs color=teal-9'
-                                ).classes('text-xs font-semibold cursor-pointer')
-
                     with ui.row().classes('w-full gap-2 px-1 no-wrap text-[10.5px] font-bold uppercase '
                                           'tracking-wider text-slate-500'):
                         ui.label('Account').classes('flex-[3] min-w-0')
@@ -867,17 +836,55 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
                                 line_opts = dict(first_line_accts)
                                 if line['account'] and line['account'] in accounts and line['account'] not in line_opts:
                                     line_opts[line['account']] = accounts[line['account']]
-                                short_label = filter_badge_label.split('(')[0].strip()
-                                acct_placeholder = f"Type or select {short_label} account"
                             else:
                                 line_opts = accounts
-                                acct_placeholder = "Type a code or name"
 
                             account = ui.select(line_opts, label=None, with_input=True,
                                                 value=line['account']) \
                                 .props('outlined dense options-dense use-input hide-selected '
-                                       f'input-debounce=200 placeholder="{acct_placeholder}"') \
+                                       'input-debounce=200 placeholder="Type a code or name"') \
                                 .classes('flex-[3] min-w-0')
+
+                            def _toggle_filter():
+                                show_all_line0[0] = not show_all_line0[0]
+                                draw_lines()
+
+                            if index == 0 and cur_txn and filter_badge_label:
+                                short_label = filter_badge_label.split('(')[0].strip()
+                                with account.add_slot('prepend'):
+                                    ui.icon('filter_alt' if is_filtered else 'tune', size='15px').classes(
+                                        'text-teal-600' if is_filtered else 'text-slate-400'
+                                    ).tooltip(
+                                        f'Filtered for {filter_badge_label} ({len(first_line_accts)} accounts)'
+                                        if is_filtered else 'Showing all accounts'
+                                    )
+                                with account.add_slot('append'):
+                                    if is_filtered:
+                                        ui.button(f'{len(first_line_accts)}', icon='filter_alt', on_click=_toggle_filter) \
+                                            .props('flat dense size=xs color=teal-8 rounded no-caps') \
+                                            .classes('text-[11px] font-semibold') \
+                                            .tooltip(f'Filtered for {filter_badge_label} ({len(first_line_accts)} accounts). Click to show all accounts')
+                                    else:
+                                        ui.button('All', icon='tune', on_click=_toggle_filter) \
+                                            .props('flat dense size=xs color=slate-6 rounded no-caps') \
+                                            .classes('text-[11px] font-medium text-slate-500') \
+                                            .tooltip(f'Showing all accounts. Click to re-filter for {short_label}')
+
+                                with account.add_slot('before-options'):
+                                    with ui.row().classes(
+                                        'w-full items-center justify-between px-3 py-1.5 '
+                                        + ('bg-teal-50 border-b border-teal-100 text-teal-900' if is_filtered else 'bg-slate-50 border-b border-slate-200 text-slate-700')
+                                    ):
+                                        with ui.row().classes('items-center gap-1.5'):
+                                            ui.icon('filter_alt' if is_filtered else 'tune', size='14px').classes(
+                                                'text-teal-700' if is_filtered else 'text-slate-500'
+                                            )
+                                            if is_filtered:
+                                                ui.html(f"<span class='text-xs font-medium'>Filtered for <b>{filter_badge_label}</b> ({len(first_line_accts)})</span>")
+                                            else:
+                                                ui.html("<span class='text-xs font-medium text-slate-700'>Showing <b>all accounts</b></span>")
+                                        ui.button('Show all accounts' if is_filtered else 'Re-filter', on_click=_toggle_filter) \
+                                            .props('flat dense size=xs color=primary').classes('text-xs underline cursor-pointer')
 
                             def _on_acct_change(e, i=index):
                                 old = lines[i].get('account')
