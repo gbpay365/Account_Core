@@ -46,6 +46,57 @@ _T: dict[str, dict[str, str]] = {
     'tab_comm': {'en': 'Commitments', 'fr': 'Engagements de Dépenses'},
     'tab_trans': {'en': 'Credit Transfers', 'fr': 'Virements & Modifications'},
     'tab_carry': {'en': 'Carryforwards', 'fr': 'Reports de Crédits Non Consommés'},
+    'tab_reports': {'en': 'Reports & Analytics', 'fr': 'Rapports & Analyses'},
+    'quick_btn_reports': {'en': 'Executive Reports', 'fr': 'Rapports Budgétaires'},
+    'rep_title': {'en': 'Executive Budget Reporting & Financial Analytics', 'fr': 'Centre d’Édition des Rapports Budgétaires & Analyses'},
+    'rep_subtitle': {'en': 'Official statutory statements, multi-axial variances, quarterly absorption curves, and expenditure pipeline reconciliation.', 'fr': 'États réglementaires officiels, analyse multidimensionnelle des écarts, consommation trimestrielle et chaîne de dépense.'},
+    'rep_type_execution': {'en': '1. Statutory Budget Execution Statement (État Récapitulatif)', 'fr': '1. État Récapitulatif d’Exécution Budgétaire (SYSCOHADA)'},
+    'rep_type_variance': {'en': '2. Budget vs Actual Variance & Quarterly Phasing', 'fr': '2. Analyse des Écarts & Phasing Trimestriel (T1–T4)'},
+    'rep_type_versions': {'en': '3. Multi-Version Comparative Analysis (V0 vs V1 vs Real)', 'fr': '3. Comparatif Multi-Versions (V0 Initial vs V1 Révisé vs Réel)'},
+    'rep_type_pipeline': {'en': '4. 5-Stage Statutory Expenditure Pipeline & Bottlenecks', 'fr': '4. Chaîne de Dépense & Pipeline d’Audit (Engagements ➔ Paiements)'},
+    'btn_print_official': {'en': 'Official Print / PDF', 'fr': 'Imprimer / Format Officiel'},
+    'btn_export_csv': {'en': 'Export CSV / Excel', 'fr': 'Exporter Excel / CSV'},
+    'btn_copy_summary': {'en': 'Copy Briefing', 'fr': 'Copier la Synthèse'},
+    'rep_filter_dept': {'en': 'Department / Service', 'fr': 'Département / Service'},
+    'rep_filter_prog': {'en': 'Program / Donor', 'fr': 'Programme / Bailleur'},
+    'rep_filter_nature': {'en': 'Budget Section', 'fr': 'Section Budgétaire'},
+    'rep_filter_avc': {'en': 'AVC Alert Level', 'fr': 'Niveau de Risque AVC'},
+    'rep_all_depts': {'en': '— All Departments (Global) —', 'fr': '— Tous les départements —'},
+    'rep_all_progs': {'en': '— All Programs & Donors —', 'fr': '— Tous les programmes & bailleurs —'},
+    'rep_all_avc': {'en': 'All AVC Tolerances', 'fr': 'Tous les statuts AVC'},
+    'rep_avc_safe': {'en': 'Safe (<80% Consumed)', 'fr': 'Normal (<80% Consommé)'},
+    'rep_avc_warning': {'en': 'Warning (80–100%)', 'fr': 'Alerte (80–100%)'},
+    'rep_avc_breach': {'en': 'Breach / Overrun (>100%)', 'fr': 'Dépassement / Bloqué (>100%)'},
+    'rep_stat_total_budget': {'en': 'Approved Envelope', 'fr': 'Enveloppe Votée'},
+    'rep_stat_committed': {'en': 'Committed (BC/DA)', 'fr': 'Engagé (BC/DA)'},
+    'rep_stat_spent': {'en': 'Realized Postings', 'fr': 'Dépenses Réalisées'},
+    'rep_stat_available': {'en': 'Available Balance', 'fr': 'Disponible Net'},
+    'rep_stat_rate': {'en': 'Consumption Rate', 'fr': 'Taux d’Absorption'},
+    'rep_dept_breakdown_title': {'en': 'Departmental Execution Share', 'fr': 'Consommation par Département / Service'},
+    'rep_nature_breakdown_title': {'en': 'Expenditure by Economic Nature', 'fr': 'Répartition par Nature Économique'},
+    'rep_avc_radar_title': {'en': 'Statutory Compliance & AVC Tolerance Radar', 'fr': 'Radar de Conformité Budgétaire (AVC)'},
+    'rep_lines_count': {'en': 'budget line(s)', 'fr': 'ligne(s) budgétaire(s)'},
+    'rep_official_header': {'en': 'SHISONG CARDIAC CENTRE & HOSPITAL COMPLEX', 'fr': 'COMPLEXE HOSPITALIER SHISONG / SHISONG CARDIAC CENTRE'},
+    'rep_official_sub': {'en': 'FINANCIAL CONTROLLERSHIP & STATUTORY BUDGETARY SUPERVISION', 'fr': 'DIRECTION ADMINISTRATIVE ET FINANCIÈRE — SERVICE DU BUDGET & CONTRÔLE DE GESTION'},
+    'rep_sign_budget': {'en': 'Budget Controller & Management Accounting', 'fr': 'Le Contrôleur Budgétaire & Comptabilité Matières'},
+    'rep_sign_auditor': {'en': 'Chief Financial Officer / Internal Audit', 'fr': 'Le Directeur Financier / Auditeur Interne'},
+    'rep_sign_dg': {'en': 'Authorizing Officer (General Director)', 'fr': 'L’Ordonnateur / Directeur Général'},
+    'notify_copied_briefing': {'en': 'Executive briefing copied to clipboard!', 'fr': 'Synthèse exécutive copiée dans le presse-papiers !'},
+    'col_variance_val': {'en': 'Variance (Value)', 'fr': 'Écart en Valeur'},
+    'col_variance_pct': {'en': 'Variance (%)', 'fr': 'Écart (%)'},
+    'col_variance_status': {'en': 'Impact', 'fr': 'Impact'},
+    'col_phasing_q1': {'en': 'Q1 Planned', 'fr': 'T1 Prévu'},
+    'col_phasing_q2': {'en': 'Q2 Planned', 'fr': 'T2 Prévu'},
+    'col_phasing_q3': {'en': 'Q3 Planned', 'fr': 'T3 Prévu'},
+    'col_phasing_q4': {'en': 'Q4 Planned', 'fr': 'T4 Prévu'},
+    'pipe_step1': {'en': '1. Voted Budget', 'fr': '1. Budget Voté'},
+    'pipe_step2': {'en': '2. Engaged (PO)', 'fr': '2. Engagé (BC)'},
+    'pipe_step3': {'en': '3. Certified (GR)', 'fr': '3. Service Fait (PV)'},
+    'pipe_step4': {'en': '4. Mandated', 'fr': '4. Ordonnancé'},
+    'pipe_step5': {'en': '5. Disbursed', 'fr': '5. Décaissé'},
+    'pipe_pending_cert': {'en': 'Pending Delivery Certification', 'fr': 'En attente de réception technique'},
+    'pipe_pending_mandat': {'en': 'Certified Pending Payment Order', 'fr': 'Certifié en attente d’ordonnancement'},
+    'pipe_pending_pay': {'en': 'Mandated Pending Treasury Payment', 'fr': 'Mandaté en attente de paiement bancaire'},
 
     'lbl_comm_section_title': {
         'en': 'Budget Commitments & Credit Reservations',
@@ -3646,11 +3697,16 @@ async def budgeting_page() -> None:
                         ui.label(_loc('quick_hub_subtitle')).classes('text-[11px] text-teal-200/80')
 
                 with ui.row().classes('items-center gap-2'):
+                    ui.button(
+                        '📊 ' + ('Rapports & Analyses' if is_fr else 'Executive Reports'),
+                        on_click=lambda: (tabs_ref['tabs'].set_value('reports') if tabs_ref.get('tabs') else None),
+                    ).props('unelevated bg-teal-600 hover:bg-teal-500 text-white dense no-caps size=sm rounded')
+
                     guide_btn = ui.button(
                         '💡 ' + ('Guide Rapide' if is_fr else 'Quick Guide'),
                     ).props('flat text-color=teal-2 dense no-caps size=sm')
 
-            # The 6 Quick-Action Cards
+            # The 7 Quick-Action Cards
             with ui.row().classes('w-full gap-2.5 items-stretch flex-wrap'):
                 # 1. New Commitment (Primary Action)
                 with ui.element('button').classes(
@@ -3717,6 +3773,17 @@ async def budgeting_page() -> None:
                     with ui.column().classes('gap-0 overflow-hidden'):
                         ui.label(_loc('btn_quick_guide')).classes('text-xs font-bold text-white leading-tight truncate')
                         ui.label(_loc('hint_quick_guide')).classes('text-[10px] text-slate-200/80 leading-tight truncate')
+
+                # 7. World-Class Reports & Analytics
+                with ui.element('button').classes(
+                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-teal-800 via-indigo-900 to-purple-900 text-white '
+                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
+                ).on('click', lambda: (tabs_ref['tabs'].set_value('reports') if tabs_ref.get('tabs') else None)):
+                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
+                        ui.icon('analytics').classes('text-lg text-white')
+                    with ui.column().classes('gap-0 overflow-hidden'):
+                        ui.label(_loc('quick_btn_reports')).classes('text-xs font-bold text-white leading-tight truncate')
+                        ui.label('SYSCOHADA & AVC' if is_fr else 'Statutory & AVC').classes('text-[10px] text-teal-200/80 leading-tight truncate')
 
             # Collapsible 3-Step Guided Cheatsheet
             guide_collapse = ui.column().classes('w-full border-t border-slate-700/60 pt-3 gap-2')
@@ -3843,6 +3910,7 @@ async def budgeting_page() -> None:
         t_carry = ui.tab('carry', label=_loc('tab_carry'), icon='move_up')
         t_comp = ui.tab('comp', label=_loc('tab_comp'), icon='compare_arrows')
         t_alloc = ui.tab('alloc', label=_loc('tab_alloc'), icon='hub')
+        t_reports = ui.tab('reports', label=_loc('tab_reports'), icon='insights')
 
     with ui.tab_panels(tabs, value=t_exec).classes('w-full p-0 bg-transparent'):
         # ---------------------------------------------------------------------
@@ -4801,4 +4869,776 @@ async def budgeting_page() -> None:
 
             refreshers['alloc'] = _render_alloc_tab.refresh
             _render_alloc_tab()
+
+        # ---------------------------------------------------------------------
+        # TAB 8: WORLD-CLASS EXECUTIVE BUDGET REPORTING & ANALYTICS MODULE
+        # ---------------------------------------------------------------------
+        def _open_official_print_modal(report_type: str, rows_data: list, summary_info: dict) -> None:
+            is_fr = lang() == 'fr'
+            curr = currency
+            today_str = datetime.date.today().strftime('%d/%m/%Y')
+            now_time = datetime.datetime.now().strftime('%H:%M:%S')
+
+            type_titles = {
+                'statutory': 'ÉTAT RÉCAPITULATIF STATUTAIRE D’EXÉCUTION BUDGÉTAIRE ET DE DISPONIBILITÉ AVC' if is_fr else 'STATUTORY BUDGET EXECUTION AND AVAILABILITY CONTROL STATEMENT',
+                'variance': 'TABLEAU DE BORD D’ANALYSE DES ÉCARTS BUDGÉTAIRES ET PHASAGE TRIMESTRIEL' if is_fr else 'BUDGET VS ACTUAL VARIANCE ANALYSIS AND QUARTERLY PHASING STATEMENT',
+                'versions': 'ÉTAT COMPARATIF MULTI-VERSIONS DES CRÉDITS (V0 INITIAL ➔ V1 RECTIFIÉ ➔ RÉALISATIONS)' if is_fr else 'MULTI-VERSION APPROPRIATIONS RECONCILIATION STATEMENT (V0 VOTED vs V1 REVISED vs ACTUALS)',
+                'pipeline': 'PISTE D’AUDIT RÉGLEMENTAIRE ET FLUX D’EXÉCUTION DE LA DÉPENSE PUBLIQUE' if is_fr else 'STATUTORY EXPENDITURE PIPELINE AND STAGE-GATE AUDIT TRAIL',
+            }
+            rep_title = type_titles.get(report_type, type_titles['statutory'])
+
+            with ui.dialog().props('maximized') as dlg, ui.card().classes('w-full h-full p-8 bg-slate-100 flex flex-col gap-6 overflow-y-auto'):
+                # Action Header (Non-printed toolbar)
+                with ui.row().classes('w-full justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm print:hidden no-wrap'):
+                    with ui.row().classes('items-center gap-2'):
+                        ui.icon('verified').classes('text-teal-700 text-2xl')
+                        with ui.column().classes('gap-0'):
+                            ui.label('Format Officiel Certifié & Prêt pour Impression' if is_fr else 'Certified Official Document Ready for Printing').classes('text-sm font-bold text-slate-800')
+                            ui.label('Conforme aux standards SYSCOHADA Révisé, CEMAC et IFRS' if is_fr else 'Compliant with Revised SYSCOHADA, CEMAC and IFRS statutory norms').classes('text-xs text-slate-500')
+                    with ui.row().classes('items-center gap-3'):
+                        ui.button(_loc('btn_cancel'), on_click=dlg.close).props('flat color=grey-8 dense')
+                        ui.button(
+                            '🖨️ ' + ('Lancer l’Impression / Générer PDF' if is_fr else 'Print / Save as PDF'),
+                            on_click=lambda: ui.run_javascript('window.print()')
+                        ).props('unelevated color=indigo-9 dense size=md class="px-4 py-1.5 shadow-sm"')
+
+                # The Official A4 Printable Document Container
+                with ui.element('div').classes('w-full max-w-5xl mx-auto p-10 bg-white rounded-xl border border-slate-300 shadow-md flex flex-col gap-6 text-slate-900'):
+                    # 1. State / Hospital Formal Header
+                    with ui.row().classes('w-full justify-between items-start no-wrap border-b-2 border-slate-900 pb-5'):
+                        with ui.column().classes('gap-0.5 text-center items-center w-72'):
+                            ui.label('RÉPUBLIQUE DU CAMEROUN').classes('text-xs font-black tracking-wide text-slate-900')
+                            ui.label('Paix – Travail – Patrie').classes('text-[10px] italic text-slate-600')
+                            ui.label('----------------').classes('text-[10px] text-slate-400')
+                            ui.label('MINISTÈRE DE LA SANTÉ PUBLIQUE').classes('text-[10px] font-bold text-slate-800')
+                            ui.label('COMPLEXE HOSPITALIER SHISONG').classes('text-[11px] font-black text-slate-900')
+                            ui.label('SHISONG CARDIAC CENTRE').classes('text-[10px] font-bold text-teal-800')
+
+                        with ui.column().classes('items-center justify-center text-center px-4'):
+                            with ui.element('div').classes('w-16 h-16 rounded-full border-2 border-teal-800 flex items-center justify-center bg-teal-50 shadow-inner mb-1'):
+                                ui.icon('account_balance').classes('text-teal-900 text-3xl')
+                            ui.label('CONTRÔLE BUDGÉTAIRE').classes('text-[10px] font-black tracking-widest text-teal-900 uppercase')
+                            ui.label('FINANCIAL AUDIT DIVISION').classes('text-[9px] font-bold text-slate-500')
+
+                        with ui.column().classes('gap-0.5 text-center items-center w-72'):
+                            ui.label('REPUBLIC OF CAMEROON').classes('text-xs font-black tracking-wide text-slate-900')
+                            ui.label('Peace – Work – Fatherland').classes('text-[10px] italic text-slate-600')
+                            ui.label('----------------').classes('text-[10px] text-slate-400')
+                            ui.label('MINISTRY OF PUBLIC HEALTH').classes('text-[10px] font-bold text-slate-800')
+                            ui.label('DIRECTION ADMINISTRATIVE ET FINANCIÈRE').classes('text-[10px] font-extrabold text-slate-800')
+                            ui.label('SERVICE DU BUDGET & DE LA COMPTABILITÉ MATIÈRES').classes('text-[9px] font-bold text-slate-700')
+
+                    # 2. Formal Title
+                    with ui.column().classes('w-full items-center text-center gap-1 my-2'):
+                        ui.label(rep_title).classes('text-base font-black text-slate-900 uppercase tracking-wide border-b-2 border-teal-800 pb-1')
+                        ui.label(f"{'EXERCICE BUDGÉTAIRE' if is_fr else 'FISCAL YEAR'} 2026 — {'RESTITUTION OFFICIELLE AU' if is_fr else 'OFFICIAL POSITION AS OF'} {today_str} ({now_time})").classes('text-xs font-bold text-slate-600')
+
+                    # 3. Metadata Parameters Box
+                    with ui.grid(columns=4).classes('w-full gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-lg text-xs'):
+                        with ui.column().classes('gap-0'):
+                            ui.label('Entité / Établissement' if is_fr else 'Institution').classes('text-[10px] uppercase font-bold text-slate-400')
+                            ui.label('Complexe Hospitalier Shisong').classes('font-bold text-slate-800')
+                        with ui.column().classes('gap-0'):
+                            ui.label('Devise de Restitution' if is_fr else 'Currency').classes('text-[10px] uppercase font-bold text-slate-400')
+                            ui.label(f'Francs CFA ({curr})').classes('font-bold text-slate-800')
+                        with ui.column().classes('gap-0'):
+                            ui.label('Référentiel Juridique' if is_fr else 'Accounting Standard').classes('text-[10px] uppercase font-bold text-slate-400')
+                            ui.label('SYSCOHADA Révisé / CEMAC').classes('font-bold text-teal-800')
+                        with ui.column().classes('gap-0'):
+                            ui.label('Mode de Contrôle' if is_fr else 'Control Enforcement').classes('text-[10px] uppercase font-bold text-slate-400')
+                            ui.label('AVC Strict Blocker (Temps Réel)').classes('font-bold text-indigo-900')
+
+                    # 4. Executive KPI Summary Cards
+                    tot_b = summary_info.get('totalBudget', 0)
+                    tot_c = summary_info.get('totalCommitted', 0)
+                    tot_s = summary_info.get('totalSpent', 0)
+                    tot_cons = tot_c + tot_s
+                    tot_rem = tot_b - tot_cons
+                    pct = round((tot_cons / tot_b) * 100, 1) if tot_b > 0 else 0
+
+                    with ui.grid(columns=5).classes('w-full gap-2.5 text-center my-1'):
+                        with ui.element('div').classes('p-3 rounded-lg border border-slate-300 bg-slate-50'):
+                            ui.label('Dotation Votée' if is_fr else 'Approved Budget').classes('text-[10px] font-bold text-slate-500 uppercase')
+                            ui.label(w.money(tot_b, curr)).classes('text-sm font-mono font-bold text-slate-900')
+                        with ui.element('div').classes('p-3 rounded-lg border border-amber-200 bg-amber-50/50'):
+                            ui.label('Engagé (BC/DA)' if is_fr else 'Committed').classes('text-[10px] font-bold text-amber-700 uppercase')
+                            ui.label(w.money(tot_c, curr)).classes('text-sm font-mono font-bold text-amber-900')
+                        with ui.element('div').classes('p-3 rounded-lg border border-indigo-200 bg-indigo-50/50'):
+                            ui.label('Dépenses Réalisées' if is_fr else 'Actual Spent').classes('text-[10px] font-bold text-indigo-700 uppercase')
+                            ui.label(w.money(tot_s, curr)).classes('text-sm font-mono font-bold text-indigo-900')
+                        with ui.element('div').classes('p-3 rounded-lg border border-teal-200 bg-teal-50/50'):
+                            ui.label('Disponible Net' if is_fr else 'Net Available').classes('text-[10px] font-bold text-teal-700 uppercase')
+                            ui.label(w.money(tot_rem, curr)).classes('text-sm font-mono font-bold text-teal-900')
+                        with ui.element('div').classes('p-3 rounded-lg border border-slate-300 bg-slate-50'):
+                            ui.label('Taux d’Absorption' if is_fr else 'Execution Rate').classes('text-[10px] font-bold text-slate-500 uppercase')
+                            ui.label(f"{pct}%").classes('text-sm font-mono font-extrabold text-slate-900')
+
+                    # 5. Tabular Data Representation
+                    html_table_rows = []
+                    for idx, r in enumerate(rows_data[:60]):
+                        acct_label = f"{r.get('account_code')} - {r.get('account_name')}"
+                        dept_label = r.get('cost_center_name') or 'Direction Générale'
+                        b_val = float(r.get('budget_amount') or 0)
+                        c_val = float(r.get('committed_amount') or 0)
+                        s_val = float(r.get('actual_spent') or 0)
+                        rem_val = float(r.get('remaining_budget') or 0)
+                        pct_val = r.get('pct_consumed') or 0
+                        avc_badge = '🟢 NORMAL' if r.get('avc_status') == 'normal' else ('🟡 ALERTE' if r.get('avc_status') == 'warning' else '🔴 DÉPASSEMENT')
+
+                        row_bg = '#ffffff' if idx % 2 == 0 else '#f8fafc'
+                        html_table_rows.append(
+                            f"<tr style='background-color:{row_bg}; border-bottom:1px solid #e2e8f0;'>"
+                            f"<td style='padding:6px 8px; font-weight:600; font-size:11px;'>{acct_label}</td>"
+                            f"<td style='padding:6px 8px; font-size:11px;'>{dept_label}</td>"
+                            f"<td style='padding:6px 8px; text-align:right; font-family:monospace; font-size:11px;'>{w.money(b_val, curr)}</td>"
+                            f"<td style='padding:6px 8px; text-align:right; font-family:monospace; font-size:11px;'>{w.money(c_val, curr)}</td>"
+                            f"<td style='padding:6px 8px; text-align:right; font-family:monospace; font-size:11px;'>{w.money(s_val, curr)}</td>"
+                            f"<td style='padding:6px 8px; text-align:right; font-family:monospace; font-weight:bold; font-size:11px;'>{w.money(rem_val, curr)}</td>"
+                            f"<td style='padding:6px 8px; text-align:center; font-family:monospace; font-size:11px;'>{pct_val}%</td>"
+                            f"<td style='padding:6px 8px; text-align:center; font-size:10px; font-weight:bold;'>{avc_badge}</td>"
+                            f"</tr>"
+                        )
+
+                    all_rows_html = "".join(html_table_rows)
+                    table_html = f"""
+                    <table style="width:100%; border-collapse:collapse; margin-top:8px; border:1px solid #cbd5e1; font-family:inherit;">
+                        <thead>
+                            <tr style="background-color:#0f172a; color:#ffffff; font-size:11px; text-transform:uppercase;">
+                                <th style="padding:8px; text-align:left;">Compte SYSCOHADA</th>
+                                <th style="padding:8px; text-align:left;">Service</th>
+                                <th style="padding:8px; text-align:right;">Dotation Votée</th>
+                                <th style="padding:8px; text-align:right;">Engagé</th>
+                                <th style="padding:8px; text-align:right;">Réalisé</th>
+                                <th style="padding:8px; text-align:right;">Disponible Net</th>
+                                <th style="padding:8px; text-align:center;">Taux</th>
+                                <th style="padding:8px; text-align:center;">Statut AVC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {all_rows_html}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background-color:#e2e8f0; font-weight:bold; font-size:11px; border-top:2px solid #0f172a;">
+                                <td colspan="2" style="padding:8px; text-align:left;">TOTAL GÉNÉRAL CONSOLIDÉ</td>
+                                <td style="padding:8px; text-align:right; font-family:monospace;">{w.money(tot_b, curr)}</td>
+                                <td style="padding:8px; text-align:right; font-family:monospace;">{w.money(tot_c, curr)}</td>
+                                <td style="padding:8px; text-align:right; font-family:monospace;">{w.money(tot_s, curr)}</td>
+                                <td style="padding:8px; text-align:right; font-family:monospace;">{w.money(tot_rem, curr)}</td>
+                                <td style="padding:8px; text-align:center; font-family:monospace;">{pct}%</td>
+                                <td style="padding:8px; text-align:center;">CERTIFIÉ CONFORME</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    """
+                    ui.html(table_html).classes('w-full')
+
+                    # 6. Statutory Tripartite Signatory Box
+                    with ui.row().classes('w-full justify-between items-start no-wrap mt-8 pt-6 border-t border-slate-300 text-center text-xs'):
+                        with ui.column().classes('items-center w-64 gap-12'):
+                            ui.label(_loc('rep_sign_budget')).classes('font-bold text-slate-900 uppercase text-[11px]')
+                            with ui.column().classes('gap-0 items-center'):
+                                ui.label('Date : ____/____/2026').classes('text-[10px] text-slate-500')
+                                ui.label('Visa & Cachet').classes('text-[10px] italic text-slate-400')
+
+                        with ui.column().classes('items-center w-64 gap-12'):
+                            ui.label(_loc('rep_sign_auditor')).classes('font-bold text-slate-900 uppercase text-[11px]')
+                            with ui.column().classes('gap-0 items-center'):
+                                ui.label('Date : ____/____/2026').classes('text-[10px] text-slate-500')
+                                ui.label('Visa & Cachet').classes('text-[10px] italic text-slate-400')
+
+                        with ui.column().classes('items-center w-64 gap-12'):
+                            ui.label(_loc('rep_sign_dg')).classes('font-bold text-slate-900 uppercase text-[11px]')
+                            with ui.column().classes('gap-0 items-center'):
+                                ui.label('Date : ____/____/2026').classes('text-[10px] text-slate-500')
+                                ui.label('Signature & Sceau de l’Établissement').classes('text-[10px] italic text-slate-400')
+
+            dlg.open()
+
+        # Reports Tab Interactive State
+        report_internal_state = {
+            'type': 'statutory',
+            'dept_id': 0,
+            'prog_id': 0,
+            'nature': 'all',
+            'avc': 'all',
+            'search': '',
+        }
+
+        with ui.tab_panel(t_reports).classes('p-0 gap-4 flex flex-col'):
+            @ui.refreshable
+            def _render_reports_tab() -> None:
+                rep = state['report'] or {}
+                raw_rows = rep.get('rows', [])
+                comp = state.get('comparative') or {}
+                orders = state.get('payment_orders', [])
+                certs = state.get('certifications', [])
+                comms = state.get('commitments', [])
+                curr = currency
+                is_fr = lang() == 'fr'
+
+                # Filtering dataset
+                f_dept = report_internal_state['dept_id']
+                f_prog = report_internal_state['prog_id']
+                f_nature = report_internal_state['nature']
+                f_avc = report_internal_state['avc']
+                f_search = (report_internal_state['search'] or '').strip().lower()
+
+                filtered_rows = []
+                for r in raw_rows:
+                    if f_dept and f_dept > 0 and r.get('cost_center_id') != f_dept:
+                        continue
+                    if f_prog and f_prog > 0 and r.get('program_id') != f_prog:
+                        continue
+                    if f_nature != 'all' and r.get('budget_type') != f_nature:
+                        continue
+                    if f_avc != 'all' and r.get('avc_status') != f_avc:
+                        continue
+                    if f_search:
+                        text_match = (
+                            f_search in str(r.get('account_code', '')).lower()
+                            or f_search in str(r.get('account_name', '')).lower()
+                            or f_search in str(r.get('account_name_en', '')).lower()
+                            or f_search in str(r.get('cost_center_name', '')).lower()
+                        )
+                        if not text_match:
+                            continue
+                    filtered_rows.append(r)
+
+                # Recomputed totals for the filtered set
+                filt_b = sum(float(r.get('budget_amount') or 0) for r in filtered_rows)
+                filt_c = sum(float(r.get('committed_amount') or 0) for r in filtered_rows)
+                filt_s = sum(float(r.get('actual_spent') or 0) for r in filtered_rows)
+                filt_cons = filt_c + filt_s
+                filt_rem = filt_b - filt_cons
+                filt_pct = round((filt_cons / filt_b) * 100, 1) if filt_b > 0 else 0
+
+                filt_summary = {
+                    'totalBudget': filt_b,
+                    'totalCommitted': filt_c,
+                    'totalSpent': filt_s,
+                    'totalConsumed': filt_cons,
+                    'remainingBudget': filt_rem,
+                    'overallPctConsumed': filt_pct,
+                }
+
+                with ui.card().classes('w-full p-5 gap-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs'):
+                    # 1. Executive Title & Export Action Suite
+                    with ui.row().classes('w-full items-center justify-between no-wrap gap-4 border-b border-slate-100 pb-4'):
+                        with ui.row().classes('items-center gap-3.5'):
+                            with ui.element('div').classes('w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-600 to-indigo-700 text-white flex items-center justify-center shadow-md shadow-teal-500/20 shrink-0'):
+                                ui.icon('analytics').classes('text-2xl')
+                            with ui.column().classes('gap-0.5'):
+                                with ui.row().classes('items-center gap-2'):
+                                    ui.label(_loc('rep_title')).classes('text-lg font-extrabold text-slate-900 tracking-tight')
+                                    ui.label('PREMIUM EDITION').classes('text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-2xs')
+                                ui.label(_loc('rep_subtitle')).classes('text-xs text-slate-500 max-w-3xl leading-relaxed')
+
+                        # Export & Print Actions Suite
+                        with ui.row().classes('items-center gap-2 shrink-0'):
+                            def _do_copy_briefing():
+                                br_cnt = sum(1 for r in filtered_rows if r.get('avc_status') == 'breach')
+                                wn_cnt = sum(1 for r in filtered_rows if r.get('avc_status') == 'warning')
+                                summary_text = (
+                                    f"--- COMPLEXE HOSPITALIER SHISONG // BUDGETARY BRIEFING 2026 ---\n"
+                                    f"* Exercice Budgétaire : 2026 | Date : {datetime.date.today()}\n"
+                                    f"* Périmètre : {len(filtered_rows)} lignes budgétaires analysées\n"
+                                    f"* Dotation Votée Révisée : {w.money(filt_b, curr)} {curr}\n"
+                                    f"* Engagements Juridiques (BC/DA) : {w.money(filt_c, curr)} {curr}\n"
+                                    f"* Dépenses Comptables Réalisées : {w.money(filt_s, curr)} {curr}\n"
+                                    f"* Total Consommé : {w.money(filt_cons, curr)} {curr} ({filt_pct}%)\n"
+                                    f"* Crédits Disponibles Nets : {w.money(filt_rem, curr)} {curr}\n"
+                                    f"* Statut de Conformité AVC : {len(filtered_rows) - br_cnt - wn_cnt} lignes conformes | {wn_cnt} sous surveillance | {br_cnt} en dépassement.\n"
+                                    f"-----------------------------------------------------------"
+                                )
+                                ui.run_javascript(f'navigator.clipboard.writeText({repr(summary_text)})')
+                                ui.notify(_loc('notify_copied_briefing'), type='positive', position='top')
+
+                            ui.button(
+                                _loc('btn_copy_summary'),
+                                icon='content_copy',
+                                on_click=_do_copy_briefing
+                            ).props('outline color=slate-700 dense no-caps text-color=slate-700 size=sm')
+
+                            def _do_export_csv():
+                                import csv
+                                import io
+                                output = io.StringIO()
+                                writer = csv.writer(output)
+                                r_type = report_internal_state['type']
+
+                                if r_type == 'statutory':
+                                    writer.writerow(['Compte Code', 'Compte Intitule', 'Departement', 'Programme', 'Section', 'Budget Vote', 'Engage', 'Realise', 'Total Consomme', 'Disponible', 'Taux %', 'Statut AVC'])
+                                    for r in filtered_rows:
+                                        b_amt = float(r.get('budget_amount') or 0)
+                                        c_amt = float(r.get('committed_amount') or 0)
+                                        s_amt = float(r.get('actual_spent') or 0)
+                                        writer.writerow([
+                                            r.get('account_code'),
+                                            r.get('account_name_en') if (not is_fr and r.get('account_name_en')) else r.get('account_name'),
+                                            r.get('cost_center_name') or 'Direction Generale',
+                                            r.get('program_name') or 'Fonds Propres',
+                                            r.get('budget_type') or 'opex',
+                                            b_amt, c_amt, s_amt, c_amt + s_amt,
+                                            float(r.get('remaining_budget') or 0),
+                                            r.get('pct_consumed') or 0,
+                                            r.get('avc_status') or 'normal'
+                                        ])
+                                elif r_type == 'variance':
+                                    writer.writerow(['Compte Code', 'Compte Intitule', 'Budget Annuel', 'T1', 'T2', 'T3', 'T4', 'Realise', 'Ecart Valeur', 'Ecart %', 'Statut'])
+                                    for r in filtered_rows:
+                                        b_amt = float(r.get('budget_amount') or 0)
+                                        s_amt = float(r.get('actual_spent') or 0)
+                                        q = b_amt / 4.0
+                                        delta = b_amt - s_amt
+                                        delta_pct = round(((b_amt - s_amt) / b_amt) * 100, 1) if b_amt > 0 else 0
+                                        writer.writerow([r.get('account_code'), r.get('account_name'), b_amt, q, q, q, q, s_amt, delta, delta_pct, 'Favorable' if delta >= 0 else 'Defavorable'])
+                                elif r_type == 'versions':
+                                    writer.writerow(['Compte Code', 'Compte Intitule', 'Vote Initial (V0)', 'Reports N-1', 'Virements', 'Budget Revise (V1)', 'Pre-Engagements (DA)', 'Engagements Fermes (BC)', 'Depenses Realisees', 'Consomme V1', 'Disponible V1', 'Taux %', 'Statut AVC'])
+                                    for r in filtered_rows:
+                                        writer.writerow([
+                                            r.get('account_code'), r.get('account_name'),
+                                            r.get('initial_budget') or r.get('budget_amount'),
+                                            0, 0, r.get('budget_amount'),
+                                            0, r.get('committed_amount'), r.get('actual_spent'),
+                                            float(r.get('committed_amount') or 0) + float(r.get('actual_spent') or 0),
+                                            r.get('remaining_budget'), r.get('pct_consumed'), r.get('avc_status')
+                                        ])
+                                else:
+                                    writer.writerow(['Etape', 'Reference', 'Objet / Description', 'Beneficiaire', 'Montant XAF', 'Statut'])
+                                    for c in comms:
+                                        writer.writerow(['2. Engagement', c.get('commitment_number'), c.get('description'), c.get('vendor_name') or 'N/A', c.get('amount'), c.get('status')])
+                                    for m in orders:
+                                        writer.writerow(['4. Ordonnancement', m.get('mandat_number'), m.get('object_description'), m.get('beneficiary_name'), m.get('net_amount'), m.get('status')])
+
+                                csv_data = output.getvalue()
+                                ui.download(csv_data.encode('utf-8'), f"Rapport_Budgetaire_{datetime.date.today().isoformat()}_{report_internal_state['type']}.csv")
+                                ui.notify('Fichier CSV généré avec succès !' if is_fr else 'CSV Report exported successfully!', type='positive')
+
+                            ui.button(
+                                _loc('btn_export_csv'),
+                                icon='file_download',
+                                on_click=_do_export_csv
+                            ).props('outline color=teal dense no-caps text-color=teal-8 size=sm')
+
+                            ui.button(
+                                _loc('btn_print_official'),
+                                icon='print',
+                                on_click=lambda: _open_official_print_modal(report_internal_state['type'], filtered_rows, filt_summary)
+                            ).props('unelevated color=indigo-9 text-white dense no-caps size=sm shadow-xs')
+
+                    # 2. Multi-Report Selector Bar & Multi-Axial Filters
+                    with ui.row().classes('w-full items-center justify-between gap-3 p-3.5 bg-slate-50/80 rounded-xl border border-slate-200'):
+                        # Report Type Selector
+                        rep_type_opts = {
+                            'statutory': _loc('rep_type_execution'),
+                            'variance': _loc('rep_type_variance'),
+                            'versions': _loc('rep_type_versions'),
+                            'pipeline': _loc('rep_type_pipeline'),
+                        }
+                        def _change_rep_type(e_val: str):
+                            report_internal_state['type'] = e_val
+                            _render_reports_tab.refresh()
+
+                        sel_type = ui.select(
+                            rep_type_opts,
+                            value=report_internal_state['type'],
+                            label='Sélectionner le Rapport' if is_fr else 'Select Report Mode',
+                            on_change=lambda e: _change_rep_type(e.value),
+                        ).props('outlined dense options-dense bg-white').classes('w-96 font-semibold')
+
+                        # Filter Dimensions
+                        dept_opts = {0: _loc('rep_all_depts')}
+                        for c in cost_centers:
+                            c_name = c.get('name_en') if (not is_fr and c.get('name_en')) else c.get('name')
+                            dept_opts[c['id']] = f"{c['code']} - {c_name}"
+
+                        def _change_dept(e_val: int):
+                            report_internal_state['dept_id'] = e_val
+                            _render_reports_tab.refresh()
+
+                        ui.select(
+                            dept_opts,
+                            value=report_internal_state['dept_id'],
+                            label=_loc('rep_filter_dept'),
+                            on_change=lambda e: _change_dept(e.value),
+                        ).props('outlined dense options-dense bg-white').classes('w-56')
+
+                        nature_opts = {
+                            'all': _loc('filter_all_types'),
+                            'opex': _loc('type_opex'),
+                            'capex': _loc('type_capex'),
+                            'maintenance': _loc('type_maint'),
+                            'revenue': _loc('type_rev'),
+                        }
+                        def _change_nature(e_val: str):
+                            report_internal_state['nature'] = e_val
+                            _render_reports_tab.refresh()
+
+                        ui.select(
+                            nature_opts,
+                            value=report_internal_state['nature'],
+                            label=_loc('rep_filter_nature'),
+                            on_change=lambda e: _change_nature(e.value),
+                        ).props('outlined dense options-dense bg-white').classes('w-48')
+
+                        avc_opts = {
+                            'all': _loc('rep_all_avc'),
+                            'normal': _loc('rep_avc_safe'),
+                            'warning': _loc('rep_avc_warning'),
+                            'breach': _loc('rep_avc_breach'),
+                        }
+                        def _change_avc(e_val: str):
+                            report_internal_state['avc'] = e_val
+                            _render_reports_tab.refresh()
+
+                        ui.select(
+                            avc_opts,
+                            value=report_internal_state['avc'],
+                            label=_loc('rep_filter_avc'),
+                            on_change=lambda e: _change_avc(e.value),
+                        ).props('outlined dense options-dense bg-white').classes('w-44')
+
+                        def _change_search(e_val: str):
+                            report_internal_state['search'] = e_val
+                            _render_reports_tab.refresh()
+
+                        search_in = ui.input(placeholder=_loc('search_placeholder'), value=report_internal_state['search']).props('outlined dense clearable bg-white').classes('w-56')
+                        search_in.on('keydown.enter', lambda e: _change_search(search_in.value or ''))
+
+                    # 3. Executive KPI Cards Bar
+                    with ui.grid(columns=5).classes('w-full gap-3 text-center'):
+                        with ui.element('div').classes('p-3.5 rounded-xl bg-gradient-to-br from-white to-slate-50 border border-slate-200 shadow-2xs'):
+                            ui.label(_loc('rep_stat_total_budget')).classes('text-[11px] uppercase font-bold text-slate-500')
+                            ui.label(w.money(filt_b, curr)).classes('text-lg font-mono font-bold text-slate-900 truncate')
+                            ui.label(f"{len(filtered_rows)} {_loc('rep_lines_count')}").classes('text-[10px] text-slate-400')
+
+                        with ui.element('div').classes('p-3.5 rounded-xl bg-gradient-to-br from-white to-amber-50/40 border border-amber-200 shadow-2xs'):
+                            ui.label(_loc('rep_stat_committed')).classes('text-[11px] uppercase font-bold text-amber-700')
+                            ui.label(w.money(filt_c, curr)).classes('text-lg font-mono font-bold text-amber-900 truncate')
+                            ui.label(f"{round((filt_c / filt_b)*100, 1) if filt_b > 0 else 0}% du budget").classes('text-[10px] text-amber-600')
+
+                        with ui.element('div').classes('p-3.5 rounded-xl bg-gradient-to-br from-white to-indigo-50/40 border border-indigo-200 shadow-2xs'):
+                            ui.label(_loc('rep_stat_spent')).classes('text-[11px] uppercase font-bold text-indigo-700')
+                            ui.label(w.money(filt_s, curr)).classes('text-lg font-mono font-bold text-indigo-900 truncate')
+                            ui.label(f"{round((filt_s / filt_b)*100, 1) if filt_b > 0 else 0}% imputé").classes('text-[10px] text-indigo-600')
+
+                        avail_tone = 'emerald' if filt_rem >= 0 else 'rose'
+                        with ui.element('div').classes(f"p-3.5 rounded-xl bg-gradient-to-br from-white to-{avail_tone}-50/40 border border-{avail_tone}-200 shadow-2xs"):
+                            ui.label(_loc('rep_stat_available')).classes(f'text-[11px] uppercase font-bold text-{avail_tone}-700')
+                            ui.label(w.money(filt_rem, curr)).classes(f'text-lg font-mono font-extrabold text-{avail_tone}-900 truncate')
+                            ui.label('Solde libre net' if is_fr else 'Net free headroom').classes(f'text-[10px] text-{avail_tone}-600')
+
+                        with ui.element('div').classes('p-3.5 rounded-xl bg-gradient-to-br from-white to-teal-50/40 border border-teal-200 shadow-2xs flex flex-col justify-between'):
+                            ui.label(_loc('rep_stat_rate')).classes('text-[11px] uppercase font-bold text-teal-700')
+                            ui.label(f"{filt_pct}%").classes('text-xl font-mono font-black text-teal-950')
+                            p_color = 'negative' if filt_pct > 90 else ('warning' if filt_pct > 75 else 'teal')
+                            ui.linear_progress(value=min(1.0, filt_pct / 100.0), size='6px').props(f'rounded color={p_color}').classes('w-full mt-1')
+
+                    # 4. Executive Visual Breakdown Panels (Departmental, Nature, and AVC Radar)
+                    with ui.grid(columns=3).classes('w-full gap-4'):
+                        # Panel A: Departmental Share
+                        with ui.element('div').classes('p-4 rounded-xl border border-slate-200 bg-white flex flex-col gap-2.5 shadow-2xs'):
+                            with ui.row().classes('items-center justify-between no-wrap'):
+                                ui.label(_loc('rep_dept_breakdown_title')).classes('text-xs font-bold uppercase text-slate-700 tracking-wide')
+                                ui.icon('apartment').classes('text-teal-700 text-sm')
+
+                            # Aggregate by department
+                            dept_totals: dict[str, float] = {}
+                            for r in filtered_rows:
+                                d_name = r.get('cost_center_name') or ('Direction Générale' if is_fr else 'General Management')
+                                dept_totals[d_name] = dept_totals.get(d_name, 0) + (float(r.get('committed_amount') or 0) + float(r.get('actual_spent') or 0))
+
+                            top_depts = sorted(dept_totals.items(), key=lambda x: x[1], reverse=True)[:4]
+                            if top_depts:
+                                for d_name, d_val in top_depts:
+                                    d_share = round((d_val / filt_cons) * 100, 1) if filt_cons > 0 else 0
+                                    with ui.column().classes('w-full gap-1'):
+                                        with ui.row().classes('w-full justify-between items-center text-xs'):
+                                            ui.label(d_name).classes('font-medium text-slate-700 truncate max-w-[180px]')
+                                            ui.label(f"{w.money(d_val, curr)} ({d_share}%)").classes('font-mono font-bold text-slate-800 text-[11px]')
+                                        ui.linear_progress(value=min(1.0, d_share / 100.0), size='5px').props('rounded color=teal').classes('w-full')
+                            else:
+                                ui.label('Aucune dépense enregistrée' if is_fr else 'No expenses recorded').classes('text-xs text-slate-400 italic py-2')
+
+                        # Panel B: Nature Breakdown (OPEX vs CAPEX vs Maint)
+                        with ui.element('div').classes('p-4 rounded-xl border border-slate-200 bg-white flex flex-col gap-2.5 shadow-2xs'):
+                            with ui.row().classes('items-center justify-between no-wrap'):
+                                ui.label(_loc('rep_nature_breakdown_title')).classes('text-xs font-bold uppercase text-slate-700 tracking-wide')
+                                ui.icon('pie_chart').classes('text-indigo-700 text-sm')
+
+                            nature_totals: dict[str, float] = {'opex': 0, 'capex': 0, 'maintenance': 0}
+                            for r in filtered_rows:
+                                n_key = r.get('budget_type') or 'opex'
+                                if n_key in nature_totals:
+                                    nature_totals[n_key] += (float(r.get('committed_amount') or 0) + float(r.get('actual_spent') or 0))
+
+                            nature_labels = {
+                                'opex': ('Charges de Fonctionnement (Classe 6)' if is_fr else 'Operating (Opex)', 'indigo'),
+                                'capex': ('Investissements & Actifs (Classe 2)' if is_fr else 'Capital (Capex)', 'amber'),
+                                'maintenance': ('Maintenance & Entretien Biomédical' if is_fr else 'Maintenance', 'teal'),
+                            }
+                            for n_key, (n_lbl, n_col) in nature_labels.items():
+                                n_val = nature_totals.get(n_key, 0)
+                                n_share = round((n_val / filt_cons) * 100, 1) if filt_cons > 0 else 0
+                                with ui.column().classes('w-full gap-1'):
+                                    with ui.row().classes('w-full justify-between items-center text-xs'):
+                                        ui.label(n_lbl).classes('font-medium text-slate-700 truncate max-w-[200px]')
+                                        ui.label(f"{w.money(n_val, curr)} ({n_share}%)").classes('font-mono font-bold text-slate-800 text-[11px]')
+                                    ui.linear_progress(value=min(1.0, n_share / 100.0), size='5px').props(f'rounded color={n_col}').classes('w-full')
+
+                        # Panel C: AVC Statutory Compliance Radar
+                        with ui.element('div').classes('p-4 rounded-xl border border-slate-200 bg-white flex flex-col gap-2.5 shadow-2xs'):
+                            with ui.row().classes('items-center justify-between no-wrap'):
+                                ui.label(_loc('rep_avc_radar_title')).classes('text-xs font-bold uppercase text-slate-700 tracking-wide')
+                                ui.icon('shield').classes('text-emerald-700 text-sm')
+
+                            br_cnt = sum(1 for r in filtered_rows if r.get('avc_status') == 'breach')
+                            wn_cnt = sum(1 for r in filtered_rows if r.get('avc_status') == 'warning')
+                            ok_cnt = len(filtered_rows) - br_cnt - wn_cnt
+
+                            with ui.column().classes('w-full gap-2 text-xs'):
+                                with ui.row().classes('w-full justify-between items-center p-2 rounded-lg bg-emerald-50 border border-emerald-200'):
+                                    with ui.row().classes('items-center gap-2'):
+                                        ui.label('🟢').classes('text-xs')
+                                        ui.label('Conformes (<80% de conso)' if is_fr else 'Safe (<80% consumed)').classes('font-bold text-emerald-900')
+                                    ui.label(f"{ok_cnt} lignes").classes('font-mono font-bold text-emerald-800')
+
+                                with ui.row().classes('w-full justify-between items-center p-2 rounded-lg bg-amber-50 border border-amber-200'):
+                                    with ui.row().classes('items-center gap-2'):
+                                        ui.label('🟡').classes('text-xs')
+                                        ui.label('Sous Alerte (80–100%)' if is_fr else 'Warning (80–100%)').classes('font-bold text-amber-900')
+                                    ui.label(f"{wn_cnt} lignes").classes('font-mono font-bold text-amber-800')
+
+                                with ui.row().classes('w-full justify-between items-center p-2 rounded-lg bg-rose-50 border border-rose-200'):
+                                    with ui.row().classes('items-center gap-2'):
+                                        ui.label('🔴').classes('text-xs')
+                                        ui.label('Dépassements / Bloqués' if is_fr else 'Breach / Overruns').classes('font-bold text-rose-900')
+                                    ui.label(f"{br_cnt} lignes").classes('font-mono font-extrabold text-rose-800')
+
+                    # 5. Dynamic Data Table Based on Active Report Mode
+                    r_type = report_internal_state['type']
+
+                    if r_type == 'statutory':
+                        # Case 1: Statutory Budget Execution Statement
+                        stat_rows = []
+                        for r in filtered_rows:
+                            b_amt = float(r.get('budget_amount') or 0)
+                            c_amt = float(r.get('committed_amount') or 0)
+                            s_amt = float(r.get('actual_spent') or 0)
+                            cons_amt = c_amt + s_amt
+                            rem_amt = float(r.get('remaining_budget') or 0)
+                            pct_val = r.get('pct_consumed') or 0
+                            avc_status = r.get('avc_status') or 'normal'
+                            stat_rows.append({
+                                'account': f"{r.get('account_code')} - {r.get('account_name')}",
+                                'dept': r.get('cost_center_name') or ('Direction Générale' if is_fr else 'General Management'),
+                                'prog': r.get('program_name') or ('Fonds Propres' if is_fr else 'Own Funds'),
+                                'type': _tr_type(r.get('budget_type') or 'opex'),
+                                'budget': w.money(b_amt, curr),
+                                'committed': w.money(c_amt, curr),
+                                'spent': w.money(s_amt, curr),
+                                'consumed': w.money(cons_amt, curr),
+                                'avail': w.money(rem_amt, curr),
+                                'rate': f"{pct_val}%",
+                                '_rate_raw': pct_val,
+                                'avc': 'NORMAL' if avc_status == 'normal' else ('ALERTE' if avc_status == 'warning' else 'DÉPASSEMENT'),
+                                '_avc_raw': avc_status,
+                            })
+
+                        stat_cols = [
+                            {'name': 'account', 'label': _loc('col_account'), 'field': 'account', 'align': 'left', 'sortable': True},
+                            {'name': 'dept', 'label': _loc('col_dept'), 'field': 'dept', 'align': 'left', 'sortable': True},
+                            {'name': 'prog', 'label': _loc('col_program'), 'field': 'prog', 'align': 'left'},
+                            {'name': 'type', 'label': _loc('col_type'), 'field': 'type', 'align': 'center'},
+                            {'name': 'budget', 'label': _loc('col_budget'), 'field': 'budget', 'align': 'right', 'sortable': True},
+                            {'name': 'committed', 'label': _loc('col_comm'), 'field': 'committed', 'align': 'right', 'sortable': True},
+                            {'name': 'spent', 'label': _loc('col_spent'), 'field': 'spent', 'align': 'right', 'sortable': True},
+                            {'name': 'consumed', 'label': _loc('col_consumed'), 'field': 'consumed', 'align': 'right', 'sortable': True},
+                            {'name': 'avail', 'label': _loc('col_avail'), 'field': 'avail', 'align': 'right', 'sortable': True},
+                            {'name': 'rate', 'label': _loc('col_rate'), 'field': 'rate', 'align': 'right', 'sortable': True},
+                            {'name': 'avc', 'label': _loc('col_avc_status'), 'field': 'avc', 'align': 'center', 'sortable': True},
+                        ]
+
+                        tbl_stat = ui.table(columns=stat_cols, rows=stat_rows, pagination=15).classes('w-full lc-table')
+                        tbl_stat.add_slot('body-cell-budget', '<q-td :props="props" class="font-mono font-bold">{{ props.value }}</q-td>')
+                        tbl_stat.add_slot('body-cell-consumed', '<q-td :props="props" class="font-mono font-bold text-slate-800">{{ props.value }}</q-td>')
+                        tbl_stat.add_slot('body-cell-avail', '<q-td :props="props" :class="props.row._avc_raw === \'breach\' ? \'text-red-700 font-bold font-mono\' : \'text-emerald-700 font-bold font-mono\'">{{ props.value }}</q-td>')
+                        tbl_stat.add_slot('body-cell-avc', '''
+                            <q-td :props="props">
+                                <q-chip dense :color="props.row._avc_raw === 'breach' ? 'red-1' : (props.row._avc_raw === 'warning' ? 'amber-1' : 'green-1')"
+                                        :text-color="props.row._avc_raw === 'breach' ? 'red-9' : (props.row._avc_raw === 'warning' ? 'amber-9' : 'green-9')"
+                                        class="text-weight-bold text-caption">
+                                    {{ props.value }}
+                                </q-chip>
+                            </q-td>
+                        ''')
+
+                    elif r_type == 'variance':
+                        # Case 2: Budget vs Actual Variance Analysis & Quarterly Phasing
+                        var_rows = []
+                        for r in filtered_rows:
+                            b_amt = float(r.get('budget_amount') or 0)
+                            s_amt = float(r.get('actual_spent') or 0)
+                            q_amt = b_amt / 4.0
+                            delta = b_amt - s_amt
+                            delta_pct = round(((b_amt - s_amt) / b_amt) * 100, 1) if b_amt > 0 else 0
+                            is_favorable = delta >= 0
+                            var_rows.append({
+                                'account': f"{r.get('account_code')} - {r.get('account_name')}",
+                                'dept': r.get('cost_center_name') or 'Direction Générale',
+                                'budget': w.money(b_amt, curr),
+                                'q1': w.money(q_amt, curr),
+                                'q2': w.money(q_amt, curr),
+                                'q3': w.money(q_amt, curr),
+                                'q4': w.money(q_amt, curr),
+                                'spent': w.money(s_amt, curr),
+                                'delta': w.money(delta, curr),
+                                'delta_pct': f"{delta_pct}%",
+                                'status': 'FAVORABLE (Économie)' if is_favorable else 'DÉFAVORABLE (Dépassement)',
+                                '_is_fav': is_favorable,
+                            })
+
+                        var_cols = [
+                            {'name': 'account', 'label': _loc('col_account'), 'field': 'account', 'align': 'left', 'sortable': True},
+                            {'name': 'dept', 'label': _loc('col_dept'), 'field': 'dept', 'align': 'left'},
+                            {'name': 'budget', 'label': _loc('col_budget'), 'field': 'budget', 'align': 'right', 'sortable': True},
+                            {'name': 'q1', 'label': _loc('col_phasing_q1'), 'field': 'q1', 'align': 'right'},
+                            {'name': 'q2', 'label': _loc('col_phasing_q2'), 'field': 'q2', 'align': 'right'},
+                            {'name': 'q3', 'label': _loc('col_phasing_q3'), 'field': 'q3', 'align': 'right'},
+                            {'name': 'q4', 'label': _loc('col_phasing_q4'), 'field': 'q4', 'align': 'right'},
+                            {'name': 'spent', 'label': _loc('col_spent'), 'field': 'spent', 'align': 'right', 'sortable': True},
+                            {'name': 'delta', 'label': _loc('col_variance_val'), 'field': 'delta', 'align': 'right', 'sortable': True},
+                            {'name': 'delta_pct', 'label': _loc('col_variance_pct'), 'field': 'delta_pct', 'align': 'right', 'sortable': True},
+                            {'name': 'status', 'label': _loc('col_variance_status'), 'field': 'status', 'align': 'center'},
+                        ]
+
+                        tbl_var = ui.table(columns=var_cols, rows=var_rows, pagination=15).classes('w-full lc-table')
+                        tbl_var.add_slot('body-cell-delta', '<q-td :props="props" :class="props.row._is_fav ? \'text-emerald-700 font-bold font-mono\' : \'text-red-700 font-bold font-mono\'">{{ props.value }}</q-td>')
+                        tbl_var.add_slot('body-cell-status', '''
+                            <q-td :props="props">
+                                <q-badge :color="props.row._is_fav ? 'green-1' : 'red-1'" :text-color="props.row._is_fav ? 'green-9' : 'red-9'" class="text-weight-bold">
+                                    {{ props.value }}
+                                </q-badge>
+                            </q-td>
+                        ''')
+
+                    elif r_type == 'versions':
+                        # Case 3: Multi-Version Comparative Analysis (V0 vs V1 vs Real)
+                        comp_rows = []
+                        for r in filtered_rows:
+                            v0 = float(r.get('initial_budget') or r.get('budget_amount') or 0)
+                            v1 = float(r.get('budget_amount') or 0)
+                            delta = v1 - v0
+                            comm_amt = float(r.get('committed_amount') or 0)
+                            s_amt = float(r.get('actual_spent') or 0)
+                            cons_amt = comm_amt + s_amt
+                            rem_amt = float(r.get('remaining_budget') or 0)
+                            pct_v1 = r.get('pct_consumed') or 0
+                            comp_rows.append({
+                                'account': f"{r.get('account_code')} - {r.get('account_name')}",
+                                'v0': w.money(v0, curr),
+                                'carried': w.money(0, curr),
+                                'transfers': w.money(delta, curr),
+                                'v1': w.money(v1, curr),
+                                'delta': w.money(delta, curr),
+                                'comm': w.money(comm_amt, curr),
+                                'spent': w.money(s_amt, curr),
+                                'consumed': w.money(cons_amt, curr),
+                                'avail': w.money(rem_amt, curr),
+                                'rate_v1': f"{pct_v1}%",
+                                'avc': 'NORMAL' if r.get('avc_status') == 'normal' else ('ALERTE' if r.get('avc_status') == 'warning' else 'DÉPASSEMENT'),
+                                '_avc_raw': r.get('avc_status') or 'normal',
+                            })
+
+                        comp_cols = [
+                            {'name': 'account', 'label': _loc('col_account'), 'field': 'account', 'align': 'left', 'sortable': True},
+                            {'name': 'v0', 'label': _loc('col_v0'), 'field': 'v0', 'align': 'right', 'sortable': True},
+                            {'name': 'carried', 'label': _loc('col_carried'), 'field': 'carried', 'align': 'right'},
+                            {'name': 'transfers', 'label': _loc('col_transfers'), 'field': 'transfers', 'align': 'right'},
+                            {'name': 'v1', 'label': _loc('col_v1'), 'field': 'v1', 'align': 'right', 'sortable': True},
+                            {'name': 'delta', 'label': _loc('col_delta'), 'field': 'delta', 'align': 'right'},
+                            {'name': 'comm', 'label': _loc('col_comm'), 'field': 'comm', 'align': 'right'},
+                            {'name': 'spent', 'label': _loc('col_spent'), 'field': 'spent', 'align': 'right'},
+                            {'name': 'consumed', 'label': _loc('col_consumed'), 'field': 'consumed', 'align': 'right', 'sortable': True},
+                            {'name': 'avail', 'label': _loc('col_avail'), 'field': 'avail', 'align': 'right', 'sortable': True},
+                            {'name': 'rate_v1', 'label': _loc('col_exec_v1'), 'field': 'rate_v1', 'align': 'right', 'sortable': True},
+                            {'name': 'avc', 'label': _loc('col_avc_status'), 'field': 'avc', 'align': 'center'},
+                        ]
+
+                        tbl_comp = ui.table(columns=comp_cols, rows=comp_rows, pagination=15).classes('w-full lc-table')
+                        tbl_comp.add_slot('body-cell-v1', '<q-td :props="props" class="font-mono font-bold text-teal-800">{{ props.value }}</q-td>')
+                        tbl_comp.add_slot('body-cell-avc', '''
+                            <q-td :props="props">
+                                <q-chip dense :color="props.row._avc_raw === 'breach' ? 'red-1' : (props.row._avc_raw === 'warning' ? 'amber-1' : 'green-1')"
+                                        :text-color="props.row._avc_raw === 'breach' ? 'red-9' : (props.row._avc_raw === 'warning' ? 'amber-9' : 'green-9')"
+                                        class="text-weight-bold">
+                                    {{ props.value }}
+                                </q-chip>
+                            </q-td>
+                        ''')
+
+                    else:
+                        # Case 4: 5-Stage Statutory Expenditure Pipeline & Bottlenecks
+                        tot_mandat = sum(float(o.get('net_amount', 0)) for o in orders)
+                        tot_paid = sum(float(o.get('paid_amount', 0)) for o in orders if o.get('status') == 'paid')
+                        tot_cert = sum(float(c.get('certified_amount', 0)) for c in certs)
+
+                        # Pipeline summary cards
+                        with ui.grid(columns=3).classes('w-full gap-3 mb-2'):
+                            pending_cert = max(0.0, filt_c - tot_cert)
+                            with ui.element('div').classes('p-3 rounded-xl bg-amber-50 border border-amber-200'):
+                                ui.label(_loc('pipe_pending_cert')).classes('text-[11px] font-bold text-amber-900 uppercase')
+                                ui.label(w.money(pending_cert, curr)).classes('text-base font-mono font-bold text-amber-950')
+                                ui.label(f"{len(comms)} engagements émis").classes('text-[10px] text-amber-700')
+
+                            pending_mandat = max(0.0, tot_cert - tot_mandat)
+                            with ui.element('div').classes('p-3 rounded-xl bg-purple-50 border border-purple-200'):
+                                ui.label(_loc('pipe_pending_mandat')).classes('text-[11px] font-bold text-purple-900 uppercase')
+                                ui.label(w.money(pending_mandat, curr)).classes('text-base font-mono font-bold text-purple-950')
+                                ui.label(f"{len(certs)} PV de réception certifiés").classes('text-[10px] text-purple-700')
+
+                            pending_pay = max(0.0, tot_mandat - tot_paid)
+                            with ui.element('div').classes('p-3 rounded-xl bg-indigo-50 border border-indigo-200'):
+                                ui.label(_loc('pipe_pending_pay')).classes('text-[11px] font-bold text-indigo-900 uppercase')
+                                ui.label(w.money(pending_pay, curr)).classes('text-base font-mono font-bold text-indigo-950')
+                                ui.label(f"{len(orders)} mandats de paiement émis").classes('text-[10px] text-indigo-700')
+
+                        pipe_rows = []
+                        for c in comms:
+                            pipe_rows.append({
+                                'stage': '2. Engagement (BC)',
+                                'ref': c.get('commitment_number') or f"#{c.get('id')}",
+                                'desc': c.get('description'),
+                                'partner': c.get('vendor_name') or 'Fournisseur non spécifié',
+                                'amount': w.money(c.get('amount', 0), curr),
+                                'status': _tr_status(c.get('status')),
+                                '_status_raw': c.get('status'),
+                            })
+                        for o in orders:
+                            pipe_rows.append({
+                                'stage': '4. Ordonnancement',
+                                'ref': o.get('mandat_number'),
+                                'desc': o.get('object_description'),
+                                'partner': o.get('beneficiary_name'),
+                                'amount': w.money(o.get('net_amount', 0), curr),
+                                'status': _tr_status(o.get('status')),
+                                '_status_raw': o.get('status'),
+                            })
+
+                        pipe_cols = [
+                            {'name': 'stage', 'label': 'Étape du Flux' if is_fr else 'Pipeline Stage', 'field': 'stage', 'align': 'left', 'sortable': True},
+                            {'name': 'ref', 'label': _loc('col_ref'), 'field': 'ref', 'align': 'left', 'sortable': True},
+                            {'name': 'desc', 'label': _loc('col_desc'), 'field': 'desc', 'align': 'left'},
+                            {'name': 'partner', 'label': _loc('col_vendor'), 'field': 'partner', 'align': 'left'},
+                            {'name': 'amount', 'label': _loc('col_amount'), 'field': 'amount', 'align': 'right', 'sortable': True},
+                            {'name': 'status', 'label': _loc('col_status'), 'field': 'status', 'align': 'center'},
+                        ]
+
+                        tbl_pipe = ui.table(columns=pipe_cols, rows=pipe_rows, pagination=15).classes('w-full lc-table')
+                        tbl_pipe.add_slot('body-cell-ref', '<q-td :props="props" class="font-mono font-bold text-primary">{{ props.value }}</q-td>')
+                        tbl_pipe.add_slot('body-cell-amount', '<q-td :props="props" class="font-mono font-bold text-slate-800">{{ props.value }}</q-td>')
+
+            refreshers['reports'] = _render_reports_tab.refresh
+            _render_reports_tab()
+
 
