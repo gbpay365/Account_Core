@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy full application code
 COPY backend ./backend
 COPY frontend ./frontend
+COPY docs ./docs
 COPY start.sh ./start.sh
 
 RUN chmod +x ./start.sh
