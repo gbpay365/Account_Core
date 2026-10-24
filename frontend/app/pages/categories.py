@@ -12,13 +12,16 @@ from ..i18n import account_label, domain_label, t
 from ..ui import chrome, widgets as w
 from ..ui.shell import page
 
-DOMAINS = ('biomedical', 'facility', 'fleet', 'it_office')
+DOMAINS = ('mining', 'production', 'biomedical', 'facility', 'fleet', 'it_office', 'services')
 
 DOMAIN_DEFAULTS = {
+    'mining': {'asset': '2411', 'accum': '2841', 'expense': '68131', 'maint': '6241'},
+    'production': {'asset': '2411', 'accum': '2841', 'expense': '68131', 'maint': '6241'},
     'biomedical': {'asset': '2412', 'accum': '2842', 'expense': '68132', 'maint': '6243'},
     'facility': {'asset': '234', 'accum': '2834', 'expense': '68131', 'maint': '6244'},
     'fleet': {'asset': '2451', 'accum': '2845', 'expense': '68134', 'maint': '6245'},
     'it_office': {'asset': '2442', 'accum': '2844', 'expense': '68133', 'maint': '6246'},
+    'services': {'asset': '2441', 'accum': '2844', 'expense': '68133', 'maint': '6248'},
 }
 
 SHARED_DEFAULTS = {'gain': '822', 'loss': '812', 'reval': '106', 'impair': '6941'}
@@ -90,14 +93,16 @@ def _summary(rows: list[dict]) -> None:
     with w.kpi_row():
         w.kpi(t('cat.total'), w.number(len(rows)), hint=t('cat.total_hint'),
               icon='category', tone='slate')
+        w.kpi(t('domain.mining'), w.number(counts['mining']),
+              hint='Extraction, crushers, heavy mobile', icon='construction', tone='amber')
+        w.kpi(t('domain.production'), w.number(counts['production']),
+              hint='Processing, assembly, CNC, plant', icon='precision_manufacturing', tone='sky')
         w.kpi(t('domain.biomedical'), w.number(counts['biomedical']),
               hint=t('cat.kpi_bio'), icon='biotech', tone='teal')
         w.kpi(t('domain.facility'), w.number(counts['facility']),
-              hint=t('cat.kpi_fac'), icon='apartment', tone='sky')
+              hint=t('cat.kpi_fac'), icon='apartment', tone='indigo')
         w.kpi(t('domain.fleet'), w.number(counts['fleet']),
               hint=t('cat.kpi_flt'), icon='local_shipping', tone='amber')
-        w.kpi(t('domain.it_office'), w.number(counts['it_office']),
-              hint=t('cat.kpi_it'), icon='computer', tone='violet')
 
 
 def _table(rows: list[dict], account_options: dict, all_rows: list[dict], reload) -> None:
@@ -184,7 +189,7 @@ def _category_dialog(reload, account_options: dict, all_rows: list[dict],
                 code = ui.input(t('cat.code'), value=existing.get('code') if editing else '') \
                     .props('outlined dense' + (' readonly' if editing else '')).classes('w-56')
                 domain = ui.select({key: t(f'domain.{key}') for key in DOMAINS},
-                                   value=existing.get('domain') if editing else 'biomedical',
+                                   value=existing.get('domain') if editing else 'production',
                                    label=t('common.domain')) \
                     .props('outlined dense').classes('flex-1')
             name = ui.input(t('cat.name_fr'), value=existing.get('name') if editing else '') \
@@ -202,7 +207,7 @@ def _category_dialog(reload, account_options: dict, all_rows: list[dict],
 
             with ui.row().classes('w-full gap-3 no-wrap'):
                 taxonomy = ui.select(
-                    {key: t(f'cat.tax.{key}') for key in ('internal', 'umdns', 'gmdn', 'none')},
+                    {key: t(f'cat.tax.{key}') for key in ('internal', 'iso14224', 'eclass', 'vmrs', 'umdns', 'gmdn', 'unspsc', 'none')},
                     value=(existing.get('taxonomy_system') if editing else 'internal') or 'internal',
                     label=t('cat.taxonomy')) \
                     .props('outlined dense').classes('flex-1')
@@ -212,7 +217,7 @@ def _category_dialog(reload, account_options: dict, all_rows: list[dict],
 
             w.heading(t('cat.accounts'))
             defaults = DOMAIN_DEFAULTS.get(
-                (existing or {}).get('domain') or 'biomedical', DOMAIN_DEFAULTS['biomedical']
+                (existing or {}).get('domain') or 'production', DOMAIN_DEFAULTS['production']
             )
             asset_acc = acct_select(t('cat.asset_account'),
                                     _account_code(existing, 'asset_account_id') or defaults['asset'])
@@ -325,7 +330,7 @@ def _category_dialog(reload, account_options: dict, all_rows: list[dict],
         def apply_domain() -> None:
             if parent.value or editing:
                 return
-            preset = DOMAIN_DEFAULTS.get(domain.value) or DOMAIN_DEFAULTS['biomedical']
+            preset = DOMAIN_DEFAULTS.get(domain.value) or DOMAIN_DEFAULTS['production']
             asset_acc.set_value(preset['asset'])
             accum_acc.set_value(preset['accum'])
             expense_acc.set_value(preset['expense'])

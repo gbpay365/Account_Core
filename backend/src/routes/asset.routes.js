@@ -44,7 +44,7 @@ assetRoutes.get(
   validate({
     query: pagination.extend({
       search: z.string().trim().optional(),
-      domain: z.enum(['biomedical', 'facility', 'fleet', 'it_office']).optional(),
+      domain: z.enum(['mining', 'production', 'biomedical', 'facility', 'fleet', 'it_office', 'services']).optional(),
       categoryId: optionalId,
       costCenterId: optionalId,
       locationId: optionalId,
@@ -481,7 +481,7 @@ assetRoutes.post(
   requirePermission('asset.dispose_request'),
   validate({
     body: z.object({
-      method: z.enum(['sale', 'donation', 'scrap', 'biomedical_waste', 'trade_in', 'write_off', 'theft_loss']),
+      method: z.enum(['sale', 'donation', 'scrap', 'biomedical_waste', 'hazardous_waste', 'trade_in', 'write_off', 'theft_loss']),
       reason: z.string().trim().min(5).max(500),
       requestDate: isoDate.optional(),
       disposalDate: isoDate.optional().nullable(),
@@ -614,9 +614,9 @@ const categoryBody = z.object({
     .regex(/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/, 'Use letters, numbers and hyphens, e.g. BIO-IMG-PET.'),
   name: z.string().trim().min(1).max(200),
   nameEn: emptyToNull(z.union([z.null(), z.string().trim().max(200)])),
-  domain: z.enum(['biomedical', 'facility', 'fleet', 'it_office']),
+  domain: z.enum(['mining', 'production', 'biomedical', 'facility', 'fleet', 'it_office', 'services']),
   parentId: emptyToNull(z.union([z.null(), z.coerce.number().int().positive()])),
-  taxonomySystem: z.enum(['umdns', 'gmdn', 'internal', 'none']).optional(),
+  taxonomySystem: z.enum(['internal', 'iso14224', 'eclass', 'vmrs', 'umdns', 'gmdn', 'unspsc', 'none']).optional(),
   taxonomyCode: emptyToNull(z.union([z.null(), z.string().trim().max(30)])),
   assetAccount: accountCode,
   accumDeprAccount: accountCode,

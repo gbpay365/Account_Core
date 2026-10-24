@@ -15,6 +15,20 @@ import { actorOf, isoDate, optionalId, boolish, pagination, paged } from './help
 
 export const maintenanceRoutes = Router();
 
+const teamEnum = z.enum([
+  'mechanical', 'electrical', 'production', 'heavy_equipment',
+  'biomedical', 'facilities', 'it', 'fleet', 'external'
+]);
+const woTypeEnum = z.enum([
+  'preventive', 'corrective', 'predictive', 'calibration',
+  'safety_test', 'overhaul', 'inspection', 'installation',
+  'statutory', 'vehicle_service'
+]);
+const domainEnum = z.enum([
+  'mining', 'production', 'biomedical', 'facility',
+  'fleet', 'it_office', 'services'
+]);
+
 // --- preventive maintenance plans (FR-AM-020) ------------------------------
 
 maintenanceRoutes.get(
@@ -23,8 +37,8 @@ maintenanceRoutes.get(
   validate({
     query: pagination.extend({
       assetId: optionalId,
-      planType: z.enum(['preventive', 'calibration', 'safety_test', 'inspection', 'statutory', 'vehicle_service']).optional(),
-      team: z.enum(['biomedical', 'facilities', 'it', 'fleet', 'external']).optional(),
+      planType: woTypeEnum.optional(),
+      team: teamEnum.optional(),
       dueBefore: isoDate.optional(),
       activeOnly: boolish.default(true),
     }),
@@ -76,7 +90,7 @@ maintenanceRoutes.patch(
       estimatedHours: z.coerce.number().min(0).optional(),
       requiredSkill: z.string().trim().max(100).optional().nullable(),
       defaultTechnicianId: optionalId.nullable(),
-      assignedTeam: z.enum(['biomedical', 'facilities', 'it', 'fleet', 'external']).optional(),
+      assignedTeam: teamEnum.optional(),
       serviceProviderId: optionalId.nullable(),
       leadTimeDays: z.coerce.number().int().min(0).max(365).optional(),
       priority: z.enum(['low', 'normal', 'high', 'emergency']).optional(),
@@ -156,7 +170,7 @@ maintenanceRoutes.get(
       pastDueOnly: boolish.optional(),
       type: z.string().trim().optional(),
       priority: z.enum(['low', 'normal', 'high', 'emergency']).optional(),
-      team: z.enum(['biomedical', 'facilities', 'it', 'fleet', 'external']).optional(),
+      team: teamEnum.optional(),
       mine: boolish.optional(),
       from: isoDate.optional(),
       to: isoDate.optional(),
@@ -280,7 +294,7 @@ maintenanceRoutes.post(
   validate({
     body: z.object({
       assetId: z.coerce.number().int().positive(),
-      type: z.enum(['preventive', 'corrective', 'calibration', 'safety_test', 'inspection', 'installation', 'vehicle_service']).default('corrective'),
+      type: woTypeEnum.default('corrective'),
       priority: z.enum(['low', 'normal', 'high', 'emergency']).default('normal'),
       title: z.string().trim().min(5).max(200),
       problemDescription: z.string().trim().max(2000).optional().nullable(),
@@ -290,7 +304,7 @@ maintenanceRoutes.post(
       scheduledDate: isoDate.optional().nullable(),
       dueDate: isoDate.optional().nullable(),
       assignedTo: optionalId.nullable(),
-      team: z.enum(['biomedical', 'facilities', 'it', 'fleet', 'external']).optional(),
+      team: teamEnum.optional(),
       serviceProviderId: optionalId.nullable(),
       serviceContractId: optionalId.nullable(),
       takeOffline: boolish.default(false),
@@ -330,7 +344,7 @@ const actionBody = z.object({
   reason: z.string().trim().max(500).optional().nullable(),
   assignedTo: optionalId.nullable(),
   serviceProviderId: optionalId.nullable(),
-  team: z.enum(['biomedical', 'facilities', 'it', 'fleet', 'external']).optional(),
+  team: teamEnum.optional(),
   scheduledDate: isoDate.optional(),
   dueDate: isoDate.optional(),
   takeOffline: boolish.optional(),
@@ -656,7 +670,7 @@ maintenanceRoutes.get(
     query: z.object({
       from: isoDate,
       to: isoDate,
-      domain: z.enum(['biomedical', 'facility', 'fleet', 'it_office']).optional(),
+      domain: domainEnum.optional(),
     }),
   }),
   handler(async (req, res) => {

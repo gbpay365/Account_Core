@@ -17,16 +17,27 @@ from ..ui.shell import page
 
 WO_TYPES = {
     'preventive': 'Preventive service', 'corrective': 'Corrective repair',
-    'calibration': 'Calibration', 'safety_test': 'Electrical safety test',
-    'inspection': 'Inspection', 'installation': 'Installation',
-    'vehicle_service': 'Vehicle service',
+    'predictive': 'Predictive / Condition monitoring',
+    'calibration': 'Calibration & Metrology', 'safety_test': 'Safety inspection & Testing',
+    'overhaul': 'Major overhaul & Refurbishment',
+    'inspection': 'Inspection & Walkaround', 'installation': 'Installation & Commissioning',
+    'vehicle_service': 'Vehicle & Heavy equipment service',
 }
 
-TEAMS = {'biomedical': 'Biomedical engineering', 'facilities': 'Facilities',
-         'it': 'IT', 'fleet': 'Fleet workshop', 'external': 'External provider'}
+TEAMS = {
+    'mechanical': 'Mechanical maintenance',
+    'electrical': 'Electrical & Instrumentation',
+    'production': 'Production & Plant operations',
+    'heavy_equipment': 'Heavy equipment & Mining',
+    'biomedical': 'Biomedical engineering',
+    'facilities': 'Facilities & Utilities',
+    'it': 'IT & Systems',
+    'fleet': 'Fleet & Transport workshop',
+    'external': 'External contractor / Vendor',
+}
 
 PRIORITIES = {'low': 'Low', 'normal': 'Normal', 'high': 'High',
-              'emergency': 'Emergency — patient care affected'}
+              'emergency': 'Emergency — safety hazard, critical stoppage or patient risk'}
 
 #: Which transitions to offer, in the order a job actually moves through them.
 ACTIONS = [
@@ -430,7 +441,7 @@ def _action_dialog(wo: dict, action: str, label: str, redraw, reload) -> None:
             fields['takeOffline'] = ui.switch(
                 'Take the asset out of service while the work is done',
                 value=bool(wo.get('asset_took_offline'))).props('dense')
-            w.note('Taking equipment offline restricts its clinical use until the job is verified.',
+            w.note('Taking equipment offline restricts its operational/clinical use until the job is verified.',
                    icon='gpp_maybe', tone='amber')
 
         if action == 'complete':
@@ -742,16 +753,19 @@ async def plans_page() -> None:
                 w.add_badge_slot(table, 'state',
                                  tones={'overdue': 'rose', 'open job': 'sky', 'scheduled': 'emerald'})
                 w.add_badge_slot(table, 'plan_type',
-                                 tones={'preventive': 'teal', 'calibration': 'violet',
-                                        'safety_test': 'amber', 'inspection': 'sky',
+                                 tones={'preventive': 'teal', 'predictive': 'cyan',
+                                        'calibration': 'violet', 'safety_test': 'amber',
+                                        'inspection': 'sky', 'overhaul': 'indigo',
                                         'statutory': 'rose', 'vehicle_service': 'slate'})
 
     with ui.element('div').classes('lc-card p-4 w-full lc-no-print'):
         with w.toolbar():
             kind = ui.select({None: 'All plan types', 'preventive': 'Preventive',
+                              'predictive': 'Predictive / Condition',
                               'calibration': 'Calibration', 'safety_test': 'Safety test',
-                              'inspection': 'Inspection', 'statutory': 'Statutory',
-                              'vehicle_service': 'Vehicle service'}, value=None, label='Type') \
+                              'inspection': 'Inspection', 'overhaul': 'Overhaul',
+                              'statutory': 'Statutory',
+                              'vehicle_service': 'Vehicle / Heavy service'}, value=None, label='Type') \
                 .props('outlined dense options-dense').classes('w-48')
             kind.bind_value(state, 'type')
             team = ui.select({None: 'All teams', **TEAMS}, value=None, label='Team') \
@@ -774,8 +788,10 @@ def _plan_dialog(plan: dict, reload) -> None:
         months = ui.number('Interval (months)', value=plan.get('interval_months'), min=1, max=600,
                            format='%d').props('outlined dense').classes('w-full')
         source = ui.select({'manufacturer': 'Manufacturer’s schedule',
-                            'local_regulation': 'Local regulation',
-                            'who_guideline': 'WHO guideline', 'internal': 'Internal policy'},
+                            'local_regulation': 'Local / statutory regulation',
+                            'industry_standard': 'Industry standard (ISO/MSHA/API/VMRS)',
+                            'who_guideline': 'WHO / Healthcare guideline',
+                            'internal': 'Internal maintenance policy'},
                            value=plan.get('interval_source'), label='Interval basis') \
             .props('outlined dense').classes('w-full')
         team = ui.select(TEAMS, value=plan.get('assigned_team'), label='Owning team') \

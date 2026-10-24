@@ -309,7 +309,7 @@ reportRoutes.get(
       asOf: isoDate.optional(),
       basis: z.enum(['ohada', 'ifrs']).default('ohada'),
       groupBy: z.enum(['category', 'domain', 'cost_center', 'location', 'funding_source']).default('category'),
-      domain: z.enum(['biomedical', 'facility', 'fleet', 'it_office']).optional(),
+      domain: z.enum(['mining', 'production', 'biomedical', 'facility', 'fleet', 'it_office', 'services']).optional(),
     }),
   }),
   handler(async (req, res) => {
@@ -478,7 +478,7 @@ reportRoutes.get(
   requirePermission('report.asset'),
   validate({
     query: rangeQuery.and(z.object({
-      domain: z.enum(['biomedical', 'facility', 'fleet', 'it_office']).optional(),
+      domain: z.enum(['mining', 'production', 'biomedical', 'facility', 'fleet', 'it_office', 'services']).optional(),
     })),
   }),
   handler(async (req, res) => {

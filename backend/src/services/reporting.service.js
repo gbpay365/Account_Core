@@ -608,7 +608,7 @@ export async function buildPpeNote(db, orgId, { from, to, basis = 'ifrs' }) {
        JOIN asset_categories c ON c.id = a.category_id
       WHERE a.org_id = ? AND a.is_capitalized = 1 AND a.status <> 'disposed'
       GROUP BY c.domain
-      ORDER BY FIELD(c.domain, 'facility','biomedical','fleet','it_office')`,
+      ORDER BY FIELD(c.domain, 'mining','production','biomedical','facility','fleet','it_office','services')`,
     [orgId]
   );
 
@@ -653,10 +653,13 @@ export async function buildPpeNote(db, orgId, { from, to, basis = 'ifrs' }) {
   const chgIdx = idx(charge);
 
   const DOMAIN_LABEL = {
+    mining: ['Installations et materiel minier', 'Mining and heavy extraction plant'],
+    production: ['Materiel et outillage industriel de production', 'Production and manufacturing equipment'],
     facility: ['Terrains, batiments et installations techniques', 'Land, buildings and technical installations'],
-    biomedical: ['Materiel biomedical', 'Biomedical equipment'],
-    fleet: ['Materiel de transport', 'Transport equipment'],
+    biomedical: ['Materiel biomedical et clinique', 'Biomedical and clinical equipment'],
+    fleet: ['Materiel de transport et engins', 'Transport fleet and heavy mobile equipment'],
     it_office: ['Materiel, mobilier et informatique', 'Equipment, furniture and IT'],
+    services: ['Equipements de services generaux', 'General services and operations equipment'],
   };
 
   const classes = rows.map((r) => {

@@ -17,10 +17,13 @@ from ..ui.shell import page
 
 DOMAINS = {
     None: 'All domains',
+    'mining': 'Mining & Heavy Extraction',
+    'production': 'Production & Manufacturing',
     'biomedical': 'Biomedical equipment',
     'facility': 'Facility and infrastructure',
-    'fleet': 'Vehicles and ambulances',
+    'fleet': 'Vehicles and heavy transport',
     'it_office': 'IT and office equipment',
+    'services': 'Services and operations',
 }
 
 STATUSES = {
@@ -38,6 +41,7 @@ FUNDING = {
 
 DISPOSAL_METHODS = {
     'sale': 'Sale', 'donation': 'Donation to another facility', 'scrap': 'Scrap',
+    'hazardous_waste': 'Hazardous / Industrial waste stream',
     'biomedical_waste': 'Biomedical waste stream', 'trade_in': 'Trade in',
     'write_off': 'Write off', 'theft_loss': 'Theft or loss',
 }
@@ -87,7 +91,9 @@ async def assets_page() -> None:
                 .props('outlined dense clearable debounce=350').classes('w-full sm:w-72')
             search.bind_value(state, 'search')
             domain = ui.select({None: t('ar.all_domains'),
-                                **{k: t(f'domain.{k}') for k in ('biomedical', 'facility', 'fleet', 'it_office')}},
+                                **{k: t(f'domain.{k}') for k in (
+                                    'mining', 'production', 'biomedical', 'facility', 'fleet', 'it_office', 'services'
+                                )}},
                                value=None, label=t('common.domain')) \
                 .props('outlined dense options-dense').classes('w-52')
             domain.bind_value(state, 'domain')
@@ -893,7 +899,7 @@ def _disposal_dialog(asset: dict, reload) -> None:
                 'buyerName': recipient.value or None if method.value == 'sale' else None,
                 'recipientName': recipient.value or None if method.value == 'donation' else None,
                 'wasteHandler': recipient.value or None
-                if method.value in ('scrap', 'biomedical_waste') else None,
+                if method.value in ('scrap', 'biomedical_waste', 'hazardous_waste') else None,
                 'decontaminationDone': decontaminated.value, 'dataWiped': wiped.value,
                 'certificateNo': certificate.value or None, 'notes': notes.value or None,
             }))

@@ -170,7 +170,15 @@ export async function createPlansForAsset(tx, orgId, assetId, category, startDat
     });
   }
 
-  const team = { biomedical: 'biomedical', facility: 'facilities', fleet: 'fleet', it_office: 'it' }[category.domain] || 'biomedical';
+  const team = {
+    mining: 'heavy_equipment',
+    production: 'production',
+    biomedical: 'biomedical',
+    facility: 'facilities',
+    fleet: 'fleet',
+    it_office: 'it',
+    services: 'mechanical',
+  }[category.domain] || 'mechanical';
 
   for (const p of plans) {
     const code = await nextSequence(tx, orgId, 'maintenance_plan');
@@ -193,6 +201,56 @@ export async function createPlansForAsset(tx, orgId, assetId, category, startDat
 
 function defaultChecklist(domain, type) {
   const lists = {
+    'mining:preventive': [
+      'Inspection structurelle du chassis, du bras/fleche et des organes d usure',
+      'Graissage complet et lubrification sous pression des axes et articulations',
+      'Prelevement et analyse des fluides (huile hydraulique, reducteurs, moteur)',
+      'Controle des pressions hydrauliques et de l etancheite des verins et flexibles',
+      'Verification du systeme d extinction incendie automatique (type Ansul)',
+      'Controle des freins, de la direction d urgence et de l eclairage de chantier',
+      'Releve des heures moteur et mise a jour du journal de bord machine',
+    ],
+    'mining:safety_test': [
+      'Controle de conformite de la structure de protection ROPS / FOPS',
+      'Test de decharge et verification du systeme automatique anti-incendie',
+      'Verification du coupe-circuit general et des arrets d urgence exterieurs',
+      'Test du freinage de secours et du limiteur de vitesse en pente',
+      'Verification de l alarme de recul, gyrophare et camera panoramique',
+    ],
+    'mining:calibration': [
+      'Etalonnage du peson embarque / bascule sur bande transporteuse avec masses certifiees',
+      'Verification des detecteurs de gaz (CH4, CO, O2, H2S) et reetalonnage',
+      'Controle des capteurs de pression et indicateurs de charge sur essieux',
+      'Emission du constat de verification metrologique industrielle',
+    ],
+    'production:preventive': [
+      'Inspection visuelle des organes en mouvement (courroies, chaines, roulements, engrenages)',
+      'Thermographie infrarouge des armoires electriques, disjoncteurs et variateurs',
+      'Lubrification des guidages lineaires, vis a billes et verins pneumatiques',
+      'Controle des niveaux d huile de reducteurs et des circuits de refroidissement',
+      'Verification des carters de protection, rideaux optiques et boutons d arret d urgence',
+      'Recherche et elimination des fuites d air comprime et de fluides de coupe',
+      'Releve du compteur d heures et des cycles de production',
+    ],
+    'production:safety_test': [
+      'Test de conformite des circuits de securite selon la directive machines / ISO 13849',
+      'Mesure du temps d arret et de la distance de securite des barrieres immaterielles',
+      'Test fonctionnel de l ensemble des boutons poussoirs coup de poing d arret d urgence',
+      'Controle de la continuite des masses metalliques et de l equipotentialite',
+    ],
+    'production:calibration': [
+      'Etalonnage des sondes de temperature (PT100, thermocouples) en bain/four d etalonnage',
+      'Verification des transmetteurs de pression industrielle et manometres etalons',
+      'Controle des debitmetres et pompes doseuses volumetriques',
+      'Etalonnage des ponts-bascules et cellules de pesage avec poids etalons',
+      'Apposition de la vignette de controle et emission du certificat d etalonnage',
+    ],
+    'services:preventive': [
+      'Inspection generale, nettoyage et depoussierage des organes electriques',
+      'Controle des liaisons electriques, cordons d alimentation et mises a la terre',
+      'Test de bon fonctionnement mecanique et verification des securites de l operateur',
+      'Controle des consommables, filtres et lubrifiants d entretien courant',
+    ],
     'biomedical:preventive': [
       'Inspection visuelle du chassis, des cables et des accessoires',
       'Nettoyage et decontamination externe',
@@ -769,6 +827,7 @@ function labelForMethod(method) {
     scrap: 'Scrapping',
     trade_in: 'Trade-in',
     biomedical_waste: 'Disposal as biomedical waste',
+    hazardous_waste: 'Disposal as hazardous/industrial waste',
     write_off: 'Write-off for destruction',
     theft_loss: 'Write-off for theft or loss',
     return_to_donor: 'Return to donor',

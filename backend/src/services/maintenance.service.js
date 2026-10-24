@@ -13,12 +13,23 @@ import { refreshComplianceFlags, rollUpMaintenanceCost } from './asset.service.j
  * ownership on the asset and the maintenance charge in the ledger agree.
  */
 
-const TEAM_BY_DOMAIN = { biomedical: 'biomedical', facility: 'facilities', fleet: 'fleet', it_office: 'it' };
+const TEAM_BY_DOMAIN = {
+  mining: 'heavy_equipment',
+  production: 'production',
+  biomedical: 'biomedical',
+  facility: 'facilities',
+  fleet: 'fleet',
+  it_office: 'it',
+  services: 'mechanical',
+};
 
 const WO_TYPE_BY_PLAN = {
   preventive: 'preventive',
+  corrective: 'corrective',
+  predictive: 'predictive',
   calibration: 'calibration',
   safety_test: 'safety_test',
+  overhaul: 'overhaul',
   inspection: 'inspection',
   statutory: 'inspection',
   vehicle_service: 'vehicle_service',
@@ -114,7 +125,7 @@ export async function createWorkOrder(tx, orgId, data, actor = null) {
       actor?.id ?? null,
       approved ? (actor?.id ?? null) : null, approved ? new Date() : null,
       data.assignedTo ?? null,
-      data.team || TEAM_BY_DOMAIN[asset.domain] || 'biomedical',
+      data.team || TEAM_BY_DOMAIN[asset.domain] || 'mechanical',
       data.serviceProviderId ?? null, data.serviceContractId ?? null,
       data.assignedTo ? new Date() : null,
       data.scheduledDate ? toISO(data.scheduledDate) : null,

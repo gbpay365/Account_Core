@@ -20,9 +20,12 @@ CAL_RESULTS = {'pass': 'Pass', 'pass_with_adjustment': 'Pass after adjustment',
 
 TEST_RESULTS = {'pass': 'Pass', 'conditional': 'Conditional pass', 'fail': 'Fail'}
 
-PERFORMED_BY = {'internal': 'In-house biomedical team', 'manufacturer': 'Manufacturer',
-                'third_party': 'Third-party service company',
-                'accredited_lab': 'Accredited calibration laboratory'}
+PERFORMED_BY = {
+    'internal': 'In-house maintenance / technician team',
+    'manufacturer': 'Original equipment manufacturer (OEM)',
+    'third_party': 'Third-party certified service provider',
+    'accredited_lab': 'Accredited calibration & testing laboratory',
+}
 
 APPLIED_PART = {'none': 'No applied part', 'B': 'Type B', 'BF': 'Type BF',
                 'CF': 'Type CF (direct cardiac)'}
@@ -272,7 +275,7 @@ def _calibration_dialog(reload, asset_id: int | None = None) -> None:
             ui.button('Record the calibration', on_click=submit).props('unelevated')
 
     async def load() -> None:
-        data = await api.safe(api.get('/assets', domain='biomedical', pageSize=500), notify=False)
+        data = await api.safe(api.get('/assets', pageSize=500), notify=False)
         if data:
             asset.set_options({a['id']: f"{a['asset_tag']} — {a['name']}" for a in data['rows']},
                               value=asset_id)
@@ -287,8 +290,8 @@ def _safety_dialog(reload, asset_id: int | None = None) -> None:
         ui.label('Record an electrical safety test').classes(
             'text-base font-semibold px-5 py-3 border-b border-slate-200 w-full')
         with ui.column().classes('p-5 gap-3 w-full lc-scroll').style('max-height: 70vh'):
-            w.note('IEC 60601-1 limits depend on the applied part type: earth leakage below '
-                   '500 µA, and patient leakage below 10 µA for a type CF part.',
+            w.note('Statutory electrical & safety inspection (IEC 60601-1 / IEC 62353 / NFPA 70 / ISO 13849 / MSHA). '
+                   'Limits and applied parts depend on standard and equipment class.',
                    icon='bolt', tone='sky')
             asset = ui.select({}, label='Device', with_input=True, value=asset_id) \
                 .props('outlined dense use-input hide-selected input-debounce=200').classes('w-full')
@@ -365,7 +368,7 @@ def _safety_dialog(reload, asset_id: int | None = None) -> None:
             ui.button('Record the test', on_click=submit).props('unelevated')
 
     async def load() -> None:
-        data = await api.safe(api.get('/assets', domain='biomedical', pageSize=500), notify=False)
+        data = await api.safe(api.get('/assets', pageSize=500), notify=False)
         if data:
             asset.set_options({a['id']: f"{a['asset_tag']} — {a['name']}" for a in data['rows']},
                               value=asset_id)
