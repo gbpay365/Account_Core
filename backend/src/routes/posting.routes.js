@@ -84,6 +84,22 @@ postingRoutes.get(
         ORDER BY t.sort_order, t.code`,
       [req.orgId]
     );
+    const lines = await query(
+      `SELECT l.*
+         FROM posting_template_lines l
+         JOIN posting_templates t ON l.template_id = t.id
+        WHERE t.org_id = ? AND t.is_active = 1
+        ORDER BY l.template_id, l.line_no`,
+      [req.orgId]
+    );
+    const linesByTpl = {};
+    for (const line of lines) {
+      if (!linesByTpl[line.template_id]) linesByTpl[line.template_id] = [];
+      linesByTpl[line.template_id].push(line);
+    }
+    for (const r of rows) {
+      r.lines = linesByTpl[r.id] || [];
+    }
     res.json({ rows, total: rows.length });
   })
 );

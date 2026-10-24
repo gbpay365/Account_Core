@@ -363,6 +363,142 @@ async def _recurring_dialog(reload) -> None:
     dialog.open()
 
 
+def filter_accounts_for_transaction_type(
+    txn_type: str | None,
+    all_accounts: dict[int, str],
+    all_meta: dict[int, dict],
+    tpl_info: dict | None = None,
+) -> tuple[dict[int, str], str]:
+    """
+    Filters accounts for Line 1 based on the selected transaction type.
+    Returns (filtered_accounts_dict, human_readable_filter_label).
+    """
+    if not txn_type or not all_accounts:
+        return dict(all_accounts or {}), ""
+
+    key = str(txn_type).lower().strip()
+    prefixes: list[str] = []
+    keywords: list[str] = []
+    filter_label = ""
+
+    # Known transaction types & keyword heuristics
+    if 'deprec' in key or 'amort' in key:
+        # Depreciation charges (Class 68) & Accumulated depreciation (Class 28)
+        prefixes.extend(['68', '28'])
+        keywords.extend(['amort', 'deprec', 'dotation'])
+        filter_label = "Monthly Depreciation (Class 68, 28)"
+    elif 'supplier_inv' in key or (('suppl' in key or 'fourn' in key or 'achat' in key) and 'credit' not in key and 'avoir' not in key):
+        # Supplier invoice: Expenses (Class 6), Capitalized assets (Class 2), Deductible VAT (445)
+        prefixes.extend(['6', '21', '22', '23', '24', '445'])
+        keywords.extend(['charge', 'achat', 'expense'])
+        filter_label = "Supplier Purchases & Expenses (Class 6, 2, 445)"
+    elif 'credit_note' in key or 'avoir' in key:
+        # Supplier credit note
+        prefixes.extend(['6', '21', '22', '23', '24', '401', '445'])
+        filter_label = "Supplier Credit Notes & Reductions (Class 6, 2, 401)"
+    elif 'sales' in key or 'sale' in key or 'vent' in key or 'patient' in key:
+        # Sales / Patient revenue: Revenue (Class 7), Receivables (411), Collected VAT (443)
+        prefixes.extend(['7', '411', '443'])
+        keywords.extend(['vente', 'produit', 'revenue', 'income'])
+        filter_label = "Sales & Patient Revenue (Class 7, 411)"
+    elif 'receipt' in key or 'encaissement' in key or 'reglement_client' in key:
+        # Customer receipt: Treasury / Bank / Cash (Class 5), Customer collective (411)
+        prefixes.extend(['5', '411'])
+        keywords.extend(['banque', 'caisse', 'bank', 'cash', 'tresorerie'])
+        filter_label = "Receipts & Treasury (Class 5, 411)"
+    elif 'salary' in key or 'paie' in key or 'payroll' in key or 'remun' in key:
+        # Salary payment: Personnel charges (Class 66), Liabilities (Class 42), Social bodies (Class 43), Bank/Cash (Class 5)
+        prefixes.extend(['66', '42', '43', '442', '5'])
+        keywords.extend(['salaire', 'personnel', 'payroll', 'wage'])
+        filter_label = "Salaries, Personnel & Treasury (Class 66, 42, 5)"
+    elif 'asset_acq' in key or 'equipment' in key or 'acquisition' in key or ('immob' in key and 'disp' not in key and 'cess' not in key):
+        # Asset acquisition: Fixed assets (Class 2: 21-25) & VAT (445)
+        prefixes.extend(['21', '22', '23', '24', '25', '445'])
+        keywords.extend(['materiel', 'immobilisation', 'asset', 'equipement'])
+        filter_label = "Capital Assets & Equipment (Class 2)"
+    elif 'maint' in key or 'entretien' in key or 'repar' in key:
+        # Maintenance invoice: Maintenance expenses (605, 611, 614, 615, 624, 625) & Class 6
+        prefixes.extend(['605', '611', '614', '615', '624', '625', '6'])
+        keywords.extend(['maint', 'entretien', 'repar'])
+        filter_label = "Maintenance & Repairs (Class 605, 615, 6)"
+    elif 'disposal' in key or 'cess' in key:
+        # Asset disposal: Net book value (654, 81), Disposal proceeds (754, 82), Fixed assets (2), Accumulated depreciation (28)
+        prefixes.extend(['654', '81', '754', '82', '21', '22', '23', '24', '28'])
+        keywords.extend(['cession', 'disposal', 'vnc'])
+        filter_label = "Asset Disposal & NBV (Class 654, 81, 2, 28)"
+    elif 'loan' in key or 'emprunt' in key:
+        prefixes.extend(['16', '67', '5'])
+        filter_label = "Borrowings & Financing (Class 16, 67, 5)"
+    elif 'tax' in key or 'impot' in key or 'vat' in key or 'tva' in key:
+        prefixes.extend(['44', '5'])
+        filter_label = "Taxes & Duties (Class 44, 5)"
+
+    # Additional guidance from template definition
+    if tpl_info:
+        jcode = str(tpl_info.get('journal_code') or '').upper()
+        if jcode in ('AM',):
+            prefixes.extend(['68', '28'])
+            if not filter_label:
+                filter_label = "Depreciation (Class 68, 28)"
+        elif jcode in ('HA', 'ACH'):
+            prefixes.extend(['6', '21', '22', '23', '24', '445'])
+            if not filter_label:
+                filter_label = "Purchases & Expenses (Class 6, 2)"
+        elif jcode in ('VT', 'VE'):
+            prefixes.extend(['7', '411'])
+            if not filter_label:
+                filter_label = "Sales & Revenue (Class 7, 411)"
+        elif jcode in ('BQ', 'CA'):
+            prefixes.extend(['5', '4'])
+            if not filter_label:
+                filter_label = "Treasury & Settlements (Class 5, 4)"
+        elif jcode in ('IM',):
+            prefixes.extend(['21', '22', '23', '24', '25', '28'])
+            if not filter_label:
+                filter_label = "Fixed Assets (Class 2, 28)"
+
+        for line in tpl_info.get('lines') or []:
+            rule = str(line.get('account_rule') or '').strip()
+            if rule and not rule.startswith('{{'):
+                prefixes.append(rule)
+                if len(rule) >= 3:
+                    prefixes.append(rule[:3])
+                if len(rule) >= 2:
+                    prefixes.append(rule[:2])
+
+    if not prefixes and not keywords:
+        return dict(all_accounts or {}), ""
+
+    filtered: dict[int, str] = {}
+    for acct_id, label in all_accounts.items():
+        meta = (all_meta or {}).get(acct_id, {})
+        code = str(meta.get('code') or '').strip()
+        name = (str(meta.get('name') or '') + ' ' + str(meta.get('name_en') or '')).lower()
+
+        matched = False
+        for pref in prefixes:
+            if code.startswith(pref):
+                matched = True
+                break
+        if not matched:
+            for kw in keywords:
+                if kw in name:
+                    matched = True
+                    break
+
+        if matched:
+            filtered[acct_id] = label
+
+    if not filtered:
+        return dict(all_accounts or {}), ""
+
+    if not filter_label:
+        tpl_name = (tpl_info.get('name_en') or tpl_info.get('name') or key) if tpl_info else key
+        filter_label = f"{tpl_name} accounts"
+
+    return filtered, filter_label
+
+
 def _empty_line() -> dict:
     return {
         'account': None, 'description': '', 'debit': 0.0, 'credit': 0.0,
@@ -418,6 +554,7 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
                                journals[0]['code'] if journals else None)
     last_journal_val = [journal_default_val]
     last_txn_val = [None]
+    show_all_line0 = [False]
 
     with ui.dialog().props('maximized persistent') as dialog, \
             ui.element('div').classes('bg-white w-full h-full flex flex-col'):
@@ -599,6 +736,7 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
                     return
                 last_txn_val[0] = e.value
                 val = e.value
+                show_all_line0[0] = False  # Auto-filter Line 1 whenever transaction type changes
                 if val and val in tpl_by_type:
                     t_item = tpl_by_type[val]
                     if t_item.get('journal_code') and t_item['journal_code'] in journal.options:
@@ -606,6 +744,7 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
                         last_journal_val[0] = t_item['journal_code']
                     if not description.value and (t_item.get('name_en') or t_item.get('name')):
                         description.value = t_item.get('name_en') if auto_framework == 'ifrs' else (t_item.get('name') or t_item.get('name_en'))
+                draw_lines()
             txn.on_value_change(_on_txn_change)
 
             description = ui.input('Description').props('outlined dense').classes('w-full')
@@ -673,6 +812,47 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
             def draw_lines() -> None:
                 lines_box.clear()
                 with lines_box:
+                    cur_txn = txn.value
+                    tpl_item = tpl_by_type.get(cur_txn) if cur_txn else None
+                    first_line_accts, filter_badge_label = filter_accounts_for_transaction_type(
+                        cur_txn, accounts, account_meta, tpl_item
+                    )
+                    is_filtered = bool(
+                        cur_txn and not show_all_line0[0] and filter_badge_label
+                        and len(first_line_accts) < len(accounts)
+                    )
+
+                    if cur_txn and filter_badge_label:
+                        with ui.row().classes('w-full items-center justify-between px-3 py-1.5 rounded-lg '
+                                              'bg-teal-50 border border-teal-200 text-xs text-teal-950 mb-1'):
+                            with ui.row().classes('items-center gap-2'):
+                                ui.icon('filter_alt' if is_filtered else 'tune', size='18px').classes(
+                                    'text-teal-700' if is_filtered else 'text-slate-500'
+                                )
+                                if is_filtered:
+                                    ui.html(
+                                        f"<span>Line 1 account filtered for <b>{filter_badge_label}</b> "
+                                        f"<span class='text-teal-700 font-semibold'>({len(first_line_accts)} accounts)</span></span>"
+                                    )
+                                else:
+                                    ui.html(
+                                        "<span class='text-slate-700'>Line 1 showing <b>all accounts</b> (filter paused)</span>"
+                                    )
+
+                            def _toggle_filter():
+                                show_all_line0[0] = not show_all_line0[0]
+                                draw_lines()
+
+                            if is_filtered:
+                                ui.button('Show all accounts', on_click=_toggle_filter).props(
+                                    'flat dense size=xs color=primary'
+                                ).classes('text-xs underline cursor-pointer')
+                            else:
+                                ui.button(f"Re-filter for {filter_badge_label.split('(')[0].strip() or 'transaction'}",
+                                          on_click=_toggle_filter).props(
+                                    'flat dense size=xs color=teal-9'
+                                ).classes('text-xs font-semibold cursor-pointer')
+
                     with ui.row().classes('w-full gap-2 px-1 no-wrap text-[10.5px] font-bold uppercase '
                                           'tracking-wider text-slate-500'):
                         ui.label('Account').classes('flex-[3] min-w-0')
@@ -683,10 +863,20 @@ def _entry_form(journals: list[dict], reload, initial_templates: list[dict] | No
                         ui.label('').classes('w-8 shrink-0')
                     for index, line in enumerate(lines):
                         with ui.row().classes('w-full gap-2 items-center no-wrap'):
-                            account = ui.select(accounts, label=None, with_input=True,
+                            if index == 0 and is_filtered:
+                                line_opts = dict(first_line_accts)
+                                if line['account'] and line['account'] in accounts and line['account'] not in line_opts:
+                                    line_opts[line['account']] = accounts[line['account']]
+                                short_label = filter_badge_label.split('(')[0].strip()
+                                acct_placeholder = f"Type or select {short_label} account"
+                            else:
+                                line_opts = accounts
+                                acct_placeholder = "Type a code or name"
+
+                            account = ui.select(line_opts, label=None, with_input=True,
                                                 value=line['account']) \
                                 .props('outlined dense options-dense use-input hide-selected '
-                                       'input-debounce=200 placeholder="Type a code or name"') \
+                                       f'input-debounce=200 placeholder="{acct_placeholder}"') \
                                 .classes('flex-[3] min-w-0')
 
                             def _on_acct_change(e, i=index):
