@@ -123,6 +123,7 @@ def kpi(title: str, value: str, *, hint: str | None = None, icon: str | None = N
         'violet': ('bg-violet-50', 'text-violet-600'),
         'slate': ('bg-slate-100', 'text-slate-600'),
     }
+    bg, fg = tints.get(tone, tints['teal'])
     accent_bar = {
         'teal': 'border-t-[3px] border-t-teal-500',
         'sky': 'border-t-[3px] border-t-sky-500',
