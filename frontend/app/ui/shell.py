@@ -164,15 +164,7 @@ def _frame(active: str):
     """Draws the rail and header, and returns the content container."""
     user = api.user()
 
-    # Quasar's default behaviour docks the rail above its 1023px breakpoint and
-    # turns it into an overlay below, which is the same line the header's
-    # hamburger appears on. Forcing behavior=desktop would keep 248px of rail on
-    # a phone, leaving a technician almost no room to read a job card.
-    # Quasar's default behaviour docks the rail above its breakpoint and turns it
-    # into an overlay below, which is the same line the header's hamburger
-    # appears on. Forcing behavior=desktop would keep 248px of rail on a phone,
-    # leaving a technician almost no room to read a job card. show-if-above
-    # opens it on a desktop while leaving a phone to start with it closed.
+    # Quasar docks rail above 1023px breakpoint and turns into overlay below.
     drawer = ui.left_drawer(value=False, fixed=True, bordered=False) \
         .props('width=310 breakpoint=1023 show-if-above') \
         .classes('p-0 lc-no-print').style(f'background: {NAVY}')
@@ -198,6 +190,19 @@ def _frame(active: str):
     with ui.header(bordered=False).classes('bg-white border-b border-slate-200 px-6 py-0 lc-no-print') \
             .style('min-height: 58px'):
         _header(user, drawer, active)
+
+    ui.run_javascript('''
+        if (!window._lcCmdKeyInstalled) {
+            window._lcCmdKeyInstalled = true;
+            window.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+                    e.preventDefault();
+                    var pill = document.querySelector('.lc-search-pill');
+                    if (pill) pill.click();
+                }
+            });
+        }
+    ''')
 
     return ui.column().classes('w-full max-w-[1500px] mx-auto lc-page')
 
@@ -240,6 +245,103 @@ def _rail_footer(user: dict) -> None:
             ui.menu_item(f"🚪 {t('auth.signout')}", api.logout)
 
 
+def open_command_palette() -> None:
+    """Universal Command Palette (Ctrl+K) for instant navigation and quick actions."""
+    quick_actions = [
+        ('✍️ ' + t('dash.new_entry'), '/journal?new=1', 'receipt_long', ('journal.create',)),
+        ('💼 ' + t('nav.budgeting'), '/budgeting', 'account_balance_wallet', ('budget.view', 'coa.view')),
+        ('📊 ' + t('nav.statements'), '/reports', 'assessment', ('report.financial',)),
+        ('📦 ' + t('nav.register'), '/assets', 'inventory_2', ('asset.view',)),
+        ('🔧 ' + t('dash.raise_wo'), '/maintenance?new=1', 'build', ('wo.request',)),
+        ('🏃 ' + t('nav.errands'), '/errands?new=1', 'directions_run', ('errand.view',)),
+        ('🛒 ' + t('nav.shopping'), '/shopping', 'shopping_cart', ('shop.view',)),
+        ('⚙️ ' + t('admin.dialog_title'), '__ADMIN_DIALOG__', 'settings', ('coa.manage', 'admin.audit')),
+        ('📖 ' + t('nav.user_guide'), '/user-guide', 'menu_book', ('coa.view',)),
+    ]
+
+    nav_pages = []
+    for group_key, items in get_nav():
+        group_label = t(group_key)
+        for route, label_key, icon, perms in items:
+            if api.can(*perms):
+                nav_pages.append({
+                    'label': t(label_key),
+                    'route': route,
+                    'icon': icon,
+                    'emoji': chrome.NAV_ITEM.get(route, '•'),
+                    'group': group_label,
+                    'search': f"{t(label_key)} {route} {group_label}".lower()
+                })
+
+    with ui.dialog() as dialog, ui.card().classes('p-0 w-[640px] max-w-full rounded-2xl shadow-2xl overflow-hidden bg-white'):
+        with ui.row().classes('w-full items-center gap-3 px-4 py-3 border-b border-slate-200 bg-slate-50/50'):
+            ui.icon('search').classes('text-teal-600 text-xl shrink-0')
+            search_input = ui.input(placeholder=t('cmd.search_placeholder')) \
+                .props('autofocus dense borderless') \
+                .classes('flex-1 text-sm text-slate-800 font-medium')
+            with ui.row().classes('items-center gap-1 shrink-0'):
+                with ui.element('kbd').classes('bg-white text-slate-500 text-[11px] font-bold px-1.5 py-0.5 rounded border border-slate-200 shadow-xs'):
+                    ui.label('ESC')
+                ui.button(icon='close', on_click=dialog.close).props('flat round dense size=sm color=grey-6')
+
+        results_container = ui.column().classes('w-full p-2 max-h-[420px] overflow-y-auto gap-1 lc-scroll')
+
+        def render_results(query: str = ''):
+            results_container.clear()
+            q = query.strip().lower()
+
+            with results_container:
+                visible_actions = [
+                    a for a in quick_actions
+                    if api.can(*a[3]) and (not q or q in a[0].lower() or q in a[1].lower())
+                ]
+                if visible_actions:
+                    ui.label(t('cmd.quick_actions')).classes('text-[11px] font-bold uppercase tracking-wider text-teal-700 px-3 pt-2 pb-1')
+                    for title, action_route, icon, _ in visible_actions:
+                        def make_click(ar=action_route):
+                            def _exec():
+                                dialog.close()
+                                if ar == '__ADMIN_DIALOG__':
+                                    admin_framework_dialog()
+                                else:
+                                    ui.navigate.to(ar)
+                            return _exec
+                        with ui.row().classes('lc-cmd-item w-full items-center justify-between px-3 py-2 cursor-pointer no-wrap gap-3') \
+                                .on('click', make_click()):
+                            with ui.row().classes('items-center gap-2.5 min-w-0'):
+                                ui.icon(icon).classes('text-teal-600 text-[18px] shrink-0')
+                                ui.label(title).classes('text-xs font-semibold text-slate-800 truncate')
+                            ui.icon('arrow_forward').classes('text-slate-300 text-xs shrink-0')
+
+                filtered_pages = [p for p in nav_pages if not q or q in p['search']]
+                if filtered_pages:
+                    ui.label(t('cmd.navigation')).classes('text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 pt-3 pb-1')
+                    for page_info in filtered_pages:
+                        def make_nav(r=page_info['route']):
+                            return lambda: (dialog.close(), ui.navigate.to(r))
+                        with ui.row().classes('lc-cmd-item w-full items-center justify-between px-3 py-2 cursor-pointer no-wrap gap-3') \
+                                .on('click', make_nav()):
+                            with ui.row().classes('items-center gap-2.5 min-w-0'):
+                                ui.label(page_info['emoji']).classes('text-sm shrink-0 leading-none')
+                                ui.label(page_info['label']).classes('text-xs font-semibold text-slate-800 truncate')
+                                ui.badge(page_info['group']).props('dense outline color=slate-4').classes('text-[10px] text-slate-500 font-normal')
+                            ui.label(page_info['route']).classes('text-[11px] text-slate-400 font-mono shrink-0')
+
+                if not visible_actions and not filtered_pages:
+                    with ui.column().classes('w-full items-center justify-center py-8 gap-2 text-slate-400'):
+                        ui.icon('search_off').classes('text-4xl text-slate-300')
+                        ui.label(t('cmd.no_results')).classes('text-xs font-medium')
+
+        render_results('')
+        search_input.on_value_change(lambda e: render_results(e.value or ''))
+
+        with ui.row().classes('w-full items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500'):
+            ui.label(t('cmd.palette_tip'))
+            ui.label("LedgerCore OS").classes('font-bold tracking-wider text-teal-700')
+
+    dialog.open()
+
+
 def _header(user: dict, drawer, active: str = '') -> None:
     with ui.row().classes('w-full items-center justify-between gap-4 no-wrap h-[58px]'):
         with ui.row().classes('items-center gap-3 min-w-0 no-wrap'):
@@ -256,7 +358,20 @@ def _header(user: dict, drawer, active: str = '') -> None:
                     f" · {t('fw.viewing', fw=fw_name)}"
                 ).classes('text-[11px] text-slate-500 leading-tight truncate lc-desktop-only')
 
+        # Command Palette Search Pill
+        with ui.row().classes('lc-search-pill items-center gap-2 cursor-pointer lc-desktop-only shrink-0') \
+                .on('click', open_command_palette):
+            ui.icon('search').classes('text-slate-400 text-[16px]')
+            ui.label(t('cmd.search_placeholder')).classes('text-xs text-slate-500 font-medium')
+            with ui.element('kbd').classes('bg-slate-200/80 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-300 shadow-xs'):
+                ui.label('Ctrl K')
+
         with ui.row().classes('items-center gap-2 shrink-0 no-wrap'):
+            # System Online live status
+            with ui.row().classes('items-center gap-1.5 px-2.5 py-1 bg-emerald-50/90 border border-emerald-200 rounded-lg lc-desktop-only'):
+                ui.element('span').classes('lc-pulse-dot')
+                ui.label(t('sys.online')).classes('text-[11px] font-semibold text-emerald-800')
+
             _framework_toggle(active)
             ui.element('div').classes('w-px h-6 bg-slate-200 mx-1 lc-desktop-only')
             _language_toggle()

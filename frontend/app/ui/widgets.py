@@ -123,10 +123,17 @@ def kpi(title: str, value: str, *, hint: str | None = None, icon: str | None = N
         'violet': ('bg-violet-50', 'text-violet-600'),
         'slate': ('bg-slate-100', 'text-slate-600'),
     }
-    bg, fg = tints.get(tone, tints['teal'])
-    card = ui.element('div').classes('lc-card p-4 flex-1 lc-kpi')
+    accent_bar = {
+        'teal': 'border-t-[3px] border-t-teal-500',
+        'sky': 'border-t-[3px] border-t-sky-500',
+        'amber': 'border-t-[3px] border-t-amber-500',
+        'rose': 'border-t-[3px] border-t-rose-500',
+        'violet': 'border-t-[3px] border-t-violet-500',
+        'slate': 'border-t-[3px] border-t-slate-400',
+    }.get(tone, 'border-t-[3px] border-t-teal-500')
+    card = ui.element('div').classes(f'lc-card p-4 flex-1 lc-kpi {accent_bar}')
     if on_click:
-        card.classes('cursor-pointer hover:-translate-y-px transition').on('click', on_click)
+        card.classes('cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all duration-200').on('click', on_click)
     with card:
         with ui.row().classes('items-start justify-between w-full no-wrap gap-3'):
             with ui.column().classes('gap-1 min-w-0'):

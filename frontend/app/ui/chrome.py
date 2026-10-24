@@ -12,6 +12,7 @@ NAV_GROUP: dict[str, str] = {
     'nav.maintenance': '🔧',
     'nav.services': '🧰',
     'nav.reporting': '📈',
+    'nav.administration': '🛡️',
 }
 
 NAV_ITEM: dict[str, str] = {
@@ -21,6 +22,7 @@ NAV_ITEM: dict[str, str] = {
     '/ledger': '📖',
     '/periods': '📅',
     '/bank-reconciliation': '🏦',
+    '/budgeting': '💼',
     '/withholding-tax': '🧾',
     '/cash-registers': '📱',
     '/donor-projects': '🌍',
@@ -42,6 +44,8 @@ NAV_ITEM: dict[str, str] = {
     '/dsf': '📑',
     '/asset-reports': '📦',
     '/audit': '🕵️',
+    '/admin': '⚙️',
+    '/user-guide': '📖',
 }
 
 STATUS: dict[str, str] = {

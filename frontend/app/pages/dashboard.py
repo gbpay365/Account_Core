@@ -6,6 +6,8 @@ draw what it was not given.
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from nicegui import ui
 
 from .. import api
@@ -26,20 +28,53 @@ async def dashboard() -> None:
     currency = user.get('functional_currency', 'XAF')
     period = data.get('period') or {}
     year = data.get('fiscal_year') or {}
+    first = user.get('full_name', '').split()[0] or 'User'
 
-    def actions() -> None:
-        if api.can('journal.create'):
-            ui.button(t('dash.new_entry'), icon='add',
-                      on_click=lambda: ui.navigate.to('/journal?new=1')).props('unelevated size=sm')
-        if api.can('wo.request'):
-            ui.button(t('dash.raise_wo'), icon='build',
-                      on_click=lambda: ui.navigate.to('/maintenance?new=1')).props('outline size=sm')
+    now_hour = datetime.now().hour
+    if now_hour < 12:
+        greeting_title = t('dash.good_morning', name=first)
+    elif now_hour < 17:
+        greeting_title = t('dash.good_afternoon', name=first)
+    else:
+        greeting_title = t('dash.good_evening', name=first)
 
-    first = user.get('full_name', '').split()[0]
-    subtitle = (t('dash.fy_open', year=year.get('code', ''), period=period.get('code'))
-                if period else t('dash.fy_none', year=year.get('code', '')))
-    w.page_header(t('dash.hello', name=first), subtitle, actions=actions,
-                  emoji=chrome.PAGE['dash.hello'])
+    # Executive Hero Banner
+    with ui.card().classes('w-full p-5 mb-2 rounded-2xl bg-gradient-to-r from-teal-900 via-slate-900 to-slate-900 text-white shadow-lg border border-slate-700'):
+        with ui.row().classes('w-full items-center justify-between gap-4 flex-wrap'):
+            with ui.column().classes('gap-1 min-w-[280px]'):
+                with ui.row().classes('items-center gap-2.5'):
+                    ui.label('🏥').classes('text-2xl leading-none')
+                    ui.label(user.get('org_name', '')).classes('text-xs font-bold text-teal-300 uppercase tracking-widest')
+                ui.label(greeting_title).classes('text-2xl font-extrabold text-white tracking-tight')
+                with ui.row().classes('items-center gap-2 mt-1 flex-wrap'):
+                    p_code = period.get('code')
+                    period_text = f"📅 {year.get('code', '')} · {p_code}" if p_code else f"📅 {year.get('code', '')}"
+                    ui.chip(period_text, color='teal-8').props('dense text-color=white').classes('text-xs font-semibold shadow-xs')
+                    ui.chip(f"💱 {currency}", color='slate-7').props('dense text-color=slate-2').classes('text-xs font-semibold')
+                    fw_lbl = "🌐 IFRS" if view == 'ifrs' else "📒 OHADA SYSCOHADA"
+                    ui.chip(fw_lbl, color='sky-9').props('dense text-color=sky-1').classes('text-xs font-semibold')
+
+            with ui.row().classes('items-center gap-2 shrink-0 flex-wrap'):
+                if api.can('journal.create'):
+                    ui.button(t('dash.new_entry'), icon='add_circle',
+                              on_click=lambda: ui.navigate.to('/journal?new=1')) \
+                        .props('unelevated color=teal-6 size=sm') \
+                        .classes('font-bold shadow-md hover:brightness-110')
+                if api.can('budget.view', 'coa.view'):
+                    ui.button(t('nav.budgeting'), icon='account_balance_wallet',
+                              on_click=lambda: ui.navigate.to('/budgeting')) \
+                        .props('unelevated color=slate-7 size=sm') \
+                        .classes('font-semibold hover:bg-slate-600')
+                if api.can('wo.request'):
+                    ui.button(t('dash.raise_wo'), icon='build',
+                              on_click=lambda: ui.navigate.to('/maintenance?new=1')) \
+                        .props('unelevated color=slate-7 size=sm') \
+                        .classes('font-semibold hover:bg-slate-600')
+                if api.can('report.financial'):
+                    ui.button(t('nav.statements'), icon='assessment',
+                              on_click=lambda: ui.navigate.to('/reports')) \
+                        .props('outline color=teal-2 size=sm') \
+                        .classes('font-semibold hover:bg-white/10')
 
     _headline(data, currency)
 

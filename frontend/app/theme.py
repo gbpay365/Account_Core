@@ -106,12 +106,53 @@ def apply() -> None:
         background: {SURFACE};
         border: 1px solid var(--lc-border);
         border-radius: 14px;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px -16px rgba(15, 23, 42, .12);
+        box-shadow: 0 1px 3px 0 rgba(15, 23, 42, .05), 0 10px 15px -3px rgba(15, 23, 42, .03);
+        transition: border-color .15s ease, box-shadow .15s ease;
+      }}
+      .lc-card:hover {{
+        border-color: #cbd5e1;
       }}
       .lc-card-flat {{
         background: {SURFACE};
         border: 1px solid var(--lc-border);
         border-radius: 14px;
+      }}
+
+      /* Pulsing live status indicator */
+      @keyframes lc-pulse {{
+        0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }}
+        70% {{ transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }}
+        100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }}
+      }}
+      .lc-pulse-dot {{
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        animation: lc-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }}
+
+      /* Command palette & search pill */
+      .lc-search-pill {{
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 5px 12px;
+        cursor: pointer;
+        transition: all .15s ease;
+      }}
+      .lc-search-pill:hover {{
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+      }}
+      .lc-cmd-item {{
+        transition: background .12s ease, transform .12s ease;
+        border-radius: 8px;
+      }}
+      .lc-cmd-item:hover {{
+        background: #f1f5f9;
       }}
 
       .lc-nav-item {{
@@ -257,9 +298,31 @@ def apply() -> None:
         color: #ffffff !important;
       }}
 
-      .q-field--outlined .q-field__control {{ border-radius: 10px; }}
-      .q-btn {{ border-radius: 10px; font-weight: 600; text-transform: none; letter-spacing: 0; }}
-      .q-dialog__inner > .lc-card {{ box-shadow: 0 24px 64px -24px rgba(15,23,42,.35); }}
+      .q-field--outlined .q-field__control {{
+        border-radius: 10px;
+        transition: border-color .15s ease, box-shadow .15s ease;
+      }}
+      .q-field--outlined.q-field--focused .q-field__control {{
+        border-color: {PRIMARY} !important;
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, .15) !important;
+      }}
+      .q-btn {{
+        border-radius: 10px;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0;
+      }}
+      .q-btn--unelevated.bg-primary {{
+        box-shadow: 0 2px 4px rgba(15, 118, 110, .2);
+        transition: transform .15s ease, box-shadow .15s ease;
+      }}
+      .q-btn--unelevated.bg-primary:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(15, 118, 110, .28);
+      }}
+      .q-dialog__inner > .lc-card {{
+        box-shadow: 0 24px 64px -24px rgba(15,23,42,.35);
+      }}
 
       @media print {{
         @page {{
