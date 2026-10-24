@@ -612,6 +612,55 @@ _T: dict[str, dict[str, str]] = {
     'supplier_fallback': {'en': 'Vendor', 'fr': 'Fournisseur'},
     'none_label': {'en': 'None', 'fr': 'Aucun'},
     'invoice_num_prefix': {'en': 'Invoice #', 'fr': 'Facture N°'},
+
+    # --- Quick Action Hub, Stepper & Availability Checker ---
+    'quick_hub_title': {'en': '⚡ Quick Action & Expenditure Launcher', 'fr': '⚡ Centre d’Actions Rapides & Guidées'},
+    'quick_hub_subtitle': {'en': 'One-click shortcuts to check budget, commit expenses, make transfers or view payment orders', 'fr': 'Raccourcis en un clic pour tester la disponibilité, engager une dépense, virer des crédits ou émettre un mandat'},
+    'btn_quick_check_avail': {'en': 'Check Available Budget', 'fr': 'Vérifier la Disponibilité'},
+    'hint_quick_check': {'en': 'Simulate if an expense fits in budget', 'fr': 'Tester en 5 secondes si une dépense passe'},
+    'btn_quick_new_comm': {'en': 'New Commitment', 'fr': 'Nouvel Engagement'},
+    'hint_quick_comm': {'en': 'Reserve budget before issuing PO', 'fr': 'Réserver les crédits avant commande'},
+    'btn_quick_transfer': {'en': 'Credit Transfer', 'fr': 'Virement de Crédit'},
+    'hint_quick_transfer': {'en': 'Move credits between budget lines', 'fr': 'Transférer des crédits entre lignes'},
+    'btn_quick_mandats': {'en': 'Payment Orders', 'fr': 'Mandats de Paiement'},
+    'hint_quick_mandats': {'en': 'Visas, tax retentions & payments', 'fr': 'Gérer les visas, retenues et règlements'},
+    'btn_quick_procurement': {'en': 'Procurement (PPM)', 'fr': 'Marchés & PPM'},
+    'hint_quick_procurement': {'en': 'Annual tender plans & packages', 'fr': 'Plan prévisionnel des marchés'},
+    'btn_quick_guide': {'en': 'How-To Manual', 'fr': 'Guide Illustré'},
+    'hint_quick_guide': {'en': 'Step-by-step worked examples', 'fr': 'Consulter le manuel et cas pratiques'},
+
+    # 5-Stage Stepper
+    'stepper_title': {'en': '🏛️ The 5-Stage Statutory Expenditure Chain (Chaîne de la Dépense)', 'fr': '🏛️ La Chaîne de la Dépense en 5 Étapes Réglementaires'},
+    'step_1_title': {'en': '1. Planning / Budget Plan', 'fr': '1. Plan & Dotation'},
+    'step_1_desc': {'en': 'Approved annual envelope', 'fr': 'Plafond voté / autorisé'},
+    'step_2_title': {'en': '2. Commitment', 'fr': '2. Engagement Juridique'},
+    'step_2_desc': {'en': 'Credit reservation (PR/PO)', 'fr': 'Réservation de crédits (DA/BC)'},
+    'step_3_title': {'en': '3. Service Receipt', 'fr': '3. Service Fait'},
+    'step_3_desc': {'en': 'Delivery PV & Certification', 'fr': 'PV de réception & certification'},
+    'step_4_title': {'en': '4. Payment Order', 'fr': '4. Mandat de Paiement'},
+    'step_4_desc': {'en': 'Liquidation, tax & visas', 'fr': 'Ordonnancement & retenues'},
+    'step_5_title': {'en': '5. Bank Disbursement', 'fr': '5. Règlement Trésorerie'},
+    'step_5_desc': {'en': 'Disbursement & GL posting', 'fr': 'Paiement effectif & écriture'},
+
+    # Quick Checker Modal
+    'checker_modal_title': {'en': 'Instant Budget Availability Checker', 'fr': 'Vérificateur Express de Disponibilité Budgétaire'},
+    'checker_modal_desc': {'en': 'Quickly test if your department has sufficient budget before signing contracts or purchase orders.', 'fr': 'Vérifiez instantanément si votre service dispose des crédits suffisants avant de signer un bon de commande.'},
+    'checker_select_line': {'en': 'Select Budget Line / Account to Test', 'fr': 'Sélectionnez la ligne budgétaire à tester'},
+    'checker_amount_label': {'en': 'Proposed Expense Amount', 'fr': 'Montant prévisionnel de la dépense'},
+    'checker_status_approved': {'en': '✅ APPROVED: Budget is available!', 'fr': '✅ DISPONIBLE : Crédit suffisant accordé !'},
+    'checker_status_warning': {'en': '🟡 WARNING: Budget available, but reaches alert threshold', 'fr': '🟡 ATTENTION : Crédit suffisant mais seuil d’alerte atteint'},
+    'checker_status_blocked': {'en': '🛑 BLOCKED: Budget ceiling exceeded!', 'fr': '🛑 DÉPASSEMENT : Crédit insuffisant (Blocage AVC)'},
+    'checker_btn_commit_now': {'en': '⚡ Proceed to Create Commitment with this Line', 'fr': '⚡ Créer directement l’engagement avec cette ligne'},
+    'checker_btn_request_transfer': {'en': '🔄 Request Credit Transfer into this Line', 'fr': '🔄 Demander un virement de crédits pour cette ligne'},
+
+    # Help Banner
+    'help_banner_title': {'en': '💡 How to use the Budget Module in 3 Simple Steps', 'fr': '💡 Comment utiliser le Module Budgétaire en 3 étapes simples'},
+    'help_step_1': {'en': '1. Check Your Balance', 'fr': '1. Consultez vos Disponibilités'},
+    'help_step_1_sub': {'en': 'See your approved budget and remaining balance in the Execution Dashboard.', 'fr': 'Visualisez vos plafonds autorisés et soldes disponibles dans le tableau de bord.'},
+    'help_step_2': {'en': '2. Reserve Before Buying', 'fr': '2. Réservez Avant d’Acheter'},
+    'help_step_2_sub': {'en': 'Click "+ New Commitment" to reserve credit before issuing vendor purchase orders.', 'fr': 'Cliquez sur "+ Nouvel Engagement" pour garantir les fonds avant de commander.'},
+    'help_step_3': {'en': '3. Authorize & Pay', 'fr': '3. Réceptionnez & Payez'},
+    'help_step_3_sub': {'en': 'Record receipt of goods, issue payment orders (mandats), and settle via bank.', 'fr': 'Validez le service fait, émettez le mandat de paiement avec retenues fiscales, et payez.'},
 }
 
 _DATA_I18N = {
@@ -1135,7 +1184,7 @@ async def budgeting_page() -> None:
         dlg.open()
 
     # --- Modal: New Budget Commitment
-    async def _open_new_comm_modal() -> None:
+    async def _open_new_comm_modal(initial_line_id: int | None = None, initial_amount: float | None = None, initial_desc: str = '') -> None:
         b = state['active_budget']
         if not b or not b.get('lines'):
             ui.notify(_loc('notify_no_active_lines'), type='warning')
@@ -1152,7 +1201,7 @@ async def budgeting_page() -> None:
             line_options[l['id']] = label
             line_lookup[l['id']] = l
 
-        first_line_id = list(line_options.keys())[0]
+        first_line_id = initial_line_id if (initial_line_id and initial_line_id in line_options) else list(line_options.keys())[0]
 
         asset_options = {0: _loc('no_asset_opt')}
         for a in assets_list:
@@ -1179,14 +1228,14 @@ async def budgeting_page() -> None:
                 label=_loc('col_stage')
             ).props('outlined dense options-dense').classes('w-full')
 
-            desc_in = ui.input(label=_loc('col_desc'), placeholder=_loc('comm_desc_placeholder')).props('outlined dense').classes('w-full')
+            desc_in = ui.input(label=_loc('col_desc'), value=initial_desc, placeholder=_loc('comm_desc_placeholder')).props('outlined dense').classes('w-full')
 
             with ui.row().classes('w-full gap-3 no-wrap'):
                 vend_sel = ui.select(vendor_options, value=0, label=_loc('lbl_vendor')).props('outlined dense options-dense').classes('flex-1')
                 asset_sel = ui.select(asset_options, value=0, label=_loc('lbl_asset')).props('outlined dense options-dense').classes('flex-1')
 
             with ui.row().classes('w-full gap-3 no-wrap'):
-                amt_in = ui.number(label=_loc('lbl_amount'), value=1000000, format='%.0f').props('outlined dense').classes('flex-1')
+                amt_in = ui.number(label=_loc('lbl_amount'), value=initial_amount if initial_amount is not None else 1000000, format='%.0f').props('outlined dense').classes('flex-1')
                 override_inp = ui.input(label=_loc('lbl_override_ticket_opt'), placeholder='OVR-2026-XXXX').props('outlined dense clearable').classes('flex-1')
 
             cofin_sel = ui.select(cofin_options, value=0, label=_loc('lbl_cofin_key')).props('outlined dense options-dense').classes('w-full')
@@ -1256,7 +1305,7 @@ async def budgeting_page() -> None:
         dlg.open()
 
     # --- Modal: New Credit Transfer (Virement)
-    def _open_new_transfer_modal() -> None:
+    def _open_new_transfer_modal(initial_source_line_id: int | None = None, initial_target_line_id: int | None = None) -> None:
         b = state['active_budget']
         if not b or not b.get('lines') or len(b.get('lines', [])) < 2:
             ui.notify(_loc('notify_two_lines_for_transfer'), type='warning')
@@ -1267,11 +1316,14 @@ async def budgeting_page() -> None:
         src_opts = {l['id']: f"{_tr_account(l.get('account_code'), l.get('account_name'), l.get('account_name_en'))} - {avail_label} {w.money(l.get('available_balance', l.get('amount', 0)), currency)} {currency}" for l in lines}
         tgt_opts = {l['id']: f"{_tr_account(l.get('account_code'), l.get('account_name'), l.get('account_name_en'))} ({_tr_type(l.get('budget_type') or 'opex')})" for l in lines}
 
+        src_val = initial_source_line_id if (initial_source_line_id and initial_source_line_id in src_opts) else lines[0]['id']
+        tgt_val = initial_target_line_id if (initial_target_line_id and initial_target_line_id in tgt_opts) else (lines[1]['id'] if len(lines) > 1 else lines[0]['id'])
+
         with ui.dialog() as dlg, ui.card().classes('w-full max-w-lg p-6 gap-4'):
             ui.label(_loc('dialog_transfer_title')).classes('text-lg font-bold text-slate-800')
 
-            src_sel = ui.select(src_opts, value=lines[0]['id'], label=_loc('lbl_src_line')).props('outlined dense options-dense').classes('w-full')
-            tgt_sel = ui.select(tgt_opts, value=lines[1]['id'], label=_loc('lbl_tgt_line')).props('outlined dense options-dense').classes('w-full')
+            src_sel = ui.select(src_opts, value=src_val, label=_loc('lbl_src_line')).props('outlined dense options-dense').classes('w-full')
+            tgt_sel = ui.select(tgt_opts, value=tgt_val, label=_loc('lbl_tgt_line')).props('outlined dense options-dense').classes('w-full')
             amt_in = ui.number(label=_loc('lbl_amount'), value=500000, format='%.0f').props('outlined dense').classes('w-full')
             reason_in = ui.input(label=_loc('lbl_reason'), placeholder=_loc('transfer_reason_placeholder')).props('outlined dense').classes('w-full')
 
@@ -1300,6 +1352,142 @@ async def budgeting_page() -> None:
                         _refresh_all()
 
                 ui.button(_loc('btn_authorize_transfer'), icon='swap_horiz', on_click=submit_tr).props('unelevated color=primary')
+
+        dlg.open()
+
+    # --- Modal: Instant Budget Availability Checker (Vérificateur Express)
+    def _open_quick_checker_modal(preselected_line_id: int | None = None) -> None:
+        b = state['active_budget']
+        if not b or not b.get('lines'):
+            ui.notify(_loc('notify_no_active_lines'), type='warning')
+            return
+
+        lines = b.get('lines', [])
+        avail_label = _loc('source_line_avail')
+        line_lookup = {l['id']: l for l in lines}
+        line_options = {}
+        for l in lines:
+            b_type = _tr_type(l.get('budget_type') or 'opex')
+            avail = l.get('available_balance') if l.get('available_balance') is not None else l.get('amount', 0)
+            acct_display = _tr_account(l.get('account_code'), l.get('account_name'), l.get('account_name_en'))
+            dept_name = _tr_dept(l.get('cost_center_name'), l.get('cost_center_name_en'))
+            line_options[l['id']] = f"{acct_display} [{dept_name}] ({b_type}) — {avail_label} {w.money(avail, currency)} {currency}"
+
+        init_line_id = preselected_line_id if (preselected_line_id and preselected_line_id in line_options) else (list(line_options.keys())[0] if line_options else None)
+
+        with ui.dialog() as dlg, ui.card().classes('w-full max-w-2xl p-6 gap-4'):
+            with ui.row().classes('w-full items-center justify-between border-b border-slate-200 pb-3 no-wrap'):
+                with ui.row().classes('items-center gap-2.5'):
+                    with ui.element('div').classes('w-10 h-10 rounded-xl bg-teal-500/10 text-teal-800 flex items-center justify-center border border-teal-200'):
+                        ui.icon('calculate').classes('text-2xl')
+                    with ui.column().classes('gap-0'):
+                        ui.label(_loc('checker_modal_title')).classes('text-lg font-bold text-slate-800')
+                        ui.label(_loc('checker_modal_desc')).classes('text-xs text-slate-500')
+                ui.button(icon='close', on_click=dlg.close).props('flat dense round')
+
+            # Select line & amount
+            with ui.column().classes('w-full gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200'):
+                sel_line = ui.select(
+                    line_options,
+                    value=init_line_id,
+                    label=_loc('checker_select_line'),
+                ).props('outlined dense options-dense bg-white').classes('w-full')
+
+                with ui.row().classes('w-full items-center gap-3 no-wrap'):
+                    amt_in = ui.number(
+                        label=_loc('checker_amount_label'),
+                        value=500000,
+                        min=1,
+                        format='%.0f',
+                    ).props('outlined dense bg-white').classes('flex-1')
+                    ui.label(currency).classes('font-mono font-bold text-slate-700 text-sm')
+
+            # Live calculation results container
+            res_box = ui.column().classes('w-full gap-3')
+
+            def _recompute() -> None:
+                res_box.clear()
+                cur_l = line_lookup.get(sel_line.value)
+                if not cur_l:
+                    return
+                req = float(amt_in.value or 0)
+                tot_b = float(cur_l.get('amount') or cur_l.get('revised_amount') or 0)
+                avail_raw = cur_l.get('available_balance')
+                avail = float(str(avail_raw).replace(',', '')) if avail_raw is not None else tot_b
+                committed = float(cur_l.get('committed_amount') or 0)
+                rem_after = avail - req
+                pct_after = round(((tot_b - rem_after) / tot_b * 100), 1) if tot_b > 0 else 0
+                warn_thresh = float(cur_l.get('warning_threshold_pct') or 80.0)
+                is_breach = req > avail
+
+                with res_box:
+                    # Metric cards grid
+                    with ui.grid(columns=4).classes('w-full gap-2.5 text-center'):
+                        with ui.element('div').classes('p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs'):
+                            ui.label('Dotation Votée' if lang() == 'fr' else 'Approved Budget').classes('text-[10px] uppercase font-bold text-slate-400')
+                            ui.label(w.money(tot_b, currency)).classes('text-sm font-mono font-bold text-slate-800 truncate')
+                        with ui.element('div').classes('p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs'):
+                            ui.label('Déjà Engagé' if lang() == 'fr' else 'Committed').classes('text-[10px] uppercase font-bold text-amber-600')
+                            ui.label(w.money(committed, currency)).classes('text-sm font-mono font-bold text-amber-800 truncate')
+                        with ui.element('div').classes('p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs'):
+                            ui.label('Disponible Net' if lang() == 'fr' else 'Available Now').classes('text-[10px] uppercase font-bold text-teal-600')
+                            ui.label(w.money(avail, currency)).classes('text-sm font-mono font-bold text-teal-800 truncate')
+                        with ui.element('div').classes(f"p-2.5 rounded-xl border shadow-2xs {'bg-rose-50 border-rose-200' if is_breach else 'bg-emerald-50 border-emerald-200'}"):
+                            ui.label('Après Dépense' if lang() == 'fr' else 'After Expense').classes(f"text-[10px] uppercase font-bold {'text-rose-600' if is_breach else 'text-emerald-700'}")
+                            ui.label(w.money(rem_after, currency)).classes(f"text-sm font-mono font-extrabold {'text-rose-700' if is_breach else 'text-emerald-800'} truncate")
+
+                    # Verdict Box
+                    if is_breach:
+                        deficit = req - avail
+                        with ui.element('div').classes('w-full p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex flex-col gap-1.5'):
+                            with ui.row().classes('items-center gap-2'):
+                                ui.icon('error').classes('text-rose-600 text-xl')
+                                ui.label(_loc('checker_status_blocked')).classes('text-sm font-bold text-rose-800')
+                            ui.label(f"{'Déficit constaté' if lang() == 'fr' else 'Deficit'}: {w.money(deficit, currency)} {currency}. {'Le contrôle AVC bloque les dépassements budgétaires. Vous pouvez effectuer un virement pour abonder cette ligne.' if lang() == 'fr' else 'Availability control blocks overruns. You can initiate a credit transfer to fund this line.'}").classes('text-xs text-rose-700')
+                    elif pct_after >= warn_thresh:
+                        with ui.element('div').classes('w-full p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col gap-1.5'):
+                            with ui.row().classes('items-center gap-2'):
+                                ui.icon('warning').classes('text-amber-600 text-xl')
+                                ui.label(_loc('checker_status_warning')).classes('text-sm font-bold text-amber-800')
+                            ui.label(f"{'Cette dépense portera la consommation à' if lang() == 'fr' else 'This expense will bring consumption to'} {pct_after}% ({'seuil d’alerte' if lang() == 'fr' else 'threshold'}: {warn_thresh}%).").classes('text-xs text-amber-700')
+                    else:
+                        with ui.element('div').classes('w-full p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col gap-1.5'):
+                            with ui.row().classes('items-center gap-2'):
+                                ui.icon('check_circle').classes('text-emerald-600 text-xl')
+                                ui.label(_loc('checker_status_approved')).classes('text-sm font-bold text-emerald-800')
+                            ui.label(f"{'Solde restant' if lang() == 'fr' else 'Remaining balance'}: {w.money(rem_after, currency)} {currency} ({pct_after}% {'consommé' if lang() == 'fr' else 'consumed'}).").classes('text-xs text-emerald-700')
+
+            sel_line.on_value_change(lambda _e: _recompute())
+            amt_in.on_value_change(lambda _e: _recompute())
+            _recompute()
+
+            # Footer actions
+            with ui.row().classes('w-full justify-between items-center border-t border-slate-200 pt-3 mt-1'):
+                ui.button(_loc('btn_cancel'), on_click=dlg.close).props('flat color=grey-8')
+
+                with ui.row().classes('items-center gap-2'):
+                    async def _proceed_to_comm():
+                        lid = sel_line.value
+                        amt = float(amt_in.value or 0)
+                        dlg.close()
+                        await _open_new_comm_modal(initial_line_id=lid, initial_amount=amt)
+
+                    def _proceed_to_transfer():
+                        lid = sel_line.value
+                        dlg.close()
+                        _open_new_transfer_modal(initial_target_line_id=lid)
+
+                    ui.button(
+                        _loc('checker_btn_request_transfer'),
+                        icon='swap_horiz',
+                        on_click=_proceed_to_transfer,
+                    ).props('outline color=purple size=sm')
+
+                    ui.button(
+                        _loc('checker_btn_commit_now'),
+                        icon='bolt',
+                        on_click=_proceed_to_comm,
+                    ).props('unelevated color=teal size=sm')
 
         dlg.open()
 
@@ -3439,11 +3627,215 @@ async def budgeting_page() -> None:
 
     refreshers['kpis'] = _render_kpis.refresh
     _render_kpis()
+    tabs_ref: dict[str, Any] = {'tabs': None}
+
+    # --- Quick Action & Expenditure Launcher Hub ---
+    @ui.refreshable
+    def _render_quick_launcher() -> None:
+        rep = state['report'] or {}
+        st_orders = state.get('payment_order_stats') or {}
+        is_fr = lang() == 'fr'
+
+        with ui.card().classes('w-full p-4 bg-gradient-to-r from-slate-900 via-teal-950 to-indigo-950 text-white rounded-2xl shadow-sm border border-slate-800 gap-3.5'):
+            with ui.row().classes('w-full items-center justify-between no-wrap gap-2'):
+                with ui.row().classes('items-center gap-2.5'):
+                    with ui.element('div').classes('w-9 h-9 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center border border-teal-500/30'):
+                        ui.icon('bolt').classes('text-xl')
+                    with ui.column().classes('gap-0'):
+                        ui.label(_loc('quick_hub_title')).classes('text-sm font-bold text-white tracking-wide')
+                        ui.label(_loc('quick_hub_subtitle')).classes('text-[11px] text-teal-200/80')
+
+                with ui.row().classes('items-center gap-2'):
+                    guide_btn = ui.button(
+                        '💡 ' + ('Guide Rapide' if is_fr else 'Quick Guide'),
+                    ).props('flat text-color=teal-2 dense no-caps size=sm')
+
+            # The 6 Quick-Action Cards
+            with ui.row().classes('w-full gap-2.5 items-stretch flex-wrap'):
+                # 1. New Commitment (Primary Action)
+                with ui.element('button').classes(
+                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white '
+                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
+                ).on('click', lambda: _open_new_comm_modal()):
+                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
+                        ui.icon('shopping_cart_checkout').classes('text-lg text-white')
+                    with ui.column().classes('gap-0 overflow-hidden'):
+                        ui.label(_loc('btn_quick_new_comm')).classes('text-xs font-bold text-white leading-tight truncate')
+                        ui.label(_loc('hint_quick_comm')).classes('text-[10px] text-emerald-100/80 leading-tight truncate')
+
+                # 2. Check Available Budget (The Instant Calculator)
+                with ui.element('button').classes(
+                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-teal-700 to-cyan-800 text-white '
+                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
+                ).on('click', lambda: _open_quick_checker_modal()):
+                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
+                        ui.icon('calculate').classes('text-lg text-white')
+                    with ui.column().classes('gap-0 overflow-hidden'):
+                        ui.label(_loc('btn_quick_check_avail')).classes('text-xs font-bold text-white leading-tight truncate')
+                        ui.label(_loc('hint_quick_check')).classes('text-[10px] text-cyan-100/80 leading-tight truncate')
+
+                # 3. Credit Transfer
+                with ui.element('button').classes(
+                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-indigo-700 to-purple-800 text-white '
+                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
+                ).on('click', lambda: _open_new_transfer_modal()):
+                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
+                        ui.icon('sync_alt').classes('text-lg text-white')
+                    with ui.column().classes('gap-0 overflow-hidden'):
+                        ui.label(_loc('btn_quick_transfer')).classes('text-xs font-bold text-white leading-tight truncate')
+                        ui.label(_loc('hint_quick_transfer')).classes('text-[10px] text-indigo-100/80 leading-tight truncate')
+
+                # 4. Payment Orders (Mandats)
+                with ui.element('button').classes(
+                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-purple-800 to-fuchsia-900 text-white '
+                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
+                ).on('click', lambda: _open_mandats_list_modal()):
+                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
+                        ui.icon('receipt_long').classes('text-lg text-white')
+                    with ui.column().classes('gap-0 overflow-hidden'):
+                        ui.label(_loc('btn_quick_mandats')).classes('text-xs font-bold text-white leading-tight truncate')
+                        ui.label(_loc('hint_quick_mandats')).classes('text-[10px] text-purple-100/80 leading-tight truncate')
+
+                # 5. Procurement Plans (PPM)
+                with ui.element('button').classes(
+                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-amber-700 to-orange-800 text-white '
+                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
+                ).on('click', lambda: _open_procurement_plans_modal()):
+                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
+                        ui.icon('assignment').classes('text-lg text-white')
+                    with ui.column().classes('gap-0 overflow-hidden'):
+                        ui.label(_loc('btn_quick_procurement')).classes('text-xs font-bold text-white leading-tight truncate')
+                        ui.label(_loc('hint_quick_procurement')).classes('text-[10px] text-amber-100/80 leading-tight truncate')
+
+                # 6. Official Manual & Examples
+                with ui.element('button').classes(
+                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 text-white '
+                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
+                ).on('click', lambda: _open_budget_manual_dialog()):
+                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
+                        ui.icon('menu_book').classes('text-lg text-white')
+                    with ui.column().classes('gap-0 overflow-hidden'):
+                        ui.label(_loc('btn_quick_guide')).classes('text-xs font-bold text-white leading-tight truncate')
+                        ui.label(_loc('hint_quick_guide')).classes('text-[10px] text-slate-200/80 leading-tight truncate')
+
+            # Collapsible 3-Step Guided Cheatsheet
+            guide_collapse = ui.column().classes('w-full border-t border-slate-700/60 pt-3 gap-2')
+            with guide_collapse:
+                with ui.row().classes('w-full gap-3 items-stretch'):
+                    # Step 1
+                    with ui.element('div').classes('flex-1 bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col gap-1'):
+                        with ui.row().classes('items-center gap-2'):
+                            ui.label('1').classes('w-5 h-5 rounded-full bg-teal-500 text-slate-900 font-extrabold text-[11px] flex items-center justify-center')
+                            ui.label(_loc('help_step_1')).classes('text-xs font-bold text-teal-300')
+                        ui.label(_loc('help_step_1_sub')).classes('text-[11px] text-slate-300 leading-snug')
+
+                    # Step 2
+                    with ui.element('div').classes('flex-1 bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col gap-1'):
+                        with ui.row().classes('items-center gap-2'):
+                            ui.label('2').classes('w-5 h-5 rounded-full bg-emerald-500 text-slate-900 font-extrabold text-[11px] flex items-center justify-center')
+                            ui.label(_loc('help_step_2')).classes('text-xs font-bold text-emerald-300')
+                        ui.label(_loc('help_step_2_sub')).classes('text-[11px] text-slate-300 leading-snug')
+
+                    # Step 3
+                    with ui.element('div').classes('flex-1 bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col gap-1'):
+                        with ui.row().classes('items-center gap-2'):
+                            ui.label('3').classes('w-5 h-5 rounded-full bg-indigo-400 text-slate-900 font-extrabold text-[11px] flex items-center justify-center')
+                            ui.label(_loc('help_step_3')).classes('text-xs font-bold text-indigo-300')
+                        ui.label(_loc('help_step_3_sub')).classes('text-[11px] text-slate-300 leading-snug')
+
+            guide_btn.on('click', lambda: guide_collapse.set_visibility(not guide_collapse.visible))
+
+    refreshers['quick_launcher'] = _render_quick_launcher.refresh
+    _render_quick_launcher()
+
+    # --- Interactive 5-Stage Statutory Expenditure Chain Stepper ---
+    @ui.refreshable
+    def _render_expenditure_stepper() -> None:
+        rep = state['report'] or {}
+        tot_b = rep.get('totalBudget', 0)
+        tot_comm = rep.get('totalCommitted', 0)
+        st_orders = state.get('payment_order_stats') or {}
+        tot_mandat = st_orders.get('total_net_amount', 0)
+        tot_paid = st_orders.get('total_paid_amount', 0)
+        cert_count = len(state.get('certifications', []))
+
+        def _goto_tab(tab_name: str) -> None:
+            if tabs_ref['tabs']:
+                tabs_ref['tabs'].set_value(tab_name)
+
+        with ui.card().classes('w-full p-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs gap-2'):
+            with ui.row().classes('w-full items-center justify-between no-wrap'):
+                ui.label(_loc('stepper_title')).classes('text-xs font-extrabold text-slate-700 uppercase tracking-wider')
+                ui.label('OHADA / CEMAC / UEMOA' if lang() == 'fr' else 'Statutory Standard').classes('text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200')
+
+            with ui.row().classes('w-full gap-2 items-center justify-between no-wrap overflow-x-auto py-1'):
+                # Stage 1: Plan
+                with ui.element('div').classes(
+                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-sky-50/50 hover:border-sky-300 cursor-pointer transition-all'
+                ).on('click', lambda: _goto_tab('plans')):
+                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
+                        ui.label(_loc('step_1_title')).classes('text-xs font-bold text-slate-800')
+                        ui.icon('table_chart').classes('text-sky-600 text-sm')
+                    ui.label(_loc('step_1_desc')).classes('text-[10px] text-slate-500 truncate')
+                    ui.label(w.money(tot_b, currency)).classes('text-xs font-mono font-extrabold text-sky-800 mt-1')
+
+                ui.icon('arrow_forward').classes('text-slate-300 text-sm shrink-0')
+
+                # Stage 2: Commitment
+                with ui.element('div').classes(
+                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-amber-50/50 hover:border-amber-300 cursor-pointer transition-all'
+                ).on('click', lambda: _goto_tab('comm')):
+                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
+                        ui.label(_loc('step_2_title')).classes('text-xs font-bold text-slate-800')
+                        ui.icon('shopping_cart_checkout').classes('text-amber-600 text-sm')
+                    ui.label(_loc('step_2_desc')).classes('text-[10px] text-slate-500 truncate')
+                    ui.label(w.money(tot_comm, currency)).classes('text-xs font-mono font-extrabold text-amber-800 mt-1')
+
+                ui.icon('arrow_forward').classes('text-slate-300 text-sm shrink-0')
+
+                # Stage 3: Service Fait / Certification
+                with ui.element('div').classes(
+                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-teal-50/50 hover:border-teal-300 cursor-pointer transition-all'
+                ).on('click', lambda: _open_certifications_list_modal()):
+                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
+                        ui.label(_loc('step_3_title')).classes('text-xs font-bold text-slate-800')
+                        ui.icon('verified').classes('text-teal-600 text-sm')
+                    ui.label(_loc('step_3_desc')).classes('text-[10px] text-slate-500 truncate')
+                    ui.label(f"{cert_count} PV enregistrés" if lang() == 'fr' else f"{cert_count} certified").classes('text-xs font-mono font-extrabold text-teal-800 mt-1')
+
+                ui.icon('arrow_forward').classes('text-slate-300 text-sm shrink-0')
+
+                # Stage 4: Payment Order (Mandat)
+                with ui.element('div').classes(
+                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-purple-50/50 hover:border-purple-300 cursor-pointer transition-all'
+                ).on('click', lambda: _open_mandats_list_modal()):
+                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
+                        ui.label(_loc('step_4_title')).classes('text-xs font-bold text-slate-800')
+                        ui.icon('receipt_long').classes('text-purple-600 text-sm')
+                    ui.label(_loc('step_4_desc')).classes('text-[10px] text-slate-500 truncate')
+                    ui.label(w.money(tot_mandat, currency)).classes('text-xs font-mono font-extrabold text-purple-900 mt-1')
+
+                ui.icon('arrow_forward').classes('text-slate-300 text-sm shrink-0')
+
+                # Stage 5: Bank Disbursement
+                with ui.element('div').classes(
+                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-emerald-50/50 hover:border-emerald-300 cursor-pointer transition-all'
+                ).on('click', lambda: _open_mandats_list_modal()):
+                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
+                        ui.label(_loc('step_5_title')).classes('text-xs font-bold text-slate-800')
+                        ui.icon('payments').classes('text-emerald-600 text-sm')
+                    ui.label(_loc('step_5_desc')).classes('text-[10px] text-slate-500 truncate')
+                    ui.label(w.money(tot_paid, currency)).classes('text-xs font-mono font-extrabold text-emerald-800 mt-1')
+
+    refreshers['stepper'] = _render_expenditure_stepper.refresh
+    _render_expenditure_stepper()
 
     # Navigation Tabs
-    with ui.tabs().props('active-color=teal-8 indicator-color=teal-8 inline-label no-caps align=left').classes(
+    tabs = ui.tabs().props('active-color=teal-8 indicator-color=teal-8 inline-label no-caps align=left').classes(
         'w-full border-b border-slate-200 bg-white rounded-t-xl px-2 pt-1 shadow-2xs font-semibold text-slate-600'
-    ) as tabs:
+    )
+    tabs_ref['tabs'] = tabs
+    with tabs:
         t_exec = ui.tab('exec', label=_loc('tab_exec'), icon='query_stats')
         t_plans = ui.tab('plans', label=_loc('tab_plans'), icon='table_chart')
         t_comm = ui.tab('comm', label=_loc('tab_comm'), icon='shopping_cart_checkout')
@@ -3468,6 +3860,12 @@ async def budgeting_page() -> None:
                     normal_count = len(rows) - breach_count - warning_count
                     is_fr = lang() == 'fr'
 
+                    cur_status_filter = state.get('exec_status_filter', 'all')
+
+                    def _set_status_filter(st_val: str) -> None:
+                        state['exec_status_filter'] = st_val
+                        _render_exec_tab.refresh()
+
                     with ui.row().classes('w-full items-center justify-between no-wrap'):
                         with ui.row().classes('items-center gap-3 flex-wrap'):
                             type_opts = {
@@ -3485,25 +3883,45 @@ async def budgeting_page() -> None:
                             ).props('outlined dense options-dense bg-white').classes('w-64')
 
                             with ui.row().classes('items-center gap-1.5'):
-                                ui.label(f"{len(rows)} {'lignes' if is_fr else 'lines'}").classes('text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-1 rounded-md')
+                                all_cls = 'bg-teal-700 text-white font-bold' if cur_status_filter == 'all' else 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                ui.button(f"{len(rows)} {'lignes' if is_fr else 'lines'}", on_click=lambda: _set_status_filter('all')).props(f'unelevated dense no-caps size=xs class="{all_cls} border border-slate-300 rounded-md px-2 py-1"')
+
                                 if breach_count > 0:
-                                    ui.label(f"🔴 {breach_count} {'Dépassements' if is_fr else 'Overruns'}").classes('text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded-md')
+                                    br_cls = 'bg-red-700 text-white font-bold' if cur_status_filter == 'breach' else 'bg-red-50 text-red-700 hover:bg-red-100'
+                                    ui.button(f"🔴 {breach_count} {'Dépassements' if is_fr else 'Overruns'}", on_click=lambda: _set_status_filter('breach')).props(f'unelevated dense no-caps size=xs class="{br_cls} border border-red-200 rounded-md px-2 py-1"')
+
                                 if warning_count > 0:
-                                    ui.label(f"🟡 {warning_count} {'Alertes' if is_fr else 'Warnings'}").classes('text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md')
-                                if breach_count == 0 and warning_count == 0 and rows:
-                                    ui.label(f"🟢 {normal_count} {'Conformes' if is_fr else 'Within Budget'}").classes('text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md')
+                                    wn_cls = 'bg-amber-600 text-white font-bold' if cur_status_filter == 'warning' else 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                    ui.button(f"🟡 {warning_count} {'Alertes' if is_fr else 'Warnings'}", on_click=lambda: _set_status_filter('warning')).props(f'unelevated dense no-caps size=xs class="{wn_cls} border border-amber-200 rounded-md px-2 py-1"')
+
+                                if normal_count > 0:
+                                    ok_cls = 'bg-emerald-700 text-white font-bold' if cur_status_filter == 'normal' else 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                    ui.button(f"🟢 {normal_count} {'Conformes' if is_fr else 'Within Budget'}", on_click=lambda: _set_status_filter('normal')).props(f'unelevated dense no-caps size=xs class="{ok_cls} border border-emerald-200 rounded-md px-2 py-1"')
 
                         with ui.row().classes('items-center gap-2'):
                             search_inp = ui.input(placeholder=_loc('search_placeholder')).props('outlined dense clearable bg-white')
                             search_inp.classes('w-64')
 
+                    # Filter rows by status filter if active
+                    filtered_rows = rows
+                    if cur_status_filter == 'breach':
+                        filtered_rows = [r for r in rows if r.get('avc_status') == 'breach']
+                    elif cur_status_filter == 'warning':
+                        filtered_rows = [r for r in rows if r.get('avc_status') == 'warning']
+                    elif cur_status_filter == 'normal':
+                        filtered_rows = [r for r in rows if r.get('avc_status') not in ('breach', 'warning')]
+
                     table_rows = []
-                    for r in rows:
+                    active_lines = (state['active_budget'] or {}).get('lines', [])
+                    for r in filtered_rows:
                         b_type_str = _tr_type(r.get('budget_type') or ('capex' if r.get('account_class') == 2 else 'opex'))
                         acct_str = _tr_account(r.get('account_code'), r.get('account_name'), r.get('account_name_en'))
                         dept_str = _tr_dept(r.get('cost_center_name'), r.get('cost_center_name_en'))
                         prog_str = _tr_prog(r.get('program_code'), r.get('program_name_en'))
                         avc_badge_text, _, _ = _tr_avc_badge(r.get('avc_status'))
+
+                        matched_line = next((l for l in active_lines if l.get('account_id') == r.get('account_id') and (not r.get('cost_center_id') or l.get('cost_center_id') == r.get('cost_center_id'))), None)
+                        matched_id = matched_line['id'] if matched_line else None
 
                         table_rows.append({
                             'account': acct_str,
@@ -3519,6 +3937,9 @@ async def budgeting_page() -> None:
                             '_avail_num': r.get('remaining_budget', 0),
                             '_rate_num': r.get('pct_consumed', 0),
                             '_avc_raw': r.get('avc_status', 'normal'),
+                            '_line_id': matched_id,
+                            '_btn_commit': 'Engager' if is_fr else 'Commit',
+                            '_btn_check': 'Tester' if is_fr else 'Check',
                         })
 
                     columns = [
@@ -3532,6 +3953,7 @@ async def budgeting_page() -> None:
                         {'name': 'avail', 'label': _loc('col_avail'), 'field': 'avail', 'align': 'right', 'sortable': True},
                         {'name': 'rate', 'label': _loc('col_rate'), 'field': 'rate', 'align': 'right', 'sortable': True},
                         {'name': 'avc', 'label': _loc('col_avc_status'), 'field': 'avc', 'align': 'center', 'sortable': True},
+                        {'name': 'actions', 'label': _loc('col_actions'), 'field': 'actions', 'align': 'center'},
                     ]
 
                     exec_table = ui.table(columns=columns, rows=table_rows, pagination=15).classes('w-full lc-table')
@@ -3569,6 +3991,24 @@ async def budgeting_page() -> None:
                             </q-chip>
                         </q-td>
                     ''')
+
+                    exec_table.add_slot('body-cell-actions', '''
+                        <q-td :props="props">
+                            <div class="row no-wrap gap-1 justify-center" v-if="props.row._line_id">
+                                <q-btn dense unelevated color="teal" icon="bolt" :label="props.row._btn_commit" size="xs"
+                                       @click="$parent.$emit('quick_commit', props.row._line_id)" class="q-px-xs" />
+                                <q-btn dense outline color="primary" icon="calculate" :label="props.row._btn_check" size="xs"
+                                       @click="$parent.$emit('quick_check', props.row._line_id)" class="q-px-xs" />
+                            </div>
+                            <span v-else class="text-grey-5 text-caption">—</span>
+                        </q-td>
+                    ''')
+
+                    async def _on_quick_commit(e):
+                        await _open_new_comm_modal(initial_line_id=int(e.args))
+
+                    exec_table.on('quick_commit', _on_quick_commit)
+                    exec_table.on('quick_check', lambda e: _open_quick_checker_modal(preselected_line_id=int(e.args)))
 
             async def _change_type(val: str) -> None:
                 state['budget_type'] = val if val else None
