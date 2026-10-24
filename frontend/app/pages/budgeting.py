@@ -18,6 +18,7 @@ from nicegui import app, ui
 from .. import api
 from ..i18n import lang, t
 from ..ui import widgets as w
+from ..ui import manual as manual_ui
 from ..ui.shell import page
 
 _T: dict[str, dict[str, str]] = {
@@ -3258,6 +3259,7 @@ async def budgeting_page() -> None:
         dlg.open()
 
     def _open_budget_manual_dialog() -> None:
+        ui.add_css(manual_ui.MANUAL_CSS)
         docs_dir = Path(__file__).resolve().parent.parent.parent.parent / 'docs'
         md_file = docs_dir / 'BUDGET_MODULE_USER_GUIDE.md'
         raw_md = md_file.read_text(encoding='utf-8') if md_file.exists() else "Budget User Guide not found."
@@ -3273,12 +3275,13 @@ async def budgeting_page() -> None:
                         app.storage.user['guide_selected_doc'] = 'BUDGET_MODULE_USER_GUIDE.md'
                         ui.navigate.to('/user-guide')
                     ui.button('Full Screen Guide', icon='open_in_new', on_click=_go_full_guide).props('outline color=teal-8 dense size=sm')
-                    ui.button('HTML Manual', icon='description', on_click=lambda: ui.open('/docs-static/BUDGET_MODULE_USER_GUIDE.html', new_tab=True)).props('outline color=slate-7 dense size=sm')
+                    ui.button('HTML Manual', icon='description', on_click=lambda: ui.navigate.to('/docs-static/BUDGET_MODULE_USER_GUIDE.html', new_tab=True)).props('outline color=slate-7 dense size=sm')
                     ui.button('Download PDF', icon='picture_as_pdf', on_click=lambda: ui.download('/docs-static/BUDGET_MODULE_USER_GUIDE.pdf')).props('unelevated color=teal dense size=sm')
                     ui.button(icon='close', on_click=dlg.close).props('flat round dense text-color=grey-7')
 
-            with ui.scroll_area().classes('w-full flex-1 p-5 bg-slate-50/50 rounded-xl border border-slate-200'):
-                ui.markdown(raw_md).classes('prose max-w-none w-full text-slate-800')
+            with ui.scroll_area().classes('w-full flex-1 p-5 rounded-xl border border-slate-200').style('background:#fff'):
+                ui.html(manual_ui.render_manual(raw_md)['html'], sanitize=False).classes('w-full')
+            manual_ui.activate_motion()
 
         dlg.open()
 
