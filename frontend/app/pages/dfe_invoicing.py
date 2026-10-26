@@ -349,7 +349,45 @@ async def dfe_invoicing_page() -> None:
 
             tr_num_in = ui.input('N° Virement (ex: TR-2026-003)' if lang() == 'fr' else 'Transfer No. (e.g. TR-2026-003)', value='TR-2026-003').props('outlined dense')
             src_in = ui.select(b_opts, value=branches_list[0]['id'] if branches_list else None, label='Établissement Source' if lang() == 'fr' else 'Source Branch').props('outlined dense')
-            dst_in = ui.select(b_opts, value=branches_list[1]['id'] if len(branches_list) > 1 else None, label='Établissement Destinataire' if lang() == 'fr' else 'Destination Branch').props('outlined dense')
+
+            def _open_new_branch_dialog():
+                dlg_br = ui.dialog()
+                with dlg_br, ui.card().classes('w-full max-w-sm p-5 gap-3'):
+                    w.modal_header('Nouvel Établissement' if lang() == 'fr' else 'New Branch / Establishment', emoji='🏥')
+                    b_code = ui.input('Code (ex: KUMBA-CARE)', placeholder='KUMBA-CARE').props('outlined dense uppercase')
+                    b_name = ui.input('Nom de l’Établissement' if lang() == 'fr' else 'Branch Name', placeholder='Centre Médical de Kumba').props('outlined dense')
+                    b_city = ui.input('Ville' if lang() == 'fr' else 'City', placeholder='Kumba').props('outlined dense')
+
+                    async def _create_b():
+                        if not b_code.value or not b_name.value:
+                            ui.notify('Veuillez renseigner le code et le nom' if lang() == 'fr' else 'Code and name required', type='warning')
+                            return
+                        try:
+                            new_b = await api.post('/interbranch/branches', {
+                                'code': b_code.value.strip().upper(),
+                                'name': b_name.value.strip(),
+                                'city': b_city.value.strip() or 'Douala',
+                                'branch_type': 'clinic',
+                                'liaison_account_code': '1851',
+                            })
+                            b_opts[new_b['id']] = f"{new_b['code']} — {new_b['name']}"
+                            dst_in.options = b_opts
+                            dst_in.set_value(new_b['id'])
+                            ui.notify(f"Établissement {new_b.get('name')} créé !" if lang() == 'fr' else f"Branch {new_b.get('name')} created!", type='positive')
+                            dlg_br.close()
+                        except Exception as ex:
+                            ui.notify(f"Erreur: {ex}", type='negative')
+
+                    with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                        ui.button('Annuler' if lang() == 'fr' else 'Cancel', on_click=dlg_br.close).props('flat color=grey')
+                        ui.button('Créer' if lang() == 'fr' else 'Create', on_click=_create_b).props('unelevated color=teal size=sm')
+                dlg_br.open()
+
+            with ui.row().classes('w-full items-center justify-between no-wrap'):
+                ui.label('Établissement Destinataire' if lang() == 'fr' else 'Destination Branch').classes('text-xs font-semibold text-slate-700')
+                ui.button('+ Nouveau' if lang() == 'fr' else '+ New Branch', icon='add_business', on_click=_open_new_branch_dialog).props('flat dense size=sm color=teal-8 no-caps class="text-xs font-bold"')
+
+            dst_in = ui.select(b_opts, value=branches_list[1]['id'] if len(branches_list) > 1 else None).props('outlined dense')
             date_in = ui.input('Date Virement (YYYY-MM-DD)' if lang() == 'fr' else 'Transfer Date (YYYY-MM-DD)', value='2026-10-15').props('outlined dense')
             amt_in = ui.number('Montant Transféré (XAF)' if lang() == 'fr' else 'Transfer Amount (XAF)', value=1000000).props('outlined dense')
             desc_in = ui.input('Objet du Virement' if lang() == 'fr' else 'Transfer Description', value='Réassort trésorerie et pharmacie').props('outlined dense')

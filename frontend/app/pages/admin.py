@@ -1322,6 +1322,56 @@ async def _render_integrations_tab(acct_options: dict, cc_options: dict, jnl_opt
 }
 ```''').classes('w-full text-xs')
 
+                            ui.label('Format 4: Sage Enterprise Ecosystem Multi-Platform Budget & Expenditure Gateway').classes('font-bold text-sm text-emerald-800 mt-2')
+                            ui.markdown('''```json
+// POST /api/integrations/sage/commitments (Header: X-API-Key: lch_live_sage_enterprise_88f9104b2c3d5e6a)
+
+// Option A: Sage X3 Finance Module (Syracuse POH / POP format)
+{
+  "sage_erp": "sage_x3",
+  "poh_num": "POH-X3-DLA-2026-0044",
+  "site": "DOUALA_CLINIC",
+  "account_code": "6042",
+  "amount": 1500000,
+  "lines": [{ "account_code": "6042", "amount": 1500000, "axe_cc": "PHARMA", "axe_prg": "PRG-1", "description": "Consommables bloc chirurgical" }],
+  "vendor_name": "Laborex Cameroun SARL",
+  "strict_avc": true
+}
+
+// Option B: Sage Intacct (XML-RPC 3.0 / PO Transaction JSON)
+{
+  "sage_erp": "sage_intacct",
+  "document_id": "PO-INTACCT-BAF-2026-0812",
+  "location_id": "LOC-BAF-01",
+  "department_id": "DEPT-CLINICAL",
+  "account_no": "6042",
+  "amount": 850000,
+  "vendor_name": "UCB Pharma Central Africa",
+  "description": "Réactifs hématologie analyseur"
+}
+
+// Option C: Sage 300 (Accpac Web API OData v4 Requisition)
+{
+  "sage_erp": "sage_300",
+  "requisition_number": "REQ-300-GAR-2026-092",
+  "account_id": "6042-GAR",
+  "budget_set": 1,
+  "amount": 450000,
+  "description": "Acquisition compresses stériles et gants"
+}
+
+// Option D: Sage 200 Professional (Columbus REST POP Order)
+{
+  "sage_erp": "sage_200",
+  "order_number": "POP-200-KBA-2026-031",
+  "nominal_code": "6042",
+  "cost_centre": "CC_KUMBA",
+  "department": "DEPT_CARE",
+  "amount": 320000,
+  "description": "Fournitures soins infirmiers dispensaire"
+}
+```''').classes('w-full text-xs')
+
     await reload_all()
 
 

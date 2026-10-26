@@ -17,7 +17,7 @@ from .config import API_BASE_URL
 
 _client = httpx.AsyncClient(
     base_url=API_BASE_URL,
-    timeout=httpx.Timeout(10.0, connect=4.0),
+    timeout=httpx.Timeout(45.0, connect=5.0),
 )
 
 

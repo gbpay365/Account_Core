@@ -126,8 +126,8 @@ reportRoutes.get(
       tafire: { ...OHADA_STATEMENTS.tafire, ...tafire },
       // The Compte de resultat has no self-balancing identity of its own; its
       // check simply carries the net result, so it is not a pass/fail row.
-      checks: [bilan.check, tafire.check].filter((c) => c && c.balanced !== undefined),
-      net_result: resultat.check.net_result,
+      checks: [bilan?.check, tafire?.check].filter((c) => c && c.balanced !== undefined),
+      net_result: resultat?.check?.net_result ?? 0,
     });
   })
 );

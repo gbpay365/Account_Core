@@ -717,14 +717,14 @@ async def _render_cofinancing_panel(projects: list, currency: str, on_change: ca
                     for line in k.get('lines', []):
                         with ui.row().classes('w-full items-center justify-between text-xs'):
                             ui.label(f"{line.get('donor_name', 'Bailleur')} ({line.get('project_code', '')})").classes('text-slate-700 font-medium')
-                            ui.label(f"{line.get('percentage', 0):.1f}%").classes('font-bold font-mono text-primary')
+                            ui.label(f"{float(line.get('percentage') or 0):.1f}%").classes('font-bold font-mono text-primary')
 
                     # Stacked Bar Visualizer
                     with ui.row().classes('w-full h-2 rounded-full overflow-hidden bg-slate-100 mt-1 gap-0.5'):
                         colors = ['bg-indigo-600', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500']
                         for idx, line in enumerate(k.get('lines', [])):
                             c = colors[idx % len(colors)]
-                            pct = line.get('percentage', 0)
+                            pct = float(line.get('percentage') or 0)
                             ui.element('div').classes(f"{c} h-full").style(f"width: {pct}%")
 
                 # Action Button on Card
@@ -747,8 +747,8 @@ async def _render_cofinancing_panel(projects: list, currency: str, on_change: ca
             table_rows = [
                 {
                     **s,
-                    'pct_formatted': f"{float(s.get('split_percentage', 0)):.2f}%",
-                    'amt_formatted': f"{w.money(float(s.get('split_amount', 0)), currency)} {currency}",
+                    'pct_formatted': f"{float(s.get('split_percentage') or 0):.2f}%",
+                    'amt_formatted': f"{w.money(float(s.get('split_amount') or 0), currency)} {currency}",
                     'stage_label': _loc(f"stage_{s.get('stage', 'commitment')}"),
                     'date_formatted': str(s.get('created_at', ''))[:10],
                 }

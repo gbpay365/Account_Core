@@ -216,6 +216,40 @@ postingRoutes.get(
 );
 
 postingRoutes.post(
+  '/partners',
+  requirePermission('journal.view', 'coa.view', 'supplier.view', 'coa.manage'),
+  validate({
+    body: z.object({
+      type: z.enum(['supplier', 'customer']).default('supplier'),
+      name: z.string().trim().min(2).max(200),
+      code: z.string().trim().min(2).max(20).optional(),
+      tax_id: z.string().trim().optional(),
+      email: z.string().trim().email().optional().or(z.literal('')),
+      phone: z.string().trim().optional(),
+      address: z.string().trim().optional(),
+      supplier_type: z.enum(['equipment', 'consumables', 'services', 'biomedical_service', 'utilities', 'construction', 'other']).default('other'),
+    }),
+  }),
+  handler(async (req, res) => {
+    const { type, name, tax_id, email, phone, address, supplier_type } = req.body;
+    const table = type === 'customer' ? 'customers' : 'suppliers';
+    let code = req.body.code;
+    if (!code) {
+      const prefix = type === 'customer' ? 'CUST' : 'SUP';
+      const countRow = await queryOne(`SELECT COUNT(*) AS n FROM ${table} WHERE org_id = ?`, [req.orgId]);
+      code = `${prefix}-${String((Number(countRow?.n || 0) + 1)).padStart(3, '0')}`;
+    }
+    const ins = await query(
+      `INSERT INTO ${table} (org_id, code, name, supplier_type, tax_id, email, phone, address, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+      [req.orgId, code, name, supplier_type || 'other', tax_id || null, email || null, phone || null, address || null]
+    );
+    const created = await queryOne(`SELECT id, code, name, ? AS partner_type FROM ${table} WHERE id = ?`, [type, ins.insertId]);
+    res.status(201).json(created);
+  })
+);
+
+postingRoutes.post(
   '/accounts/:id/default-child',
   requirePermission('coa.manage'),
   handler(async (req, res) => {

@@ -34,6 +34,7 @@ import { leaseRoutes } from './routes/lease.routes.js';
 import { adminRoutes } from './routes/admin.routes.js';
 import { budgetRoutes } from './routes/budget.routes.js';
 import { integrationRoutes, integrationIngestRoutes } from './routes/integration.routes.js';
+import { sageRoutes, sageIngestRoutes } from './routes/sage.routes.js';
 import * as dfeService from './services/dfe.service.js';
 import { renderLandingPage } from './views/landing.js';
 
@@ -92,6 +93,7 @@ export function createApp() {
 
   // Public / external gateway for systems (Billing, POS, ERP, Invoicing, Banking) using API Key
   app.use('/api/integrations', integrationIngestRoutes);
+  app.use('/api/integrations/sage', sageIngestRoutes);
 
   // Everything past this point requires a valid session.
   const api = express.Router();
@@ -122,6 +124,7 @@ export function createApp() {
   api.use(leaseRoutes);
   api.use(adminRoutes);
   api.use(integrationRoutes);
+  api.use(sageRoutes);
   api.use(reportRoutes);
   app.use('/api', api);
 

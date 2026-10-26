@@ -25,15 +25,52 @@ export async function listBranches(orgId) {
 }
 
 export async function createBranch(orgId, data) {
-  const { code, name, city, branch_type = 'clinic', liaison_account_code = '1851' } = data;
+  const {
+    code,
+    name,
+    city,
+    branch_type = 'clinic',
+    liaison_account_code = '1851',
+    erp_system = 'sage_100c',
+    erp_flavor = 'sage_100c',
+    auth_type = 'api_key',
+    sage_company_id = null,
+    api_endpoint_url = null,
+    api_key_or_token = null,
+    sync_frequency = 'daily',
+    budget_allocation_total = 0,
+    connector_config = null,
+  } = data;
   if (!code || !name || !city) {
     throw new ApiError(400, 'Champs obligatoires manquants (code, nom, ville)');
   }
 
+  const validTypes = ['headquarters', 'hospital', 'clinic', 'dispensary', 'pharmacy'];
+  const safeBranchType = validTypes.includes(branch_type) ? branch_type : 'clinic';
+
   const res = await query(
-    `INSERT INTO branch_establishments (org_id, code, name, city, branch_type, liaison_account_code, is_active)
-     VALUES (?, ?, ?, ?, ?, ?, 1)`,
-    [orgId, code.toUpperCase().trim(), name.trim(), city.trim(), branch_type, liaison_account_code]
+    `INSERT INTO branch_establishments 
+      (org_id, code, name, city, branch_type, liaison_account_code, is_active,
+       erp_system, erp_flavor, auth_type, sage_company_id, api_endpoint_url, api_key_or_token,
+       sync_frequency, budget_allocation_total, connector_config)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      orgId,
+      code.toUpperCase().trim(),
+      name.trim(),
+      city.trim(),
+      safeBranchType,
+      liaison_account_code,
+      erp_system || erp_flavor || 'sage_100c',
+      erp_flavor || erp_system || 'sage_100c',
+      auth_type || 'api_key',
+      sage_company_id || null,
+      api_endpoint_url || null,
+      api_key_or_token || null,
+      sync_frequency || 'daily',
+      Number(budget_allocation_total || 0),
+      typeof connector_config === 'object' ? JSON.stringify(connector_config) : connector_config,
+    ]
   );
 
   return queryOne(`SELECT * FROM branch_establishments WHERE id = ?`, [res.insertId]);

@@ -20,6 +20,7 @@ from ..i18n import lang, t
 from ..ui import widgets as w
 from ..ui import manual as manual_ui
 from ..ui.shell import page
+from .budgeting_sage import render_sage_tab, SAGE_T
 
 _T: dict[str, dict[str, str]] = {
     'title': {
@@ -102,6 +103,14 @@ _T: dict[str, dict[str, str]] = {
         'en': 'Budget Commitments & Credit Reservations',
         'fr': 'Engagements Budgétaires & Réservations de Crédits',
     },
+    'comm_search_placeholder': {'en': 'Search by reference, description, vendor, account...', 'fr': 'Rechercher par référence, objet, fournisseur, compte...'},
+    'filter_pill_all': {'en': 'All Commitments', 'fr': 'Tous les engagements'},
+    'filter_pill_da': {'en': 'Purchase Requests (DA)', 'fr': 'Demandes d’Achat (DA)'},
+    'filter_pill_bc': {'en': 'Purchase Orders (BC)', 'fr': 'Bons de Commande (BC)'},
+    'filter_pill_draft': {'en': 'Drafts', 'fr': 'Brouillons'},
+    'filter_pill_approved': {'en': 'Approved', 'fr': 'Approuvés'},
+    'filter_pill_certified': {'en': 'Certified (PV)', 'fr': 'Certifiés (PV)'},
+    'filter_pill_mandated': {'en': 'Mandated', 'fr': 'Mandatés'},
     'lbl_transfer_section_title': {
         'en': 'Credit Transfers & Budget Amendments',
         'fr': 'Virements de Crédits & Décisions Modificatives',
@@ -749,6 +758,7 @@ _DATA_I18N = {
         'Own Funds & Operating Revenue': 'Fonds Propres & Recettes',
     }
 }
+_T.update(SAGE_T)
 
 
 def _loc(key: str, **kwargs: Any) -> str:
@@ -982,6 +992,39 @@ async def budgeting_page() -> None:
     }
 
     refreshers: dict[str, Any] = {}
+    tab_badges: dict[str, Any] = {}
+
+    def _update_tab_badges() -> None:
+        try:
+            rep = state.get('report') or {}
+            rows = rep.get('rows', [])
+            breach_count = sum(1 for r in rows if r.get('avc_status') == 'breach')
+            if 'exec' in tab_badges and tab_badges['exec']:
+                if breach_count > 0:
+                    tab_badges['exec'].set_text(f"⚠️ {breach_count}")
+                    tab_badges['exec'].props('color=negative')
+                    tab_badges['exec'].set_visibility(True)
+                else:
+                    tab_badges['exec'].set_text(str(len(rows)))
+                    tab_badges['exec'].props('color=teal-8')
+                    tab_badges['exec'].set_visibility(len(rows) > 0)
+
+            lines_cnt = len((state.get('active_budget') or {}).get('lines', []))
+            if 'plans' in tab_badges and tab_badges['plans']:
+                tab_badges['plans'].set_text(str(lines_cnt))
+                tab_badges['plans'].set_visibility(lines_cnt > 0)
+
+            comm_cnt = len(state.get('commitments', []))
+            if 'comm' in tab_badges and tab_badges['comm']:
+                tab_badges['comm'].set_text(str(comm_cnt))
+                tab_badges['comm'].set_visibility(comm_cnt > 0)
+
+            tr_cnt = len(state.get('transfers', []))
+            if 'trans' in tab_badges and tab_badges['trans']:
+                tab_badges['trans'].set_text(str(tr_cnt))
+                tab_badges['trans'].set_visibility(tr_cnt > 0)
+        except Exception:
+            pass
 
     def _refresh_all() -> None:
         for fn in list(refreshers.values()):
@@ -989,6 +1032,7 @@ async def budgeting_page() -> None:
                 fn()
             except Exception:
                 pass
+        _update_tab_badges()
 
     async def reload_data() -> None:
         budgets_resp = await api.safe(api.get('/budgets', fiscalYearId=state['fy_id']), default={'rows': []})
@@ -1081,6 +1125,7 @@ async def budgeting_page() -> None:
         elif state.get('fy_id'):
             stats_params['fiscalYearId'] = state['fy_id']
         state['procurement_stats'] = await api.safe(api.get('/procurement-stats', **stats_params), default={})
+        _update_tab_badges()
 
     await reload_data()
 
@@ -1281,9 +1326,43 @@ async def budgeting_page() -> None:
 
             desc_in = ui.input(label=_loc('col_desc'), value=initial_desc, placeholder=_loc('comm_desc_placeholder')).props('outlined dense').classes('w-full')
 
+            def _open_new_vendor_modal() -> None:
+                dlg_v = ui.dialog()
+                with dlg_v, ui.card().classes('w-full max-w-sm p-5 gap-3'):
+                    ui.label('Create New Supplier / Beneficiary' if lang() == 'en' else 'Créer un Nouveau Fournisseur / Prestataire').classes('text-base font-bold text-slate-800')
+                    v_name = ui.input('Supplier / Company Name', placeholder='e.g. MedSupply International SARL').props('outlined dense')
+                    v_phone = ui.input('Phone (Optional)', placeholder='+237 6...').props('outlined dense')
+                    v_email = ui.input('Email (Optional)', placeholder='contact@company.com').props('outlined dense')
+
+                    async def _save_v():
+                        if not v_name.value or not v_name.value.strip():
+                            ui.notify('Supplier name is required' if lang() == 'en' else 'Le nom du fournisseur est obligatoire', type='warning')
+                            return
+                        res = await api.safe(api.post('/partners', {
+                            'type': 'supplier',
+                            'name': v_name.value.strip(),
+                            'phone': v_phone.value.strip() if v_phone.value else None,
+                            'email': v_email.value.strip() if v_email.value else None,
+                        }))
+                        if res and res.get('id'):
+                            vendor_options[res['id']] = res.get('name')
+                            vend_sel.options = vendor_options
+                            vend_sel.set_value(res['id'])
+                            ui.notify(f"Supplier {res.get('name')} created!" if lang() == 'en' else f"Fournisseur {res.get('name')} créé !", type='positive')
+                            dlg_v.close()
+
+                    with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                        ui.button('Cancel' if lang() == 'en' else 'Annuler', on_click=dlg_v.close).props('flat color=grey')
+                        ui.button('Create' if lang() == 'en' else 'Créer', on_click=_save_v).props('unelevated color=teal size=sm')
+                dlg_v.open()
+
             with ui.row().classes('w-full gap-3 no-wrap'):
-                vend_sel = ui.select(vendor_options, value=0, label=_loc('lbl_vendor')).props('outlined dense options-dense').classes('flex-1')
-                asset_sel = ui.select(asset_options, value=0, label=_loc('lbl_asset')).props('outlined dense options-dense').classes('flex-1')
+                with ui.column().classes('flex-1 gap-1'):
+                    with ui.row().classes('w-full items-center justify-between no-wrap'):
+                        ui.label(_loc('lbl_vendor')).classes('text-xs font-semibold text-slate-700')
+                        ui.button('+ New' if lang() == 'en' else '+ Nouveau', icon='add_circle', on_click=_open_new_vendor_modal).props('flat dense size=xs color=teal-8 no-caps class="text-[11px] font-bold"')
+                    vend_sel = ui.select(vendor_options, value=0).props('outlined dense options-dense').classes('w-full')
+                asset_sel = ui.select(asset_options, value=0, label=_loc('lbl_asset')).props('outlined dense options-dense').classes('flex-1 mt-4')
 
             with ui.row().classes('w-full gap-3 no-wrap'):
                 amt_in = ui.number(label=_loc('lbl_amount'), value=initial_amount if initial_amount is not None else 1000000, format='%.0f').props('outlined dense').classes('flex-1')
@@ -3525,12 +3604,24 @@ async def budgeting_page() -> None:
         dlg.open()
 
     def _header_actions() -> None:
-        with ui.row().classes('items-center gap-3'):
+        with ui.row().classes('items-center gap-2 flex-wrap sm:flex-nowrap'):
             ui.button(
-                '📘 User Guide & Manual' if lang() == 'en' else '📘 Guide & Manuel Utilisateur',
+                _loc('btn_new_comm'),
+                icon='add_shopping_cart',
+                on_click=_open_new_comm_modal,
+            ).props('unelevated color=teal text-white dense no-caps shadow-sm font-bold').classes('px-3 py-1.5 text-xs')
+
+            ui.button(
+                '⚡ ' + ('Vérifier Crédit' if lang() == 'fr' else 'Check Availability'),
+                icon='calculate',
+                on_click=_open_quick_checker_modal,
+            ).props('outline color=teal-8 dense no-caps size=sm').tooltip('Pre-commitment budget credit simulation' if lang() != 'fr' else 'Simulateur de disponibilité pré-engagement')
+
+            ui.button(
+                '📘 ' + ('Manuel' if lang() == 'fr' else 'Guide & Manual'),
                 icon='menu_book',
                 on_click=_open_budget_manual_dialog,
-            ).props('unelevated color=teal-8 text-white dense no-caps shadow-sm')
+            ).props('outline color=slate-7 dense no-caps size=sm')
 
             fy_opts = {fy['id']: f"{fy['code']} ({fy['name']})" for fy in fiscal_years}
             ui.select(
@@ -3538,7 +3629,7 @@ async def budgeting_page() -> None:
                 value=state['fy_id'],
                 label=_loc('filter_fy'),
                 on_change=lambda e: _change_fy(e.value),
-            ).props('outlined dense options-dense bg-white').classes('w-64')
+            ).props('outlined dense options-dense bg-white').classes('w-56')
 
     w.page_header(
         _loc('title'),
@@ -3547,370 +3638,302 @@ async def budgeting_page() -> None:
         actions=_header_actions,
     )
 
-    # Top KPI Ribbon
+    # -------------------------------------------------------------------------
+    # REVAMPED EXECUTIVE COMMAND HUB (High-Density Hero Hub, KPIs & 5-Stage Flow)
+    # -------------------------------------------------------------------------
+    tabs_ref: dict[str, Any] = {'tabs': None}
+
     @ui.refreshable
-    def _render_kpis() -> None:
+    def _render_command_hub() -> None:
         rep = state['report'] or {}
         tot_b = rep.get('totalBudget', 0)
         tot_comm = rep.get('totalCommitted', 0)
         tot_spent = rep.get('totalSpent', 0)
         tot_avail = rep.get('remainingBudget', 0)
         pct = rep.get('overallPctConsumed', 0)
-
-        def _render_kpi_card(
-            title: str,
-            amount: float | int,
-            curr: str,
-            *,
-            hint: str,
-            icon_name: str,
-            tone: str,
-        ) -> None:
-            tints = {
-                'sky': (
-                    'bg-gradient-to-br from-white via-sky-50/50 to-sky-100/30 border-sky-200/90 hover:border-sky-300',
-                    'bg-sky-500/10 text-sky-800 border-sky-200',
-                    'bg-sky-600 text-white shadow-sm shadow-sky-200'
-                ),
-                'amber': (
-                    'bg-gradient-to-br from-white via-amber-50/50 to-amber-100/30 border-amber-200/90 hover:border-amber-300',
-                    'bg-amber-500/10 text-amber-800 border-amber-200',
-                    'bg-amber-600 text-white shadow-sm shadow-amber-200'
-                ),
-                'indigo': (
-                    'bg-gradient-to-br from-white via-indigo-50/50 to-indigo-100/30 border-indigo-200/90 hover:border-indigo-300',
-                    'bg-indigo-500/10 text-indigo-800 border-indigo-200',
-                    'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                ),
-                'emerald': (
-                    'bg-gradient-to-br from-white via-emerald-50/50 to-emerald-100/30 border-emerald-200/90 hover:border-emerald-300',
-                    'bg-emerald-500/10 text-emerald-800 border-emerald-200',
-                    'bg-emerald-600 text-white shadow-sm shadow-emerald-200'
-                ),
-                'rose': (
-                    'bg-gradient-to-br from-white via-rose-50/50 to-rose-100/30 border-rose-200/90 hover:border-rose-300',
-                    'bg-rose-500/10 text-rose-800 border-rose-200',
-                    'bg-rose-600 text-white shadow-sm shadow-rose-200'
-                ),
-                'teal': (
-                    'bg-gradient-to-br from-white via-teal-50/50 to-teal-100/30 border-teal-200/90 hover:border-teal-300',
-                    'bg-teal-500/10 text-teal-800 border-teal-200',
-                    'bg-teal-600 text-white shadow-sm shadow-teal-200'
-                ),
-            }
-            card_grad, badge_theme, icon_theme = tints.get(tone, tints['sky'])
-            formatted_amt = w.money(amount, curr)
-
-            card_el = ui.element('div').classes(
-                f'{card_grad} border rounded-2xl p-4 flex-1 min-w-[200px] flex flex-col justify-between '
-                'shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300'
-            )
-            with card_el:
-                with ui.row().classes('items-center justify-between w-full no-wrap gap-2 mb-2'):
-                    ui.label(title).classes('text-[11px] font-bold uppercase tracking-wider text-slate-500 leading-snug truncate')
-                    with ui.element('div').classes(f'{icon_theme} w-8 h-8 rounded-xl flex items-center justify-center shrink-0'):
-                        ui.icon(icon_name).classes('text-[17px]')
-
-                with ui.row().classes('items-baseline gap-2 w-full no-wrap my-0.5').tooltip(f"{formatted_amt} {curr}"):
-                    ui.label(formatted_amt).classes('text-[20px] xl:text-[22px] font-extrabold font-mono text-slate-900 tracking-tight truncate')
-                    ui.label(curr).classes(f'text-[10px] font-bold uppercase shrink-0 px-2 py-0.5 rounded-md tracking-wider font-mono border {badge_theme}')
-
-                ui.label(hint).classes('text-[11px] text-slate-500 truncate mt-1')
-
-        with ui.row().classes('w-full gap-3.5 items-stretch'):
-            _render_kpi_card(
-                _loc('kpi_total_budget'),
-                tot_b,
-                currency,
-                hint=_loc('hint_budget_all'),
-                icon_name='account_balance',
-                tone='sky',
-            )
-
-            _render_kpi_card(
-                _loc('kpi_committed'),
-                tot_comm,
-                currency,
-                hint=_loc('hint_committed'),
-                icon_name='assignment_turned_in',
-                tone='amber',
-            )
-
-            _render_kpi_card(
-                _loc('kpi_actual'),
-                tot_spent,
-                currency,
-                hint=_loc('hint_actual'),
-                icon_name='receipt_long',
-                tone='indigo',
-            )
-
-            avail_tone = 'emerald' if tot_avail >= 0 else 'rose'
-            avail_icon = 'savings' if tot_avail >= 0 else 'warning'
-            _render_kpi_card(
-                _loc('kpi_available'),
-                tot_avail,
-                currency,
-                hint=_loc('hint_available'),
-                icon_name=avail_icon,
-                tone=avail_tone,
-            )
-
-            # Card 5: Overall Execution Rate
-            with ui.element('div').classes(
-                'bg-gradient-to-br from-white via-teal-50/50 to-teal-100/30 border border-teal-200/90 hover:border-teal-300 '
-                'rounded-2xl p-4 flex-1 min-w-[200px] flex flex-col justify-between '
-                'shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300'
-            ):
-                with ui.row().classes('items-center justify-between w-full no-wrap gap-2 mb-2'):
-                    ui.label(_loc('kpi_rate')).classes('text-[11px] font-bold uppercase tracking-wider text-slate-500 leading-snug truncate')
-                    with ui.element('div').classes('bg-teal-600 text-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm shadow-teal-200'):
-                        ui.icon('speed').classes('text-[17px]')
-
-                with ui.row().classes('items-baseline gap-2 w-full no-wrap my-0.5'):
-                    rate_color = 'text-rose-600' if pct > 90 else 'text-teal-900'
-                    ui.label(f"{pct}%").classes(f'text-[22px] font-extrabold font-mono {rate_color}')
-                    ui.label(_loc('consumed_label')).classes('text-[10px] font-bold text-teal-800 bg-teal-500/10 border border-teal-200 px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0')
-
-                with ui.column().classes('w-full gap-1 mt-1'):
-                    prog_color = 'negative' if pct > 90 else ('warning' if pct > 75 else 'teal')
-                    ui.linear_progress(value=min(1.0, pct / 100.0), size='7px').props(f'rounded color={prog_color}').classes('w-full shadow-inner')
-
-    refreshers['kpis'] = _render_kpis.refresh
-    _render_kpis()
-    tabs_ref: dict[str, Any] = {'tabs': None}
-
-    # --- Quick Action & Expenditure Launcher Hub ---
-    @ui.refreshable
-    def _render_quick_launcher() -> None:
-        rep = state['report'] or {}
-        st_orders = state.get('payment_order_stats') or {}
         is_fr = lang() == 'fr'
 
-        with ui.card().classes('w-full p-4 bg-gradient-to-r from-slate-900 via-teal-950 to-indigo-950 text-white rounded-2xl shadow-sm border border-slate-800 gap-3.5'):
-            with ui.row().classes('w-full items-center justify-between no-wrap gap-2'):
-                with ui.row().classes('items-center gap-2.5'):
-                    with ui.element('div').classes('w-9 h-9 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center border border-teal-500/30'):
-                        ui.icon('bolt').classes('text-xl')
-                    with ui.column().classes('gap-0'):
-                        ui.label(_loc('quick_hub_title')).classes('text-sm font-bold text-white tracking-wide')
-                        ui.label(_loc('quick_hub_subtitle')).classes('text-[11px] text-teal-200/80')
-
-                with ui.row().classes('items-center gap-2'):
-                    ui.button(
-                        '📊 ' + ('Rapports & Analyses' if is_fr else 'Executive Reports'),
-                        on_click=lambda: (tabs_ref['tabs'].set_value('reports') if tabs_ref.get('tabs') else None),
-                    ).props('unelevated bg-teal-600 hover:bg-teal-500 text-white dense no-caps size=sm rounded')
-
-                    guide_btn = ui.button(
-                        '💡 ' + ('Guide Rapide' if is_fr else 'Quick Guide'),
-                    ).props('flat text-color=teal-2 dense no-caps size=sm')
-
-            # The 7 Quick-Action Cards
-            with ui.row().classes('w-full gap-2.5 items-stretch flex-wrap'):
-                # 1. New Commitment (Primary Action)
-                with ui.element('button').classes(
-                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white '
-                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
-                ).on('click', lambda: _open_new_comm_modal()):
-                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
-                        ui.icon('shopping_cart_checkout').classes('text-lg text-white')
-                    with ui.column().classes('gap-0 overflow-hidden'):
-                        ui.label(_loc('btn_quick_new_comm')).classes('text-xs font-bold text-white leading-tight truncate')
-                        ui.label(_loc('hint_quick_comm')).classes('text-[10px] text-emerald-100/80 leading-tight truncate')
-
-                # 2. Check Available Budget (The Instant Calculator)
-                with ui.element('button').classes(
-                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-teal-700 to-cyan-800 text-white '
-                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
-                ).on('click', lambda: _open_quick_checker_modal()):
-                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
-                        ui.icon('calculate').classes('text-lg text-white')
-                    with ui.column().classes('gap-0 overflow-hidden'):
-                        ui.label(_loc('btn_quick_check_avail')).classes('text-xs font-bold text-white leading-tight truncate')
-                        ui.label(_loc('hint_quick_check')).classes('text-[10px] text-cyan-100/80 leading-tight truncate')
-
-                # 3. Credit Transfer
-                with ui.element('button').classes(
-                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-indigo-700 to-purple-800 text-white '
-                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
-                ).on('click', lambda: _open_new_transfer_modal()):
-                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
-                        ui.icon('sync_alt').classes('text-lg text-white')
-                    with ui.column().classes('gap-0 overflow-hidden'):
-                        ui.label(_loc('btn_quick_transfer')).classes('text-xs font-bold text-white leading-tight truncate')
-                        ui.label(_loc('hint_quick_transfer')).classes('text-[10px] text-indigo-100/80 leading-tight truncate')
-
-                # 4. Payment Orders (Mandats)
-                with ui.element('button').classes(
-                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-purple-800 to-fuchsia-900 text-white '
-                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
-                ).on('click', lambda: _open_mandats_list_modal()):
-                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
-                        ui.icon('receipt_long').classes('text-lg text-white')
-                    with ui.column().classes('gap-0 overflow-hidden'):
-                        ui.label(_loc('btn_quick_mandats')).classes('text-xs font-bold text-white leading-tight truncate')
-                        ui.label(_loc('hint_quick_mandats')).classes('text-[10px] text-purple-100/80 leading-tight truncate')
-
-                # 5. Procurement Plans (PPM)
-                with ui.element('button').classes(
-                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-amber-700 to-orange-800 text-white '
-                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
-                ).on('click', lambda: _open_procurement_plans_modal()):
-                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
-                        ui.icon('assignment').classes('text-lg text-white')
-                    with ui.column().classes('gap-0 overflow-hidden'):
-                        ui.label(_loc('btn_quick_procurement')).classes('text-xs font-bold text-white leading-tight truncate')
-                        ui.label(_loc('hint_quick_procurement')).classes('text-[10px] text-amber-100/80 leading-tight truncate')
-
-                # 6. Official Manual & Examples
-                with ui.element('button').classes(
-                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 text-white '
-                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
-                ).on('click', lambda: _open_budget_manual_dialog()):
-                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
-                        ui.icon('menu_book').classes('text-lg text-white')
-                    with ui.column().classes('gap-0 overflow-hidden'):
-                        ui.label(_loc('btn_quick_guide')).classes('text-xs font-bold text-white leading-tight truncate')
-                        ui.label(_loc('hint_quick_guide')).classes('text-[10px] text-slate-200/80 leading-tight truncate')
-
-                # 7. World-Class Reports & Analytics
-                with ui.element('button').classes(
-                    'flex-1 min-w-[170px] p-3 rounded-xl bg-gradient-to-br from-teal-800 via-indigo-900 to-purple-900 text-white '
-                    'flex items-center gap-3 text-left hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-sm cursor-pointer border-0'
-                ).on('click', lambda: (tabs_ref['tabs'].set_value('reports') if tabs_ref.get('tabs') else None)):
-                    with ui.element('div').classes('w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0'):
-                        ui.icon('analytics').classes('text-lg text-white')
-                    with ui.column().classes('gap-0 overflow-hidden'):
-                        ui.label(_loc('quick_btn_reports')).classes('text-xs font-bold text-white leading-tight truncate')
-                        ui.label('SYSCOHADA & AVC' if is_fr else 'Statutory & AVC').classes('text-[10px] text-teal-200/80 leading-tight truncate')
-
-            # Collapsible 3-Step Guided Cheatsheet
-            guide_collapse = ui.column().classes('w-full border-t border-slate-700/60 pt-3 gap-2')
-            with guide_collapse:
-                with ui.row().classes('w-full gap-3 items-stretch'):
-                    # Step 1
-                    with ui.element('div').classes('flex-1 bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col gap-1'):
-                        with ui.row().classes('items-center gap-2'):
-                            ui.label('1').classes('w-5 h-5 rounded-full bg-teal-500 text-slate-900 font-extrabold text-[11px] flex items-center justify-center')
-                            ui.label(_loc('help_step_1')).classes('text-xs font-bold text-teal-300')
-                        ui.label(_loc('help_step_1_sub')).classes('text-[11px] text-slate-300 leading-snug')
-
-                    # Step 2
-                    with ui.element('div').classes('flex-1 bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col gap-1'):
-                        with ui.row().classes('items-center gap-2'):
-                            ui.label('2').classes('w-5 h-5 rounded-full bg-emerald-500 text-slate-900 font-extrabold text-[11px] flex items-center justify-center')
-                            ui.label(_loc('help_step_2')).classes('text-xs font-bold text-emerald-300')
-                        ui.label(_loc('help_step_2_sub')).classes('text-[11px] text-slate-300 leading-snug')
-
-                    # Step 3
-                    with ui.element('div').classes('flex-1 bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col gap-1'):
-                        with ui.row().classes('items-center gap-2'):
-                            ui.label('3').classes('w-5 h-5 rounded-full bg-indigo-400 text-slate-900 font-extrabold text-[11px] flex items-center justify-center')
-                            ui.label(_loc('help_step_3')).classes('text-xs font-bold text-indigo-300')
-                        ui.label(_loc('help_step_3_sub')).classes('text-[11px] text-slate-300 leading-snug')
-
-            guide_btn.on('click', lambda: guide_collapse.set_visibility(not guide_collapse.visible))
-
-    refreshers['quick_launcher'] = _render_quick_launcher.refresh
-    _render_quick_launcher()
-
-    # --- Interactive 5-Stage Statutory Expenditure Chain Stepper ---
-    @ui.refreshable
-    def _render_expenditure_stepper() -> None:
-        rep = state['report'] or {}
-        tot_b = rep.get('totalBudget', 0)
-        tot_comm = rep.get('totalCommitted', 0)
+        comms = state.get('commitments', [])
         st_orders = state.get('payment_order_stats') or {}
         tot_mandat = st_orders.get('total_net_amount', 0)
         tot_paid = st_orders.get('total_paid_amount', 0)
         cert_count = len(state.get('certifications', []))
+        active_lines = (state.get('active_budget') or {}).get('lines', [])
 
-        def _goto_tab(tab_name: str) -> None:
-            if tabs_ref['tabs']:
+        da_comms = [c for c in comms if c.get('stage') == 'pre_commitment']
+        bc_comms = [c for c in comms if c.get('stage') != 'pre_commitment']
+        da_total = sum(float(c.get('amount', 0) or 0) for c in da_comms)
+        bc_total = sum(float(c.get('amount', 0) or 0) for c in bc_comms)
+
+        def _goto_stage(tab_name: str, stage_filter: str | None = None) -> None:
+            if tabs_ref.get('tabs'):
                 tabs_ref['tabs'].set_value(tab_name)
+            if stage_filter is not None:
+                state['comm_pill_filter'] = stage_filter
+                if 'comm' in refreshers:
+                    refreshers['comm']()
 
-        with ui.card().classes('w-full p-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs gap-2'):
-            with ui.row().classes('w-full items-center justify-between no-wrap'):
-                ui.label(_loc('stepper_title')).classes('text-xs font-extrabold text-slate-700 uppercase tracking-wider')
-                ui.label('OHADA / CEMAC / UEMOA' if lang() == 'fr' else 'Statutory Standard').classes('text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200')
+        with ui.card().classes(
+            'w-full p-4 md:p-5 bg-gradient-to-r from-slate-900 via-slate-950 to-teal-950 '
+            'text-white rounded-2xl shadow-lg border border-slate-800 gap-3.5'
+        ):
+            # Top Row: Active Protection Status & Quick Shortcut Pills
+            with ui.row().classes('w-full items-center justify-between no-wrap gap-2'):
+                with ui.row().classes('items-center gap-2.5'):
+                    with ui.element('div').classes('w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center border border-teal-500/30'):
+                        ui.icon('shield').classes('text-lg')
+                    with ui.column().classes('gap-0'):
+                        with ui.row().classes('items-center gap-2'):
+                            ui.label('⚡ ' + ('Protection Anti-Déficit AVC Active' if is_fr else 'Real-Time AVC Overrun Protection Active')).classes('text-xs md:text-sm font-extrabold text-white tracking-wide')
+                            with ui.element('span').classes('w-2 h-2 rounded-full bg-emerald-400 animate-pulse'):
+                                pass
+                        ui.label(('Contrôle strict des engagements juridiques et imputations budgétaires OHADA' if is_fr else 'Strict statutory budget verification on all purchase requests & orders')).classes('text-[11px] text-teal-200/80 hidden sm:block')
 
-            with ui.row().classes('w-full gap-2 items-center justify-between no-wrap overflow-x-auto py-1'):
-                # Stage 1: Plan
+                with ui.row().classes('items-center gap-1.5 flex-wrap'):
+                    ui.button(
+                        '➕ ' + _loc('btn_new_comm'),
+                        on_click=_open_new_comm_modal,
+                    ).props('unelevated bg-teal-600 hover:bg-teal-500 text-white font-bold dense no-caps size=sm rounded')
+
+                    ui.button(
+                        '💸 ' + ('Virement' if is_fr else 'Transfer'),
+                        on_click=_open_new_transfer_modal,
+                    ).props('outline color=slate-3 text-white dense no-caps size=sm rounded')
+
+                    ui.button(
+                        '📑 ' + ('Mandats' if is_fr else 'Payment Orders'),
+                        on_click=_open_mandats_list_modal,
+                    ).props('outline color=purple-3 text-purple-200 dense no-caps size=sm rounded')
+
+                    ui.button(
+                        '📜 ' + ('Certifications (PV)' if is_fr else 'Certifications (PV)'),
+                        on_click=_open_certifications_list_modal,
+                    ).props('outline color=teal-3 text-teal-200 dense no-caps size=sm rounded')
+
+                    with ui.button(icon='more_horiz').props('flat round dense text-color=slate-3 size=sm'):
+                        with ui.menu().classes('p-1 rounded-xl shadow-xl border border-slate-200 min-w-[210px]'):
+                            ui.menu_item('🛡️ ' + ('Dérogations AVC' if is_fr else 'AVC Overrides & Waivers'), on_click=_open_override_list_modal, auto_close=True).classes('text-xs font-semibold text-amber-800')
+                            ui.menu_item('📋 ' + ('Plans de Passation (PPM)' if is_fr else 'Procurement Plans (PPM)'), on_click=_open_procurement_plans_modal, auto_close=True).classes('text-xs font-semibold text-indigo-800')
+                            ui.menu_item('📥 ' + ('Importer PTBA (Excel)' if is_fr else 'Import PTBA (Excel)'), on_click=_open_ptba_modal, auto_close=True).classes('text-xs font-semibold text-slate-700')
+                            ui.menu_item('📊 ' + ('Rapports & Analyses' if is_fr else 'Reports & Analytics'), on_click=lambda: (tabs_ref['tabs'].set_value('reports') if tabs_ref.get('tabs') else None), auto_close=True).classes('text-xs font-semibold text-emerald-800')
+
+            # Middle Row: 5-Metric Financial Health Ribbon
+            with ui.row().classes('w-full gap-2.5 items-stretch flex-wrap md:flex-nowrap'):
+                # 1. Total Approved Budget
                 with ui.element('div').classes(
-                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-sky-50/50 hover:border-sky-300 cursor-pointer transition-all'
-                ).on('click', lambda: _goto_tab('plans')):
-                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
-                        ui.label(_loc('step_1_title')).classes('text-xs font-bold text-slate-800')
-                        ui.icon('table_chart').classes('text-sky-600 text-sm')
-                    ui.label(_loc('step_1_desc')).classes('text-[10px] text-slate-500 truncate')
-                    ui.label(w.money(tot_b, currency)).classes('text-xs font-mono font-extrabold text-sky-800 mt-1')
+                    'flex-1 min-w-[145px] p-3 rounded-xl bg-white/5 border border-white/10 '
+                    'flex flex-col justify-between hover:bg-white/10 transition-all'
+                ):
+                    with ui.row().classes('items-center justify-between no-wrap gap-1'):
+                        ui.label(_loc('kpi_total_budget')).classes('text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate')
+                        ui.icon('account_balance').classes('text-sky-400 text-sm shrink-0')
+                    ui.label(w.money(tot_b, currency)).classes('text-lg xl:text-xl font-extrabold font-mono text-white tracking-tight mt-1 truncate')
+                    ui.label(f"{len(active_lines)} {'lignes votées' if is_fr else 'voted lines'}").classes('text-[10px] text-slate-400 truncate')
 
-                ui.icon('arrow_forward').classes('text-slate-300 text-sm shrink-0')
-
-                # Stage 2: Commitment
+                # 2. Total Committed
                 with ui.element('div').classes(
-                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-amber-50/50 hover:border-amber-300 cursor-pointer transition-all'
-                ).on('click', lambda: _goto_tab('comm')):
-                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
-                        ui.label(_loc('step_2_title')).classes('text-xs font-bold text-slate-800')
-                        ui.icon('shopping_cart_checkout').classes('text-amber-600 text-sm')
-                    ui.label(_loc('step_2_desc')).classes('text-[10px] text-slate-500 truncate')
-                    ui.label(w.money(tot_comm, currency)).classes('text-xs font-mono font-extrabold text-amber-800 mt-1')
+                    'flex-1 min-w-[145px] p-3 rounded-xl bg-white/5 border border-white/10 '
+                    'flex flex-col justify-between hover:bg-white/10 transition-all'
+                ):
+                    with ui.row().classes('items-center justify-between no-wrap gap-1'):
+                        ui.label(_loc('kpi_committed')).classes('text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate')
+                        ui.icon('assignment_turned_in').classes('text-amber-400 text-sm shrink-0')
+                    ui.label(w.money(tot_comm, currency)).classes('text-lg xl:text-xl font-extrabold font-mono text-amber-300 tracking-tight mt-1 truncate')
+                    comm_pct = round((tot_comm / tot_b * 100) if tot_b else 0, 1)
+                    ui.label(f"{len(comms)} {'engagements' if is_fr else 'commitments'} ({comm_pct}%)").classes('text-[10px] text-amber-200/70 truncate')
 
-                ui.icon('arrow_forward').classes('text-slate-300 text-sm shrink-0')
-
-                # Stage 3: Service Fait / Certification
+                # 3. Liquidated / Actual Spent
                 with ui.element('div').classes(
-                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-teal-50/50 hover:border-teal-300 cursor-pointer transition-all'
-                ).on('click', lambda: _open_certifications_list_modal()):
-                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
-                        ui.label(_loc('step_3_title')).classes('text-xs font-bold text-slate-800')
-                        ui.icon('verified').classes('text-teal-600 text-sm')
-                    ui.label(_loc('step_3_desc')).classes('text-[10px] text-slate-500 truncate')
-                    ui.label(f"{cert_count} PV enregistrés" if lang() == 'fr' else f"{cert_count} certified").classes('text-xs font-mono font-extrabold text-teal-800 mt-1')
+                    'flex-1 min-w-[145px] p-3 rounded-xl bg-white/5 border border-white/10 '
+                    'flex flex-col justify-between hover:bg-white/10 transition-all'
+                ):
+                    with ui.row().classes('items-center justify-between no-wrap gap-1'):
+                        ui.label(_loc('kpi_actual')).classes('text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate')
+                        ui.icon('receipt_long').classes('text-indigo-400 text-sm shrink-0')
+                    ui.label(w.money(tot_spent, currency)).classes('text-lg xl:text-xl font-extrabold font-mono text-indigo-300 tracking-tight mt-1 truncate')
+                    ui.label(f"{'Ordonnancé :' if is_fr else 'Mandated:'} {w.money(tot_mandat, currency)}").classes('text-[10px] text-indigo-200/70 truncate')
 
-                ui.icon('arrow_forward').classes('text-slate-300 text-sm shrink-0')
-
-                # Stage 4: Payment Order (Mandat)
+                # 4. Net Available Appropriations
+                avail_color = 'text-emerald-400' if tot_avail >= 0 else 'text-rose-400'
+                avail_badge = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' if tot_avail >= 0 else 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                 with ui.element('div').classes(
-                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-purple-50/50 hover:border-purple-300 cursor-pointer transition-all'
-                ).on('click', lambda: _open_mandats_list_modal()):
-                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
-                        ui.label(_loc('step_4_title')).classes('text-xs font-bold text-slate-800')
-                        ui.icon('receipt_long').classes('text-purple-600 text-sm')
-                    ui.label(_loc('step_4_desc')).classes('text-[10px] text-slate-500 truncate')
-                    ui.label(w.money(tot_mandat, currency)).classes('text-xs font-mono font-extrabold text-purple-900 mt-1')
+                    'flex-1 min-w-[145px] p-3 rounded-xl bg-white/5 border border-white/10 '
+                    'flex flex-col justify-between hover:bg-white/10 transition-all'
+                ):
+                    with ui.row().classes('items-center justify-between no-wrap gap-1'):
+                        ui.label(_loc('kpi_available')).classes('text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate')
+                        ui.icon('savings' if tot_avail >= 0 else 'warning').classes(f"{'text-emerald-400' if tot_avail >= 0 else 'text-rose-400'} text-sm shrink-0")
+                    ui.label(w.money(tot_avail, currency)).classes(f'text-lg xl:text-xl font-extrabold font-mono {avail_color} tracking-tight mt-1 truncate')
+                    with ui.element('div').classes(f'text-[10px] font-bold px-1.5 py-0.5 rounded border {avail_badge} w-fit truncate'):
+                        ui.label(('Solde Positif' if tot_avail >= 0 else 'Déficit!') if is_fr else ('Solvent Balance' if tot_avail >= 0 else 'Overrun Alert!'))
 
-                ui.icon('arrow_forward').classes('text-slate-300 text-sm shrink-0')
-
-                # Stage 5: Bank Disbursement
+                # 5. Overall Execution Rate %
+                rate_text_color = 'text-rose-400' if pct > 90 else ('text-amber-400' if pct > 75 else 'text-teal-300')
+                rate_bar_color = 'negative' if pct > 90 else ('warning' if pct > 75 else 'teal')
                 with ui.element('div').classes(
-                    'flex-1 min-w-[170px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-emerald-50/50 hover:border-emerald-300 cursor-pointer transition-all'
-                ).on('click', lambda: _open_mandats_list_modal()):
-                    with ui.row().classes('items-center justify-between no-wrap mb-1'):
-                        ui.label(_loc('step_5_title')).classes('text-xs font-bold text-slate-800')
-                        ui.icon('payments').classes('text-emerald-600 text-sm')
-                    ui.label(_loc('step_5_desc')).classes('text-[10px] text-slate-500 truncate')
-                    ui.label(w.money(tot_paid, currency)).classes('text-xs font-mono font-extrabold text-emerald-800 mt-1')
+                    'flex-1 min-w-[145px] p-3 rounded-xl bg-white/5 border border-white/10 '
+                    'flex flex-col justify-between hover:bg-white/10 transition-all'
+                ):
+                    with ui.row().classes('items-center justify-between no-wrap gap-1'):
+                        ui.label(_loc('kpi_rate')).classes('text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate')
+                        ui.icon('speed').classes('text-teal-400 text-sm shrink-0')
+                    with ui.row().classes('items-baseline gap-1.5 no-wrap mt-1'):
+                        ui.label(f"{pct}%").classes(f'text-lg xl:text-xl font-extrabold font-mono {rate_text_color}')
+                        ui.label(_loc('consumed_label')).classes('text-[10px] text-slate-400')
+                    ui.linear_progress(value=min(1.0, pct / 100.0), size='5px').props(f'rounded color={rate_bar_color}').classes('w-full mt-1')
 
-    refreshers['stepper'] = _render_expenditure_stepper.refresh
-    _render_expenditure_stepper()
+            # Bottom Row: Interactive 5-Stage Statutory Expenditure Pipeline
+            with ui.element('div').classes('w-full pt-1.5 border-t border-slate-800/80 flex flex-col gap-1'):
+                with ui.row().classes('items-center justify-between no-wrap'):
+                    with ui.row().classes('items-center gap-2'):
+                        ui.icon('account_tree').classes('text-teal-400 text-xs')
+                        ui.label(('Chaîne Réglementaire de la Dépense (OHADA / CEMAC)' if is_fr else 'Statutory Expenditure Lifecycle (OHADA / CEMAC)')).classes('text-[11px] font-bold uppercase tracking-wider text-slate-400')
+                    ui.label(('Cliquez sur une étape pour filtrer ou agir' if is_fr else 'Click any step to inspect or execute')).classes('text-[10px] text-teal-300/80 italic hidden sm:block')
 
-    # Navigation Tabs
-    tabs = ui.tabs().props('active-color=teal-8 indicator-color=teal-8 inline-label no-caps align=left').classes(
-        'w-full border-b border-slate-200 bg-white rounded-t-xl px-2 pt-1 shadow-2xs font-semibold text-slate-600'
+                with ui.row().classes('w-full gap-2 items-center justify-between no-wrap overflow-x-auto py-0.5'):
+                    # Step 1: Voted Budget
+                    with ui.element('div').classes(
+                        'flex-1 min-w-[150px] p-2 rounded-xl bg-slate-900/70 border border-slate-700/60 '
+                        'hover:border-sky-400/60 hover:bg-sky-950/40 cursor-pointer transition-all'
+                    ).on('click', lambda: _goto_stage('plans')):
+                        with ui.row().classes('items-center justify-between no-wrap'):
+                            with ui.row().classes('items-center gap-1.5'):
+                                ui.label('1').classes('w-4 h-4 rounded-full bg-sky-500 text-slate-950 font-black text-[10px] flex items-center justify-center')
+                                ui.label(('Budget Voté' if is_fr else 'Voted Budget')).classes('text-[11px] font-bold text-slate-200')
+                            ui.icon('table_chart').classes('text-sky-400 text-xs')
+                        with ui.row().classes('items-baseline justify-between no-wrap mt-1'):
+                            ui.label(w.money(tot_b, currency)).classes('text-xs font-mono font-bold text-sky-300 truncate')
+                            ui.label(f"{len(active_lines)}").classes('text-[10px] text-slate-400 font-mono')
+
+                    ui.icon('chevron_right').classes('text-slate-600 text-xs shrink-0')
+
+                    # Step 2: Demande d'Achat (DA)
+                    with ui.element('div').classes(
+                        'flex-1 min-w-[150px] p-2 rounded-xl bg-slate-900/70 border border-slate-700/60 '
+                        'hover:border-cyan-400/60 hover:bg-cyan-950/40 cursor-pointer transition-all'
+                    ).on('click', lambda: _goto_stage('comm', 'da')):
+                        with ui.row().classes('items-center justify-between no-wrap'):
+                            with ui.row().classes('items-center gap-1.5'):
+                                ui.label('2').classes('w-4 h-4 rounded-full bg-cyan-400 text-slate-950 font-black text-[10px] flex items-center justify-center')
+                                ui.label(('Demande d’Achat (DA)' if is_fr else 'Requisition (DA)')).classes('text-[11px] font-bold text-slate-200')
+                            ui.icon('pending_actions').classes('text-cyan-400 text-xs')
+                        with ui.row().classes('items-baseline justify-between no-wrap mt-1'):
+                            ui.label(w.money(da_total, currency)).classes('text-xs font-mono font-bold text-cyan-300 truncate')
+                            ui.label(f"{len(da_comms)} DA").classes('text-[10px] text-cyan-200/80 font-mono')
+
+                    ui.icon('chevron_right').classes('text-slate-600 text-xs shrink-0')
+
+                    # Step 3: Bon de Commande (BC)
+                    with ui.element('div').classes(
+                        'flex-1 min-w-[150px] p-2 rounded-xl bg-slate-900/70 border border-slate-700/60 '
+                        'hover:border-purple-400/60 hover:bg-purple-950/40 cursor-pointer transition-all'
+                    ).on('click', lambda: _goto_stage('comm', 'bc')):
+                        with ui.row().classes('items-center justify-between no-wrap'):
+                            with ui.row().classes('items-center gap-1.5'):
+                                ui.label('3').classes('w-4 h-4 rounded-full bg-purple-400 text-slate-950 font-black text-[10px] flex items-center justify-center')
+                                ui.label(('Bon de Commande (BC)' if is_fr else 'Purchase Order (BC)')).classes('text-[11px] font-bold text-slate-200')
+                            ui.icon('shopping_bag').classes('text-purple-400 text-xs')
+                        with ui.row().classes('items-baseline justify-between no-wrap mt-1'):
+                            ui.label(w.money(bc_total, currency)).classes('text-xs font-mono font-bold text-purple-300 truncate')
+                            ui.label(f"{len(bc_comms)} BC").classes('text-[10px] text-purple-200/80 font-mono')
+
+                    ui.icon('chevron_right').classes('text-slate-600 text-xs shrink-0')
+
+                    # Step 4: Service Fait (PV)
+                    with ui.element('div').classes(
+                        'flex-1 min-w-[150px] p-2 rounded-xl bg-slate-900/70 border border-slate-700/60 '
+                        'hover:border-teal-400/60 hover:bg-teal-950/40 cursor-pointer transition-all'
+                    ).on('click', lambda: _open_certifications_list_modal()):
+                        with ui.row().classes('items-center justify-between no-wrap'):
+                            with ui.row().classes('items-center gap-1.5'):
+                                ui.label('4').classes('w-4 h-4 rounded-full bg-teal-400 text-slate-950 font-black text-[10px] flex items-center justify-center')
+                                ui.label(('Service Fait (PV)' if is_fr else 'Service Delivery (PV)')).classes('text-[11px] font-bold text-slate-200')
+                            ui.icon('verified').classes('text-teal-400 text-xs')
+                        with ui.row().classes('items-baseline justify-between no-wrap mt-1'):
+                            ui.label(f"{cert_count} PV").classes('text-xs font-mono font-bold text-teal-300 truncate')
+                            ui.label(('Certifié' if is_fr else 'Verified')).classes('text-[10px] text-teal-200/80')
+
+                    ui.icon('chevron_right').classes('text-slate-600 text-xs shrink-0')
+
+                    # Step 5: Mandats & Paiement
+                    with ui.element('div').classes(
+                        'flex-1 min-w-[150px] p-2 rounded-xl bg-slate-900/70 border border-slate-700/60 '
+                        'hover:border-emerald-400/60 hover:bg-emerald-950/40 cursor-pointer transition-all'
+                    ).on('click', lambda: _open_mandats_list_modal()):
+                        with ui.row().classes('items-center justify-between no-wrap'):
+                            with ui.row().classes('items-center gap-1.5'):
+                                ui.label('5').classes('w-4 h-4 rounded-full bg-emerald-400 text-slate-950 font-black text-[10px] flex items-center justify-center')
+                                ui.label(('Mandats & Trésorerie' if is_fr else 'Mandats & Payment')).classes('text-[11px] font-bold text-slate-200')
+                            ui.icon('payments').classes('text-emerald-400 text-xs')
+                        with ui.row().classes('items-baseline justify-between no-wrap mt-1'):
+                            ui.label(w.money(tot_mandat, currency)).classes('text-xs font-mono font-bold text-emerald-300 truncate')
+                            ui.label(f"{'Payé:' if is_fr else 'Paid:'} {w.money(tot_paid, currency)}").classes('text-[10px] text-emerald-200/80 font-mono truncate')
+
+        _update_tab_badges()
+
+    refreshers['kpis'] = _render_command_hub.refresh
+    refreshers['quick_launcher'] = _render_command_hub.refresh
+    refreshers['stepper'] = _render_command_hub.refresh
+    refreshers['command_hub'] = _render_command_hub.refresh
+    _render_command_hub()
+
+    # Navigation Tabs with Live Reactive Counters
+    tabs = ui.tabs().props('active-color=teal-9 active-bg-color=teal-50 indicator-color=teal-7 inline-label no-caps align=left').classes(
+        'w-full border-b border-slate-200 bg-white rounded-t-2xl px-2 pt-1 shadow-2xs font-bold text-slate-600 gap-1'
     )
     tabs_ref['tabs'] = tabs
     with tabs:
-        t_exec = ui.tab('exec', label=_loc('tab_exec'), icon='query_stats')
-        t_plans = ui.tab('plans', label=_loc('tab_plans'), icon='table_chart')
-        t_comm = ui.tab('comm', label=_loc('tab_comm'), icon='shopping_cart_checkout')
-        t_trans = ui.tab('trans', label=_loc('tab_trans'), icon='sync_alt')
-        t_carry = ui.tab('carry', label=_loc('tab_carry'), icon='move_up')
-        t_comp = ui.tab('comp', label=_loc('tab_comp'), icon='compare_arrows')
-        t_alloc = ui.tab('alloc', label=_loc('tab_alloc'), icon='hub')
-        t_reports = ui.tab('reports', label=_loc('tab_reports'), icon='insights')
+        with ui.tab('exec').classes('rounded-t-xl px-3 py-1') as t_exec:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('query_stats').classes('text-teal-700 text-base')
+                ui.label(_loc('tab_exec')).classes('text-xs')
+                tab_badges['exec'] = ui.badge('', color='teal-8').classes('text-[10px] px-1.5 py-0.2 font-mono')
+
+        with ui.tab('plans').classes('rounded-t-xl px-3 py-1') as t_plans:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('table_chart').classes('text-sky-700 text-base')
+                ui.label(_loc('tab_plans')).classes('text-xs')
+                tab_badges['plans'] = ui.badge('', color='slate-7').classes('text-[10px] px-1.5 py-0.2 font-mono')
+
+        with ui.tab('comm').classes('rounded-t-xl px-3 py-1') as t_comm:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('shopping_cart_checkout').classes('text-amber-700 text-base')
+                ui.label(_loc('tab_comm')).classes('text-xs')
+                tab_badges['comm'] = ui.badge('', color='amber-8').classes('text-[10px] px-1.5 py-0.2 font-mono')
+
+        with ui.tab('trans').classes('rounded-t-xl px-3 py-1') as t_trans:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('sync_alt').classes('text-indigo-700 text-base')
+                ui.label(_loc('tab_trans')).classes('text-xs')
+                tab_badges['trans'] = ui.badge('', color='indigo-7').classes('text-[10px] px-1.5 py-0.2 font-mono')
+
+        with ui.tab('carry').classes('rounded-t-xl px-3 py-1') as t_carry:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('move_up').classes('text-purple-700 text-base')
+                ui.label(_loc('tab_carry')).classes('text-xs')
+
+        with ui.tab('comp').classes('rounded-t-xl px-3 py-1') as t_comp:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('compare_arrows').classes('text-cyan-700 text-base')
+                ui.label(_loc('tab_comp')).classes('text-xs')
+
+        with ui.tab('alloc').classes('rounded-t-xl px-3 py-1') as t_alloc:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('hub').classes('text-orange-700 text-base')
+                ui.label(_loc('tab_alloc')).classes('text-xs')
+
+        with ui.tab('reports').classes('rounded-t-xl px-3 py-1') as t_reports:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('insights').classes('text-emerald-700 text-base')
+                ui.label(_loc('tab_reports')).classes('text-xs')
+
+        with ui.tab('sage_sync').classes('rounded-t-xl px-3 py-1') as t_sage:
+            with ui.row().classes('items-center gap-1.5 no-wrap'):
+                ui.icon('cloud_sync').classes('text-teal-700 text-base')
+                ui.label(_loc('tab_sage_sync')).classes('text-xs')
+                ui.badge('Sage ERP', color='teal-9').classes('text-[9px] px-1.5 py-0.2 font-mono')
+
+    _update_tab_badges()
 
     with ui.tab_panels(tabs, value=t_exec).classes('w-full p-0 bg-transparent'):
         # ---------------------------------------------------------------------
@@ -4316,30 +4339,78 @@ async def budgeting_page() -> None:
             @ui.refreshable
             def _render_comm_tab() -> None:
                 comms = state['commitments']
+                is_fr = lang() == 'fr'
+                cur_pill = state.get('comm_pill_filter', 'all')
 
-                with ui.card().classes('w-full p-4 gap-4'):
-                    with ui.row().classes('w-full items-center justify-between no-wrap'):
+                all_cnt = len(comms)
+                da_cnt = sum(1 for c in comms if c.get('stage') == 'pre_commitment')
+                bc_cnt = sum(1 for c in comms if c.get('stage') != 'pre_commitment')
+                draft_cnt = sum(1 for c in comms if c.get('status') == 'draft')
+                appr_cnt = sum(1 for c in comms if c.get('status') == 'approved')
+                cert_cnt = sum(1 for c in comms if float(c.get('certified_amount', 0) or 0) > 0)
+                mand_cnt = sum(1 for c in comms if float(c.get('mandated_amount', 0) or 0) > 0)
+
+                def _set_pill(val: str) -> None:
+                    state['comm_pill_filter'] = val
+                    _render_comm_tab.refresh()
+
+                with ui.card().classes('w-full p-4 gap-3'):
+                    # Row 1: Section Title & Primary Action Buttons
+                    with ui.row().classes('w-full items-center justify-between no-wrap gap-2 flex-wrap sm:flex-nowrap'):
                         with ui.column().classes('gap-0'):
                             ui.label(_loc('lbl_comm_section_title')).classes('text-base font-bold text-slate-800')
-                            ui.label(_loc('note_comm_intro')).classes('text-xs text-slate-500 max-w-2xl')
+                            ui.label(_loc('note_comm_intro')).classes('text-xs text-slate-500 max-w-2xl hidden md:block')
 
-                        with ui.row().classes('items-center gap-2'):
-                            stage_opts = {
-                                '': _loc('filter_all_stages'),
-                                'pre_commitment': _loc('stage_pre_comm'),
-                                'firm_commitment': _loc('stage_firm_comm'),
-                            }
-                            ui.select(
-                                stage_opts,
-                                value=state.get('comm_stage_filter') or '',
-                                label=_loc('col_stage'),
-                                on_change=lambda e: _change_comm_stage(e.value),
-                            ).props('outlined dense options-dense bg-white').classes('w-56')
+                        with ui.row().classes('items-center gap-2 flex-wrap'):
+                            ui.button(_loc('btn_mandats_register'), icon='receipt_long', on_click=_open_mandats_list_modal).props('outline color=purple-8 dense no-caps size=sm')
+                            ui.button(_loc('btn_view_certs'), icon='verified', on_click=_open_certifications_list_modal).props('outline color=teal dense no-caps size=sm')
+                            ui.button(_loc('btn_overrides'), icon='shield', on_click=_open_override_list_modal).props('outline color=amber-800 dense no-caps size=sm')
+                            ui.button(_loc('btn_new_comm'), icon='add_shopping_cart', on_click=_open_new_comm_modal).props('unelevated color=teal text-white dense no-caps font-bold shadow-xs size=sm')
 
-                            ui.button(_loc('btn_mandats_register'), icon='receipt_long', on_click=_open_mandats_list_modal).props('outline color=purple-8')
-                            ui.button(_loc('btn_view_certs'), icon='verified', on_click=_open_certifications_list_modal).props('outline color=teal')
-                            ui.button(_loc('btn_overrides'), icon='shield', on_click=_open_override_list_modal).props('outline color=amber-800')
-                            ui.button(_loc('btn_new_comm'), icon='add_shopping_cart', on_click=_open_new_comm_modal).props('unelevated color=primary')
+                    # Row 2: Filter Pills & Instant Search
+                    with ui.row().classes('w-full items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200 gap-2 flex-wrap'):
+                        with ui.row().classes('items-center gap-1.5 flex-wrap'):
+                            p_all_cls = 'bg-teal-700 text-white font-bold' if cur_pill == 'all' else 'bg-white text-slate-700 hover:bg-slate-100'
+                            ui.button(f"{_loc('filter_pill_all')} ({all_cnt})", on_click=lambda: _set_pill('all')).props(f'unelevated dense no-caps size=xs class="{p_all_cls} border border-slate-300 rounded-lg px-2.5 py-1"')
+
+                            p_da_cls = 'bg-cyan-700 text-white font-bold' if cur_pill == 'da' else 'bg-cyan-50 text-cyan-800 hover:bg-cyan-100'
+                            ui.button(f"🛒 {_loc('filter_pill_da')} ({da_cnt})", on_click=lambda: _set_pill('da')).props(f'unelevated dense no-caps size=xs class="{p_da_cls} border border-cyan-200 rounded-lg px-2.5 py-1"')
+
+                            p_bc_cls = 'bg-purple-800 text-white font-bold' if cur_pill == 'bc' else 'bg-purple-50 text-purple-900 hover:bg-purple-100'
+                            ui.button(f"📦 {_loc('filter_pill_bc')} ({bc_cnt})", on_click=lambda: _set_pill('bc')).props(f'unelevated dense no-caps size=xs class="{p_bc_cls} border border-purple-200 rounded-lg px-2.5 py-1"')
+
+                            if draft_cnt > 0:
+                                p_dr_cls = 'bg-amber-700 text-white font-bold' if cur_pill == 'draft' else 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                                ui.button(f"🕒 {_loc('filter_pill_draft')} ({draft_cnt})", on_click=lambda: _set_pill('draft')).props(f'unelevated dense no-caps size=xs class="{p_dr_cls} border border-amber-200 rounded-lg px-2.5 py-1"')
+
+                            if appr_cnt > 0:
+                                p_ap_cls = 'bg-emerald-700 text-white font-bold' if cur_pill == 'approved' else 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                ui.button(f"✅ {_loc('filter_pill_approved')} ({appr_cnt})", on_click=lambda: _set_pill('approved')).props(f'unelevated dense no-caps size=xs class="{p_ap_cls} border border-emerald-200 rounded-lg px-2.5 py-1"')
+
+                            if cert_cnt > 0:
+                                p_ce_cls = 'bg-teal-800 text-white font-bold' if cur_pill == 'certified' else 'bg-teal-50 text-teal-900 hover:bg-teal-100'
+                                ui.button(f"📜 {_loc('filter_pill_certified')} ({cert_cnt})", on_click=lambda: _set_pill('certified')).props(f'unelevated dense no-caps size=xs class="{p_ce_cls} border border-teal-200 rounded-lg px-2.5 py-1"')
+
+                            if mand_cnt > 0:
+                                p_ma_cls = 'bg-indigo-800 text-white font-bold' if cur_pill == 'mandated' else 'bg-indigo-50 text-indigo-900 hover:bg-indigo-100'
+                                ui.button(f"💰 {_loc('filter_pill_mandated')} ({mand_cnt})", on_click=lambda: _set_pill('mandated')).props(f'unelevated dense no-caps size=xs class="{p_ma_cls} border border-indigo-200 rounded-lg px-2.5 py-1"')
+
+                        search_comm_inp = ui.input(placeholder=_loc('comm_search_placeholder')).props('outlined dense clearable bg-white').classes('w-72')
+
+                    # Filter comms by pill
+                    filtered_comms = comms
+                    if cur_pill == 'da':
+                        filtered_comms = [c for c in comms if c.get('stage') == 'pre_commitment']
+                    elif cur_pill == 'bc':
+                        filtered_comms = [c for c in comms if c.get('stage') != 'pre_commitment']
+                    elif cur_pill == 'draft':
+                        filtered_comms = [c for c in comms if c.get('status') == 'draft']
+                    elif cur_pill == 'approved':
+                        filtered_comms = [c for c in comms if c.get('status') == 'approved']
+                    elif cur_pill == 'certified':
+                        filtered_comms = [c for c in comms if float(c.get('certified_amount', 0) or 0) > 0]
+                    elif cur_pill == 'mandated':
+                        filtered_comms = [c for c in comms if float(c.get('mandated_amount', 0) or 0) > 0]
 
                     comm_rows = []
                     btn_approve_txt = _loc('btn_approve_comm')
@@ -4348,12 +4419,13 @@ async def budgeting_page() -> None:
                     btn_certify_txt = _loc('btn_certify')
                     btn_mandate_txt = _loc('btn_create_mandat_for_comm')
 
-                    for c in comms:
+                    for c in filtered_comms:
                         asset_str = _tr_asset(c.get('asset_tag'), c.get('asset_name'), c.get('asset_name_en'))
                         desc_str = _tr_val(c.get('description'))
                         type_str = _tr_type(c.get('budget_type'))
                         acct_code = c.get('account_code') or ''
                         is_da = c.get('stage') == 'pre_commitment'
+                        amt_num = float(c.get('amount', 0) or 0)
 
                         comm_rows.append({
                             'id': c.get('id'),
@@ -4366,7 +4438,8 @@ async def budgeting_page() -> None:
                             'account': f"{acct_code} ({type_str})",
                             'vendor': c.get('vendor_name') or '—',
                             'asset': asset_str,
-                            'amount': w.money(c.get('amount', 0), currency),
+                            'amount': w.money(amt_num, currency),
+                            '_amount_raw': amt_num,
                             'certified': w.money(c.get('certified_amount', 0), currency),
                             '_certified_raw': float(c.get('certified_amount', 0) or 0),
                             'mandated': w.money(c.get('mandated_amount', 0), currency),
@@ -4396,17 +4469,30 @@ async def budgeting_page() -> None:
                     ]
 
                     tbl = ui.table(columns=comm_cols, rows=comm_rows, pagination=15).classes('w-full lc-table')
+                    tbl.bind_filter_from(search_comm_inp, 'value')
+
+                    tbl.add_slot('body-cell-ref', '''
+                        <q-td :props="props" class="font-mono font-bold text-slate-800">
+                            {{ props.value }}
+                        </q-td>
+                    ''')
 
                     tbl.add_slot('body-cell-stage', '''
                         <q-td :props="props">
                             <q-chip dense :color="props.row._stage === 'pre_commitment' ? 'cyan-1' : 'purple-1'"
                                     :text-color="props.row._stage === 'pre_commitment' ? 'cyan-9' : 'purple-9'"
-                                    class="text-weight-bold">
+                                    class="text-weight-bold font-mono">
                                 {{ props.value }}
                             </q-chip>
                             <q-badge v-if="props.row._ppm_pkg_id" color="indigo-8" class="q-ml-xs">
                                 📋 Lot PPM #{{ props.row._ppm_pkg_id }}
                             </q-badge>
+                        </q-td>
+                    ''')
+
+                    tbl.add_slot('body-cell-amount', '''
+                        <q-td :props="props" class="font-mono font-extrabold text-slate-900">
+                            {{ props.value }}
                         </q-td>
                     ''')
 
@@ -4424,7 +4510,7 @@ async def budgeting_page() -> None:
 
                     tbl.add_slot('body-cell-status', '''
                         <q-td :props="props">
-                            <q-badge :color="props.row._status_raw === 'approved' ? 'positive' : (props.row._status_raw === 'liquidated' ? 'indigo' : (props.row._status_raw === 'converted' ? 'teal' : 'grey-7'))">
+                            <q-badge :color="props.row._status_raw === 'approved' ? 'positive' : (props.row._status_raw === 'liquidated' ? 'indigo' : (props.row._status_raw === 'converted' ? 'cyan-8' : 'amber-8'))">
                                 {{ props.value }}
                             </q-badge>
                         </q-td>
@@ -4432,16 +4518,44 @@ async def budgeting_page() -> None:
 
                     tbl.add_slot('body-cell-actions', '''
                         <q-td :props="props">
-                            <q-btn v-if="props.row._status_raw === 'draft'" size="xs" color="positive" dense :label="props.row._btn_approve"
-                                   @click="$parent.$emit('approve-comm', props.row.id)" class="q-mr-xs" />
-                            <q-btn v-if="props.row._status_raw === 'approved' && props.row._stage === 'pre_commitment'" size="xs" color="warning" dense :label="props.row._btn_convert"
-                                   @click="$parent.$emit('convert-comm', props.row.id)" class="q-mr-xs" />
-                            <q-btn v-if="props.row._status_raw === 'approved' && props.row._stage !== 'pre_commitment'" size="xs" color="teal" dense outline icon="verified" :label="props.row._btn_certify"
-                                   @click="$parent.$emit('certify-comm', props.row.id)" class="q-mr-xs" />
-                            <q-btn v-if="props.row._status_raw === 'approved' && props.row._stage !== 'pre_commitment'" size="xs" color="purple-8" dense outline icon="receipt_long" :label="props.row._btn_mandate"
-                                   @click="$parent.$emit('mandate-comm', props.row.id)" class="q-mr-xs" />
-                            <q-btn v-if="props.row._status_raw === 'approved' && props.row._stage !== 'pre_commitment'" size="xs" color="indigo" dense :label="props.row._btn_liquidate"
-                                   @click="$parent.$emit('liquidate-comm', props.row.id)" />
+                            <div class="row no-wrap items-center justify-center gap-1">
+                                <!-- Draft status: Single approve button -->
+                                <q-btn v-if="props.row._status_raw === 'draft'" size="xs" color="positive" dense unelevated icon="check"
+                                       :label="props.row._btn_approve" @click="$parent.$emit('approve-comm', props.row.id)" class="q-px-xs" />
+
+                                <!-- Pre-commitment (DA) approved: Convert to BC -->
+                                <q-btn v-if="props.row._status_raw === 'approved' && props.row._stage === 'pre_commitment'"
+                                       size="xs" color="cyan-9" dense unelevated icon="transform"
+                                       :label="props.row._btn_convert" @click="$parent.$emit('convert-comm', props.row.id)" class="q-px-xs" />
+
+                                <!-- Firm commitment (BC) approved: Contextual workflow actions -->
+                                <template v-if="props.row._status_raw === 'approved' && props.row._stage !== 'pre_commitment'">
+                                    <!-- Step 1: Certify PV if certified < amount -->
+                                    <q-btn v-if="props.row._certified_raw < props.row._amount_raw"
+                                           size="xs" color="teal" dense outline icon="verified"
+                                           :label="props.row._btn_certify" @click="$parent.$emit('certify-comm', props.row.id)" class="q-px-xs">
+                                        <q-tooltip>Enregistrer le procès-verbal de réception (Service Fait)</q-tooltip>
+                                    </q-btn>
+
+                                    <!-- Step 2: Mandate if certified > 0 and mandated < certified -->
+                                    <q-btn v-if="props.row._certified_raw > 0 && props.row._mandated_raw < props.row._certified_raw"
+                                           size="xs" color="purple-8" dense outline icon="receipt_long"
+                                           :label="props.row._btn_mandate" @click="$parent.$emit('mandate-comm', props.row.id)" class="q-px-xs">
+                                        <q-tooltip>Émettre le Mandat de Paiement (Ordonnancement)</q-tooltip>
+                                    </q-btn>
+
+                                    <!-- Step 3: Liquidate -->
+                                    <q-btn size="xs" color="indigo" dense flat icon="task_alt"
+                                           :label="props.row._btn_liquidate" @click="$parent.$emit('liquidate-comm', props.row.id)" class="q-px-xs">
+                                        <q-tooltip>Clôturer et liquider l'engagement</q-tooltip>
+                                    </q-btn>
+                                </template>
+
+                                <!-- Liquidated status badge -->
+                                <span v-if="props.row._status_raw === 'liquidated'" class="text-caption text-indigo-8 text-weight-bold">
+                                    ✓ Soldé
+                                </span>
+                            </div>
                         </q-td>
                     ''')
 
@@ -5640,5 +5754,11 @@ async def budgeting_page() -> None:
 
             refreshers['reports'] = _render_reports_tab.refresh
             _render_reports_tab()
+
+        # ---------------------------------------------------------------------
+        # TAB 9: SAGE 100 / SAGE X3 & MULTI-BRANCH ERP GATEWAY
+        # ---------------------------------------------------------------------
+        with ui.tab_panel(t_sage).classes('p-0 gap-4 flex flex-col'):
+            await render_sage_tab(state, refreshers, currency)
 
 

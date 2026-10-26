@@ -1233,7 +1233,7 @@ async def _budget_check_dialog() -> None:
                               hint=t('bud.kpi_spent_hint'), icon='payments', tone='sky')
                         w.kpi(t('bud.kpi_remaining'), w.money(data.get('remainingBudget'), currency),
                               hint=t('bud.kpi_remaining_hint'), icon='savings', tone='teal')
-                        w.kpi(t('bud.kpi_rate'), f"{data.get('overallPctConsumed', 0):.1f}%",
+                        w.kpi(t('bud.kpi_rate'), f"{float(data.get('overallPctConsumed') or 0):.1f}%",
                               hint=t('bud.kpi_rate_hint'), icon='percent', tone='amber')
 
                     rows = data.get('rows') or []
